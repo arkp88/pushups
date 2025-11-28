@@ -16,6 +16,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [practiceMode, setPracticeMode] = useState('single'); // 'single' or 'mixed'
   const [mixedFilter, setMixedFilter] = useState('all'); // 'all', 'unattempted', 'missed'
+  const [displayCount, setDisplayCount] = useState(10);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -189,6 +190,9 @@ const filteredSets = questionSets.filter(set =>
   set.name.toLowerCase().includes(searchTerm.toLowerCase())
 );
 
+const displayedSets = filteredSets.slice(0, displayCount);
+const hasMore = filteredSets.length > displayCount;
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
@@ -321,7 +325,10 @@ return (
             type="text"
             placeholder="Search question sets..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setDisplayCount(10); // Reset to 10 when searching
+            }}
             style={{
               width: '100%',
               padding: '12px',
@@ -347,37 +354,50 @@ return (
             </label>
           </div>
 
-          {filteredSets.length === 0 ? (
+{filteredSets.length === 0 ? (
             <div className="empty-state">
               <h3>No Question Sets Yet</h3>
               <p>Upload your first TSV file to get started!</p>
             </div>
           ) : (
-            <div className="set-list">
-              {filteredSets.map((set) => (
-                <div
-                  key={set.id}
-                  className="set-card"
-                  onClick={() => practiceMode === 'single' ? startPractice(set) : null}
-                  style={{cursor: practiceMode === 'single' ? 'pointer' : 'default', opacity: practiceMode === 'single' ? 1 : 0.6}}
-                >
-                  <h3>{set.name}</h3>
-                  <div className="set-info">
-                    <span>📝 {set.total_questions} questions</span>
-                    <span>✅ {set.questions_attempted || 0} attempted</span>
-                    <span>👤 {set.uploaded_by_username}</span>
+            <>
+              <div className="set-list">
+                {displayedSets.map((set) => (
+                  <div
+                    key={set.id}
+                    className="set-card"
+                    onClick={() => practiceMode === 'single' ? startPractice(set) : null}
+                    style={{cursor: practiceMode === 'single' ? 'pointer' : 'default', opacity: practiceMode === 'single' ? 1 : 0.6}}
+                  >
+                    <h3>{set.name}</h3>
+                    <div className="set-info">
+                      <span>📝 {set.total_questions} questions</span>
+                      <span>✅ {set.questions_attempted || 0} attempted</span>
+                      <span>👤 {set.uploaded_by_username}</span>
+                    </div>
+                    <div className="progress-bar">
+                      <div
+                        className="progress-fill"
+                        style={{
+                          width: `${((set.questions_attempted || 0) / set.total_questions) * 100}%`
+                        }}
+                      />
+                    </div>
                   </div>
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill"
-                      style={{
-                        width: `${((set.questions_attempted || 0) / set.total_questions) * 100}%`
-                      }}
-                    />
-                  </div>
+                ))}
+              </div>
+              
+              {hasMore && (
+                <div style={{textAlign: 'center', marginTop: '20px'}}>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => setDisplayCount(prev => prev + 10)}
+                  >
+                    Load More ({filteredSets.length - displayCount} remaining)
+                  </button>
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       )}
