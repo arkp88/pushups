@@ -54,41 +54,60 @@ function App() {
     }
   };
 
-  const handleUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+const handleUpload = async (event) => {
+  const files = event.target.files;
+  if (!files || files.length === 0) return;
 
-    const setName = prompt('Enter a name for this question set:', file.name.replace('.tsv', ''));
-    if (!setName) return;
-
-    try {
-      setLoading(true);
-      await api.uploadTSV(file, setName, '');
-      await loadQuestionSets();
-      alert('Questions uploaded successfully!');
-    } catch (error) {
-      alert('Error uploading file: ' + error.message);
-    } finally {
-      setLoading(false);
-      event.target.value = '';
+  try {
+    setLoading(true);
+    let successCount = 0;
+    
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const setName = file.name.replace('.tsv', '');
+      
+      try {
+        await api.uploadTSV(file, setName, '');
+        successCount++;
+      } catch (error) {
+        console.error(`Error uploading ${file.name}:`, error);
+      }
     }
-  };
+    
+    await loadQuestionSets();
+    alert(`Successfully uploaded ${successCount} of ${files.length} files!`);
+  } catch (error) {
+    alert('Error uploading files: ' + error.message);
+  } finally {
+    setLoading(false);
+    event.target.value = '';
+  }
+};
 
-  const startPractice = async (set) => {
-    try {
-      setLoading(true);
-      const data = await api.getQuestions(set.id);
-      setQuestions(data.questions);
-      setCurrentSet(set);
-      setCurrentQuestionIndex(0);
-      setIsFlipped(false);
-      setView('practice');
-    } catch (error) {
-      alert('Error loading questions: ' + error.message);
-    } finally {
-      setLoading(false);
+const startPractice = async (set) => {
+  try {
+    setLoading(true);
+    const data = await api.getQuestions(set.id);
+    setQuestions(data.questions);
+    setCurrentSet(set);
+    
+    // Load saved position
+    const savedPosition = localStorage.getItem(`quiz-position-${set.id}`);
+    const startIndex = savedPosition ? parseInt(savedPosition) : 0;
+    
+    setCurrentQuestionIndex(startIndex);
+    setIsFlipped(false);
+    setView('practice');
+    
+    if (savedPosition) {
+      alert(`Resuming from question ${startIndex + 1}`);
     }
-  };
+  } catch (error) {
+    alert('Error loading questions: ' + error.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
@@ -111,23 +130,29 @@ function App() {
 
     // Move to next question
     if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      const newIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(newIndex);
       setIsFlipped(false);
+      // Save position
+      localStorage.setItem(`quiz-position-${currentSet.id}`, newIndex);
     } else {
       // Practice session complete
       alert('Practice session complete!');
+      localStorage.removeItem(`quiz-position-${currentSet.id}`);
       setView('sets');
       loadQuestionSets();
       loadStats();
     }
   };
 
-  const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-      setIsFlipped(false);
-    }
-  };
+const handlePrevious = () => {
+  if (currentQuestionIndex > 0) {
+    const newIndex = currentQuestionIndex - 1;
+    setCurrentQuestionIndex(newIndex);
+    setIsFlipped(false);
+    localStorage.setItem(`quiz-position-${currentSet.id}`, newIndex);
+  }
+};
 
   if (loading) {
     return <div className="loading">Loading...</div>;
@@ -140,7 +165,12 @@ function App() {
   return (
     <div className="App">
       <header className="header">
-        <h1>🎯 Quiz Practice</h1>
+        <h1>🎯 ADOFAM - Made Specially for NASA!</h1>
+          {stats && (
+            <div style={{color: '#666', fontSize: '14px'}}>
+              {stats.total_questions} questions • {questionSets.length} sets
+            </div>
+          )}
         <div className="user-info">
           <span className="user-email">{session.user.email}</span>
           <button className="btn btn-secondary" onClick={() => setView('stats')}>
@@ -194,6 +224,7 @@ function App() {
               type="file"
               id="file-upload"
               accept=".tsv"
+              multiple
               onChange={handleUpload}
             />
             <label htmlFor="file-upload" className="upload-label">
