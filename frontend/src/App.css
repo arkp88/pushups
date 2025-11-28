@@ -339,6 +339,19 @@ body {
   flex-wrap: wrap;
 }
 
+@media (max-width: 768px) {
+  .flashcard-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .flashcard-controls .btn:nth-child(1) { order: 1; } /* Previous */
+  .flashcard-controls .btn:nth-child(2) { order: 3; } /* Got it right */
+  .flashcard-controls .btn:nth-child(3) { order: 4; } /* Missed it */
+  .flashcard-controls .btn:nth-child(4) { order: 2; } /* Skip */
+}
+
 .btn-success {
   background: #10b981;
   color: white;

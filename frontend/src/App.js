@@ -415,7 +415,7 @@ function Auth() {
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Choose a username"
+            placeholder={isSignUp ? "Choose a username" : "Enter your username"}
             required
           />
         </div>
