@@ -37,22 +37,39 @@ body {
 @media (max-width: 768px) {
   .header {
     padding: 15px;
-    gap: 10px;
+    gap: 12px;
   }
   
+  /* Title section - full width */
   .header > div:first-child {
     width: 100%;
+    order: 1;
   }
   
+  /* Stats - full width, below title */
   .header > div:nth-child(2) {
     width: 100%;
-    order: 3;
+    order: 2;
+    font-size: 13px !important;
   }
   
+  /* User info buttons - full width, at bottom */
   .user-info {
     width: 100%;
-    order: 2;
-    justify-content: flex-start !important;
+    order: 3;
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 8px;
+  }
+  
+  .user-info .user-email {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  
+  .user-info button {
+    width: 100%;
   }
 }
 
