@@ -13,6 +13,7 @@ function App() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [stats, setStats] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -154,6 +155,10 @@ const handlePrevious = () => {
   }
 };
 
+const filteredSets = questionSets.filter(set =>
+  set.name.toLowerCase().includes(searchTerm.toLowerCase())
+);
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
@@ -219,6 +224,21 @@ const handlePrevious = () => {
       {view === 'sets' && (
         <div className="question-sets">
           <h2>Question Sets</h2>
+
+          <input
+            type="text"
+            placeholder="Search question sets..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              marginBottom: '20px',
+              border: '2px solid #e5e7eb',
+              borderRadius: '8px',
+              fontSize: '16px'
+            }}
+          />
           
           <div className="upload-section">
             <h3>Upload New Question Set</h3>
@@ -242,7 +262,7 @@ const handlePrevious = () => {
             </div>
           ) : (
             <div className="set-list">
-              {questionSets.map((set) => (
+              {filteredSets.map((set) => (
                 <div
                   key={set.id}
                   className="set-card"
