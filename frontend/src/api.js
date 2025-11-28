@@ -95,4 +95,11 @@ export const api = {
     if (!response.ok) throw new Error('Failed to fetch stats');
     return response.json();
   },
+
+  async getMixedQuestions(filter = 'all') {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL}/api/questions/mixed?filter=${filter}`, { headers });
+    if (!response.ok) throw new Error('Failed to fetch mixed questions');
+    return response.json();
+  },
 };

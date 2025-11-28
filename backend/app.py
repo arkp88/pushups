@@ -379,6 +379,72 @@ def get_stats():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/questions/mixed', methods=['GET'])
+@token_required
+def get_mixed_questions():
+    """Get mixed questions from all sets with optional filters"""
+    try:
+        filter_type = request.args.get('filter', 'all')  # all, unattempted, missed
+        
+        conn = get_db()
+        cur = conn.cursor()
+        
+        if filter_type == 'unattempted':
+            # Get questions user hasn't attempted
+            cur.execute('''
+                SELECT q.*,
+                       up.attempted, up.correct, up.attempt_count, up.last_attempted,
+                       mq.id IS NOT NULL as is_missed,
+                       qs.name as set_name
+                FROM questions q
+                JOIN question_sets qs ON q.set_id = qs.id
+                LEFT JOIN user_progress up ON up.question_id = q.id AND up.user_id = %s
+                LEFT JOIN missed_questions mq ON mq.question_id = q.id AND mq.user_id = %s
+                WHERE up.id IS NULL OR up.attempted = false
+                ORDER BY RANDOM()
+            ''', (request.current_user['id'], request.current_user['id']))
+        
+        elif filter_type == 'missed':
+            # Get only missed questions
+            cur.execute('''
+                SELECT q.*,
+                       up.attempted, up.correct, up.attempt_count, up.last_attempted,
+                       mq.id IS NOT NULL as is_missed,
+                       qs.name as set_name
+                FROM questions q
+                JOIN question_sets qs ON q.set_id = qs.id
+                JOIN missed_questions mq ON mq.question_id = q.id AND mq.user_id = %s
+                LEFT JOIN user_progress up ON up.question_id = q.id AND up.user_id = %s
+                ORDER BY RANDOM()
+            ''', (request.current_user['id'], request.current_user['id']))
+        
+        else:  # all
+            # Get all questions, shuffled
+            cur.execute('''
+                SELECT q.*,
+                       up.attempted, up.correct, up.attempt_count, up.last_attempted,
+                       mq.id IS NOT NULL as is_missed,
+                       qs.name as set_name
+                FROM questions q
+                JOIN question_sets qs ON q.set_id = qs.id
+                LEFT JOIN user_progress up ON up.question_id = q.id AND up.user_id = %s
+                LEFT JOIN missed_questions mq ON mq.question_id = q.id AND mq.user_id = %s
+                ORDER BY RANDOM()
+            ''', (request.current_user['id'], request.current_user['id']))
+        
+        questions = cur.fetchall()
+        cur.close()
+        conn.close()
+        
+        return jsonify({
+            'questions': questions,
+            'filter_type': filter_type,
+            'total': len(questions)
+        })
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)

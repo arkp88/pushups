@@ -14,6 +14,8 @@ function App() {
   const [isFlipped, setIsFlipped] = useState(false);
   const [stats, setStats] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [practiceMode, setPracticeMode] = useState('single'); // 'single' or 'mixed'
+  const [mixedFilter, setMixedFilter] = useState('all'); // 'all', 'unattempted', 'missed'
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -110,6 +112,30 @@ const startPractice = async (set) => {
   }
 };
 
+  const startMixedPractice = async (filter) => {
+    try {
+      setLoading(true);
+      const data = await api.getMixedQuestions(filter);
+      
+      if (data.questions.length === 0) {
+        alert(`No ${filter} questions found!`);
+        setLoading(false);
+        return;
+      }
+      
+      setQuestions(data.questions);
+      setCurrentSet({ name: `Mixed Practice (${filter})`, id: 'mixed' });
+      setCurrentQuestionIndex(0);
+      setIsFlipped(false);
+      setPracticeMode('mixed');
+      setView('practice');
+    } catch (error) {
+      alert('Error loading mixed questions: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
   };
@@ -135,11 +161,15 @@ const startPractice = async (set) => {
       setCurrentQuestionIndex(newIndex);
       setIsFlipped(false);
       // Save position
+    if (currentSet.id !== 'mixed') {
       localStorage.setItem(`quiz-position-${currentSet.id}`, newIndex);
+    }
     } else {
       // Practice session complete
       alert('Practice session complete!');
+    if (currentSet.id !== 'mixed') {
       localStorage.removeItem(`quiz-position-${currentSet.id}`);
+    }
       setView('sets');
       loadQuestionSets();
       loadStats();
@@ -167,18 +197,22 @@ const filteredSets = questionSets.filter(set =>
     return <Auth />;
   }
 
-  return (
+return (
     <div className="App">
       <header className="header">
-        <h1>🎯 Pushups</h1>
-          <p style={{color: '#666', fontSize: '16px', marginTop: '-10px', marginBottom: '10px'}}>
+        <div>
+          <h1 style={{margin: 0}}>🎯 Pushups</h1>
+          <p style={{color: '#666', fontSize: '14px', margin: '5px 0 0 0'}}>
             Slightly too late for all this, no?
           </p>
-          {stats && (
-            <div style={{color: '#666', fontSize: '14px'}}>
-              {stats.total_questions} questions • {questionSets.length} sets
-            </div>
-          )}
+        </div>
+        
+        {stats && (
+          <div style={{color: '#666', fontSize: '14px'}}>
+            {stats.total_questions} questions • {questionSets.length} sets
+          </div>
+        )}
+        
         <div className="user-info">
           <span className="user-email">{session.user.email}</span>
           <button className="btn btn-secondary" onClick={() => setView('stats')}>
@@ -221,10 +255,68 @@ const filteredSets = questionSets.filter(set =>
         </div>
       )}
 
-      {view === 'sets' && (
+{view === 'sets' && (
         <div className="question-sets">
-          <h2>Question Sets</h2>
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+            <h2>Question Sets</h2>
+            <div style={{display: 'flex', gap: '10px'}}>
+              <button 
+                className={`btn ${practiceMode === 'single' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setPracticeMode('single')}
+              >
+                Practice by Set
+              </button>
+              <button 
+                className={`btn ${practiceMode === 'mixed' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setPracticeMode('mixed')}
+              >
+                Mixed Practice
+              </button>
+            </div>
+          </div>
 
+          {practiceMode === 'mixed' && (
+            <div style={{
+              background: '#f9fafb',
+              border: '2px solid #667eea',
+              borderRadius: '8px',
+              padding: '20px',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{marginBottom: '15px', color: '#333'}}>Mixed Practice Mode</h3>
+              <p style={{color: '#666', marginBottom: '15px'}}>Practice questions from all sets combined</p>
+              
+              <div style={{display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: 'wrap'}}>
+                <button 
+                  className={`btn ${mixedFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setMixedFilter('all')}
+                >
+                  All Questions
+                </button>
+                <button 
+                  className={`btn ${mixedFilter === 'unattempted' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setMixedFilter('unattempted')}
+                >
+                  Unattempted Only
+                </button>
+                <button 
+                  className={`btn ${mixedFilter === 'missed' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setMixedFilter('missed')}
+                >
+                  Missed Only
+                </button>
+              </div>
+              
+              <button 
+                className="btn btn-success"
+                onClick={() => startMixedPractice(mixedFilter)}
+                style={{width: '100%'}}
+              >
+                Start Mixed Practice ({mixedFilter})
+              </button>
+            </div>
+          )}
+          
           <input
             type="text"
             placeholder="Search question sets..."
@@ -242,7 +334,7 @@ const filteredSets = questionSets.filter(set =>
           
           <div className="upload-section">
             <h3>Upload New Question Set</h3>
-            <p style={{color: '#666', marginBottom: '15px'}}>Upload a TSV file with your questions</p>
+            <p style={{color: '#666', marginBottom: '15px'}}>Upload TSV files with your questions</p>
             <input
               type="file"
               id="file-upload"
@@ -251,11 +343,11 @@ const filteredSets = questionSets.filter(set =>
               onChange={handleUpload}
             />
             <label htmlFor="file-upload" className="upload-label">
-              Choose TSV File
+              Choose TSV File(s)
             </label>
           </div>
 
-          {questionSets.length === 0 ? (
+          {filteredSets.length === 0 ? (
             <div className="empty-state">
               <h3>No Question Sets Yet</h3>
               <p>Upload your first TSV file to get started!</p>
@@ -266,7 +358,8 @@ const filteredSets = questionSets.filter(set =>
                 <div
                   key={set.id}
                   className="set-card"
-                  onClick={() => startPractice(set)}
+                  onClick={() => practiceMode === 'single' ? startPractice(set) : null}
+                  style={{cursor: practiceMode === 'single' ? 'pointer' : 'default', opacity: practiceMode === 'single' ? 1 : 0.6}}
                 >
                   <h3>{set.name}</h3>
                   <div className="set-info">
@@ -304,9 +397,13 @@ const filteredSets = questionSets.filter(set =>
             className={`flashcard ${isFlipped ? 'flipped' : ''}`}
             onClick={handleFlip}
           >
-            <div className="round-info">
-              {questions[currentQuestionIndex].round_no} - {questions[currentQuestionIndex].question_no}
-            </div>
+          <div className="round-info">
+          {practiceMode === 'mixed' ? (
+            <span>From: {questions[currentQuestionIndex].set_name}</span>
+          ) : (
+            <span>{questions[currentQuestionIndex].round_no} - {questions[currentQuestionIndex].question_no}</span>
+          )}
+          </div>
 
             {!isFlipped ? (
               <>
