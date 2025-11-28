@@ -165,7 +165,10 @@ const handlePrevious = () => {
   return (
     <div className="App">
       <header className="header">
-        <h1>🎯 ADOFAM - Made Specially for NASA!</h1>
+        <h1>🎯 Pushups</h1>
+          <p style={{color: '#666', fontSize: '16px', marginTop: '-10px', marginBottom: '10px'}}>
+            Slightly too late for all this, no?
+          </p>
           {stats && (
             <div style={{color: '#666', fontSize: '14px'}}>
               {stats.total_questions} questions • {questionSets.length} sets
