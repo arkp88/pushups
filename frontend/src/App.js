@@ -257,8 +257,8 @@ return (
 
 {view === 'sets' && (
         <div className="question-sets">
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
-            <h2>Question Sets</h2>
+        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px'}}>
+            <h2 style={{margin: 0, width: '100%'}}>Question Sets</h2>
             <div style={{display: 'flex', gap: '10px'}}>
               <button 
                 className={`btn ${practiceMode === 'single' ? 'btn-primary' : 'btn-secondary'}`}
