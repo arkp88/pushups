@@ -347,7 +347,7 @@ const handlePrevious = () => {
 
 function Auth() {
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const [error, setError] = useState('');
@@ -357,6 +357,9 @@ function Auth() {
     setError('');
     setLoading(true);
 
+    // Convert username to fake email
+    const email = `${username.toLowerCase().trim()}@quiz.local`;
+
     try {
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({
@@ -364,7 +367,7 @@ function Auth() {
           password,
         });
         if (error) throw error;
-        alert('Check your email for the confirmation link!');
+        alert('Account created! You can now sign in.');
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -387,11 +390,12 @@ function Auth() {
       
       <form onSubmit={handleAuth}>
         <div className="form-group">
-          <label>Email</label>
+          <label>Username</label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Choose a username"
             required
           />
         </div>
