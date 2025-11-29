@@ -248,7 +248,7 @@ return (
 
       {view === 'home' && stats && (
         <div className="home-container">
-          <h2 style={{marginBottom: '30px', textAlign: 'center'}}>Ready to Practice?</h2>
+          <h2 style={{marginBottom: '30px', textAlign: 'center'}}>Good to go?</h2>
           
           {/* Quick Stats Cards */}
           <div className="quick-stats-grid">
@@ -268,7 +268,7 @@ return (
 
           {/* Practice Mode Buttons */}
           <div className="practice-modes">
-            <h3 style={{marginBottom: '20px'}}>Choose Practice Mode</h3>
+            <h3 style={{marginBottom: '20px'}}>Choose Mode</h3>
             
             <button 
               className="practice-mode-button"
@@ -277,7 +277,7 @@ return (
               <div className="practice-mode-icon">📚</div>
               <div className="practice-mode-content">
                 <h4>Browse Question Sets</h4>
-                <p>Practice by individual question set ({questionSets.length} sets available)</p>
+                <p>Play individual question set ({questionSets.length} sets available)</p>
               </div>
             </button>
 
@@ -290,7 +290,7 @@ return (
             >
               <div className="practice-mode-icon">🎲</div>
               <div className="practice-mode-content">
-                <h4>Mixed Practice - All Questions</h4>
+                <h4>Mixed Mode - All Questions</h4>
                 <p>Random questions from all sets</p>
               </div>
             </button>
@@ -304,7 +304,7 @@ return (
             >
               <div className="practice-mode-icon">🆕</div>
               <div className="practice-mode-content">
-                <h4>Mixed Practice - Unattempted</h4>
+                <h4>Mixed Mode - Unattempted</h4>
                 <p>Only questions you haven't seen yet</p>
               </div>
             </button>
@@ -319,8 +319,8 @@ return (
             >
               <div className="practice-mode-icon">❌</div>
               <div className="practice-mode-content">
-                <h4>Practice Missed Questions</h4>
-                <p>Review what you got wrong ({stats.missed} questions)</p>
+                <h4>Retry Missed Questions</h4>
+                <p>Tier-1s don't have this section - ({stats.missed} questions)</p>
               </div>
             </button>
           </div>
