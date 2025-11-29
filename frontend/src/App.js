@@ -229,7 +229,8 @@ const handlePrevious = () => {
 };
 
 const filteredSets = questionSets.filter(set =>
-  set.name.toLowerCase().includes(searchTerm.toLowerCase())
+  set.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  (set.tags && set.tags.toLowerCase().includes(searchTerm.toLowerCase()))
 );
 
 const displayedSets = filteredSets.slice(0, displayCount);
@@ -286,6 +287,12 @@ return (
         >
           📊 Stats
         </button>
+        <button 
+          className={`tab-button ${view === 'help' ? 'active' : ''}`}
+          onClick={() => setView('help')}
+      >
+          ❓ Help
+        </button>
       </nav>
 
       {view === 'home' && stats && (
@@ -312,59 +319,61 @@ return (
           <div className="practice-modes">
             <h3 style={{marginBottom: '20px'}}>Choose Mode</h3>
             
-            <button 
-              className="practice-mode-button"
-              onClick={() => setView('sets')}
-            >
-              <div className="practice-mode-icon">📚</div>
-              <div className="practice-mode-content">
-                <h4>Browse Question Sets</h4>
-                <p>Play individual question set ({questionSets.length} sets available)</p>
-              </div>
-            </button>
+            <div className="practice-mode-grid">
+              <button 
+                className="practice-mode-button"
+                onClick={() => setView('sets')}
+              >
+                <div className="practice-mode-icon">📚</div>
+                <div className="practice-mode-content">
+                  <h4>Browse Question Sets</h4>
+                  <p>Play individual question set ({questionSets.length} sets available)</p>
+                </div>
+              </button>
 
-            <button 
-              className="practice-mode-button"
-              onClick={() => {
-                setMixedFilter('all');
-                startMixedPractice('all');
-              }}
-            >
-              <div className="practice-mode-icon">🎲</div>
-              <div className="practice-mode-content">
-                <h4>Random Mode - All Questions</h4>
-                <p>Questions pulled randomly from all sets</p>
-              </div>
-            </button>
+              <button 
+                className="practice-mode-button"
+                onClick={() => {
+                  setMixedFilter('all');
+                  startMixedPractice('all');
+                }}
+              >
+                <div className="practice-mode-icon">🎲</div>
+                <div className="practice-mode-content">
+                  <h4>Random Mode - All Questions</h4>
+                  <p>Questions pulled randomly from all sets</p>
+                </div>
+              </button>
 
-            <button 
-              className="practice-mode-button"
-              onClick={() => {
-                setMixedFilter('unattempted');
-                startMixedPractice('unattempted');
-              }}
-            >
-              <div className="practice-mode-icon">🆕</div>
-              <div className="practice-mode-content">
-                <h4>Random Mode - Unattempted</h4>
-                <p>Only questions you haven't seen yet</p>
-              </div>
-            </button>
+              <button 
+                className="practice-mode-button"
+                onClick={() => {
+                  setMixedFilter('unattempted');
+                  startMixedPractice('unattempted');
+                }}
+              >
+                <div className="practice-mode-icon">🆕</div>
+                <div className="practice-mode-content">
+                  <h4>Random Mode - Unattempted</h4>
+                  <p>Only questions you haven't seen yet</p>
+                </div>
+              </button>
 
-            <button 
-              className="practice-mode-button"
-              onClick={() => {
-                setMixedFilter('missed');
-                startMixedPractice('missed');
-              }}
-              disabled={stats.missed === 0}
-            >
-              <div className="practice-mode-icon">❌</div>
-              <div className="practice-mode-content">
-                <h4>Retry Missed Questions</h4>
-                <p>Review what you got wrong ({stats.missed} questions)</p>
-              </div>
-            </button>
+              <button 
+                className="practice-mode-button"
+                onClick={() => {
+                  setMixedFilter('missed');
+                  startMixedPractice('missed');
+                }}
+                disabled={stats.missed === 0}
+              >
+                <div className="practice-mode-icon">❌</div>
+                <div className="practice-mode-content">
+                  <h4>Retry Missed Questions</h4>
+                  <p>Review what you got wrong ({stats.missed} questions)</p>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -397,6 +406,55 @@ return (
         </div>
       )}
 
+{view === 'help' && (
+  <div className="container">
+    <h2>How to Use Pushups</h2>
+    
+    <div style={{marginTop: '30px'}}>
+      <h3 style={{color: '#667eea', marginBottom: '15px'}}>📚 Getting Started</h3>
+      <ul style={{lineHeight: '1.8', color: '#666', marginLeft: '20px'}}>
+        <li><strong>Upload Sets:</strong> Go to Upload tab and add TSV files in Mimir format</li>
+        <li><strong>Browse Sets:</strong> View all available question sets from you and others</li>
+        <li><strong>Practice Modes:</strong> Choose from individual sets or randomized questions</li>
+      </ul>
+    </div>
+
+    <div style={{marginTop: '30px'}}>
+      <h3 style={{color: '#667eea', marginBottom: '15px'}}>🎯 Practice Tips</h3>
+      <ul style={{lineHeight: '1.8', color: '#666', marginLeft: '20px'}}>
+        <li><strong>Flashcard Mode:</strong> Click anywhere on the card to flip between question and answer</li>
+        <li><strong>Self-Assessment:</strong> Mark yourself "Got it right" or "Missed it" for tracking</li>
+        <li><strong>Resume Later:</strong> Your progress is saved - you can come back anytime</li>
+        <li><strong>Missed Questions:</strong> Questions marked as missed are added to review mode</li>
+      </ul>
+    </div>
+
+    <div style={{marginTop: '30px'}}>
+      <h3 style={{color: '#667eea', marginBottom: '15px'}}>🔍 Search & Filter</h3>
+      <ul style={{lineHeight: '1.8', color: '#666', marginLeft: '20px'}}>
+        <li>Search sets by name or tags in the Browse Sets tab</li>
+        <li>Use Random Mode filters: All, Unattempted, or Missed questions only</li>
+      </ul>
+    </div>
+
+    <div style={{marginTop: '30px'}}>
+      <h3 style={{color: '#667eea', marginBottom: '15px'}}>📊 Tracking Progress</h3>
+      <ul style={{lineHeight: '1.8', color: '#666', marginLeft: '20px'}}>
+        <li>View your stats anytime in the Stats tab</li>
+        <li>Each set shows a progress bar for questions attempted</li>
+        <li>Accuracy percentage updates as you practice</li>
+      </ul>
+    </div>
+
+    <div style={{marginTop: '30px', padding: '20px', background: '#f9fafb', borderRadius: '8px'}}>
+      <h3 style={{color: '#667eea', marginBottom: '10px'}}>💡 Pro Tip</h3>
+      <p style={{color: '#666', lineHeight: '1.6', margin: 0}}>
+        Tag your uploaded sets with categories (like "Art", "History", "Films") if applicable to easily filter and find them later. 
+        All users can see all sets uploaded.
+      </p>
+    </div>
+  </div>
+)}
 
 {view === 'sets' && (
         <div className="container">
@@ -404,7 +462,7 @@ return (
           
           <input
             type="text"
-            placeholder="Search question sets..."
+            placeholder="Search by name or tag..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
@@ -779,9 +837,10 @@ return (
 
             {!isFlipped ? (
               <>
-                <div className="question-text">
-                  {questions[currentQuestionIndex].question_text}
-                </div>
+              <div 
+                className="question-text"
+                dangerouslySetInnerHTML={{ __html: questions[currentQuestionIndex].question_text }}
+              />
                 {questions[currentQuestionIndex].image_url && (
                   <img
                     src={questions[currentQuestionIndex].image_url}
@@ -793,9 +852,10 @@ return (
               </>
             ) : (
               <>
-                <div className="answer-text">
-                  {questions[currentQuestionIndex].answer_text}
-                </div>
+                <div 
+                  className="answer-text"
+                  dangerouslySetInnerHTML={{ __html: questions[currentQuestionIndex].answer_text }}
+                />
                 <div className="flip-hint">Click to see question again</div>
               </>
             )}
