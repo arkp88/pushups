@@ -18,6 +18,8 @@ function App() {
   const [mixedFilter, setMixedFilter] = useState('all'); // 'all', 'unattempted', 'missed'
   const [displayCount, setDisplayCount] = useState(10);
   const [uploadTags, setUploadTags] = useState(''); // Tags for upload
+  const [customName, setCustomName] = useState(''); // Custom name for upload
+  const [selectedFileCount, setSelectedFileCount] = useState(0); // Track file count
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -69,7 +71,22 @@ const handleUpload = async (event) => {
     
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      const setName = file.name.replace('.tsv', '');
+      
+      // Determine set name
+      let setName;
+      if (customName.trim()) {
+        // Custom name provided
+        if (files.length > 1) {
+          // Multi-file: add numbering
+          setName = `${customName.trim()} - ${i + 1}`;
+        } else {
+          // Single file: use custom name as-is
+          setName = customName.trim();
+        }
+      } else {
+        // No custom name: use filename
+        setName = file.name.replace('.tsv', '');
+      }
       
       try {
         await api.uploadTSV(file, setName, '', uploadTags);
@@ -80,7 +97,9 @@ const handleUpload = async (event) => {
     }
     
     await loadQuestionSets();
-    setUploadTags(''); // Clear tags after upload
+    setUploadTags(''); // Clear tags
+    setCustomName(''); // Clear custom name
+    setSelectedFileCount(0); // Reset file count
     alert(`Successfully uploaded ${successCount} of ${files.length} files!`);
   } catch (error) {
     alert('Error uploading files: ' + error.message);
@@ -90,8 +109,12 @@ const handleUpload = async (event) => {
   }
 };
 
+const handleFileSelect = (event) => {
+  setSelectedFileCount(event.target.files?.length || 0);
+};
+
 const handleDeleteSet = async (setId, setName) => {
-  if (!window.confirm(`Delete "${setName}"? This will hide it from all users (can be restored from database).`)) {
+  if (!window.confirm(`Confirm Deletion of "${setName}"? `)) {
     return;
   }
   
@@ -144,13 +167,13 @@ const startPractice = async (set) => {
       }
       
       setQuestions(data.questions);
-      setCurrentSet({ name: `Mixed Mode (${filter})`, id: 'mixed' });
+      setCurrentSet({ name: `Random Mode (${filter})`, id: 'mixed' });
       setCurrentQuestionIndex(0);
       setIsFlipped(false);
       setPracticeMode('mixed');
       setView('practice');
     } catch (error) {
-      alert('Error loading mixed questions: ' + error.message);
+      alert('Error loading randomized questions: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -285,7 +308,7 @@ return (
             </div>
           </div>
 
-          {/* Practice Mode Buttons */}
+          {/* Mode Buttons */}
           <div className="practice-modes">
             <h3 style={{marginBottom: '20px'}}>Choose Mode</h3>
             
@@ -309,8 +332,8 @@ return (
             >
               <div className="practice-mode-icon">🎲</div>
               <div className="practice-mode-content">
-                <h4>Randomized Mode - All Questions</h4>
-                <p>Random questions from all sets</p>
+                <h4>Random Mode - All Questions</h4>
+                <p>Questions pulled randomly from all sets</p>
               </div>
             </button>
 
@@ -323,7 +346,7 @@ return (
             >
               <div className="practice-mode-icon">🆕</div>
               <div className="practice-mode-content">
-                <h4>Randomized Mode - Unattempted</h4>
+                <h4>Random Mode - Unattempted</h4>
                 <p>Only questions you haven't seen yet</p>
               </div>
             </button>
@@ -459,6 +482,33 @@ return (
             
             <div style={{marginBottom: '15px'}}>
               <label style={{display: 'block', marginBottom: '8px', color: '#555', fontWeight: '500'}}>
+                Custom Name (optional)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g., Quiz Night March 2024"
+                value={customName}
+                onChange={(e) => setCustomName(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '14px'
+                }}
+              />
+              <p style={{color: '#999', fontSize: '12px', marginTop: '5px'}}>
+                💡 Naming is optional, but proper naming will ensure easy identification of sets!
+              </p>
+              {selectedFileCount > 1 && customName.trim() && (
+                <p style={{color: '#667eea', fontSize: '12px', marginTop: '5px', fontWeight: '500'}}>
+                  ℹ️ Multiple files will be named: "{customName.trim()} - 1", "{customName.trim()} - 2", etc.
+                </p>
+              )}
+            </div>
+
+            <div style={{marginBottom: '15px'}}>
+              <label style={{display: 'block', marginBottom: '8px', color: '#555', fontWeight: '500'}}>
                 Tags (optional)
               </label>
               <input
@@ -484,7 +534,10 @@ return (
               id="file-upload"
               accept=".tsv"
               multiple
-              onChange={handleUpload}
+              onChange={(e) => {
+                handleFileSelect(e);
+                handleUpload(e);
+              }}
             />
             <label htmlFor="file-upload" className="upload-label">
               Choose TSV File(s)
@@ -586,7 +639,7 @@ return (
               padding: '20px',
               marginBottom: '20px'
             }}>
-              <h3 style={{marginBottom: '15px', color: '#333'}}>Randomized Mode</h3>
+              <h3 style={{marginBottom: '15px', color: '#333'}}>Random Mode</h3>
               <p style={{color: '#666', marginBottom: '15px'}}>Attempt questions from all sets combined</p>
               
               <div style={{display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: 'wrap'}}>
@@ -615,7 +668,7 @@ return (
                 onClick={() => startMixedPractice(mixedFilter)}
                 style={{width: '100%'}}
               >
-                Start Randomized Mode ({mixedFilter})
+                Start Random Mode ({mixedFilter})
               </button>
             </div>
           )}
