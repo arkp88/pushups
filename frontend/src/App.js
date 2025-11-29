@@ -497,42 +497,63 @@ return (
               Sets you've uploaded are shown below
             </p>
             
-            {questionSets.filter(set => set.uploaded_by_username === session.user.email.split('@')[0]).length === 0 ? (
-              <div className="empty-state">
-                <p>You haven't uploaded any sets yet.</p>
-              </div>
-            ) : (
-              <div className="set-list">
-                {questionSets
-                  .filter(set => set.uploaded_by_username === session.user.email.split('@')[0])
-                  .map((set) => (
-                    <div key={set.id} className="set-card" style={{position: 'relative'}}>
-                      <h3>{set.name}</h3>
-                      <div className="set-info">
-                        <span>📝 {set.total_questions} questions</span>
-                        <span>✅ {set.questions_attempted || 0} attempted by users</span>
-                        {set.tags && <span>🏷️ {set.tags}</span>}
+            {(() => {
+              const myUploadedSets = questionSets.filter(set => set.uploaded_by_username === session.user.email.split('@')[0]);
+              const displayedUploadedSets = myUploadedSets.slice(0, displayCount);
+              const hasMoreUploaded = myUploadedSets.length > displayCount;
+              
+              if (myUploadedSets.length === 0) {
+                return (
+                  <div className="empty-state">
+                    <p>You haven't uploaded any sets yet.</p>
+                  </div>
+                );
+              }
+              
+              return (
+                <>
+                  <div className="set-list">
+                    {displayedUploadedSets.map((set) => (
+                      <div key={set.id} className="set-card" style={{position: 'relative'}}>
+                        <h3>{set.name}</h3>
+                        <div className="set-info">
+                          <span>📝 {set.total_questions} questions</span>
+                          <span>✅ {set.questions_attempted || 0} attempted by users</span>
+                          {set.tags && <span>🏷️ {set.tags}</span>}
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteSet(set.id, set.name);
+                          }}
+                          className="btn btn-danger"
+                          style={{
+                            position: 'absolute',
+                            top: '15px',
+                            right: '15px',
+                            padding: '6px 12px',
+                            fontSize: '12px'
+                          }}
+                        >
+                          🗑️ Delete
+                        </button>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteSet(set.id, set.name);
-                        }}
-                        className="btn btn-danger"
-                        style={{
-                          position: 'absolute',
-                          top: '15px',
-                          right: '15px',
-                          padding: '6px 12px',
-                          fontSize: '12px'
-                        }}
+                    ))}
+                  </div>
+                  
+                  {hasMoreUploaded && (
+                    <div style={{textAlign: 'center', marginTop: '20px'}}>
+                      <button 
+                        className="btn btn-primary"
+                        onClick={() => setDisplayCount(prev => prev + 10)}
                       >
-                        🗑️ Delete
+                        Load More ({myUploadedSets.length - displayCount} remaining)
                       </button>
                     </div>
-                  ))}
-              </div>
-            )}
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
       )}
