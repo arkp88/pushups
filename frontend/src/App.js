@@ -20,6 +20,7 @@ function App() {
   const [uploadTags, setUploadTags] = useState(''); // Tags for upload
   const [customName, setCustomName] = useState(''); // Custom name for upload
   const [selectedFileCount, setSelectedFileCount] = useState(0); // Track file count
+  const [setsFilter, setSetsFilter] = useState('all'); // 'all', 'completed', 'in-progress', 'unattempted'
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -183,41 +184,46 @@ const startPractice = async (set) => {
     setIsFlipped(!isFlipped);
   };
 
-  const handleNext = async (markAsCorrect = null) => {
-    const currentQuestion = questions[currentQuestionIndex];
+const handleNext = async (markAsCorrect = null) => {
+  const currentQuestion = questions[currentQuestionIndex];
+  
+  try {
+    // Update progress
+    await api.updateProgress(currentQuestion.id, true, markAsCorrect);
     
-    try {
-      // Update progress
-      await api.updateProgress(currentQuestion.id, true, markAsCorrect);
-      
-      // If marked as incorrect/missed, add to missed questions
-      if (markAsCorrect === false) {
-        await api.markMissed(currentQuestion.id);
-      }
-    } catch (error) {
-      console.error('Error updating progress:', error);
+    // If marked as incorrect/missed, add to missed questions
+    if (markAsCorrect === false) {
+      await api.markMissed(currentQuestion.id);
     }
+    
+    // If marked as correct AND question was previously missed, remove from missed
+    if (markAsCorrect === true && currentQuestion.is_missed) {
+      await api.unmarkMissed(currentQuestion.id);
+    }
+  } catch (error) {
+    console.error('Error updating progress:', error);
+  }
 
-    // Move to next question
-    if (currentQuestionIndex < questions.length - 1) {
-      const newIndex = currentQuestionIndex + 1;
-      setCurrentQuestionIndex(newIndex);
-      setIsFlipped(false);
-      // Save position
+  // Move to next question
+  if (currentQuestionIndex < questions.length - 1) {
+    const newIndex = currentQuestionIndex + 1;
+    setCurrentQuestionIndex(newIndex);
+    setIsFlipped(false);
+    // Save position
     if (currentSet.id !== 'mixed') {
       localStorage.setItem(`quiz-position-${currentSet.id}`, newIndex);
     }
-    } else {
-      // Session complete
-      alert('Session complete!');
+  } else {
+    // Session complete
+    alert('Session complete!');
     if (currentSet.id !== 'mixed') {
       localStorage.removeItem(`quiz-position-${currentSet.id}`);
     }
-      setView('home');
-      loadQuestionSets();
-      loadStats();
-    }
-  };
+    setView('home');
+    loadQuestionSets();
+    loadStats();
+  }
+};
 
 const handlePrevious = () => {
   if (currentQuestionIndex > 0) {
@@ -457,75 +463,161 @@ return (
 )}
 
 {view === 'sets' && (
-        <div className="container">
-          <h2>Question Sets</h2>
-          
-          <input
-            type="text"
-            placeholder="Search by name or tag..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setDisplayCount(10);
-            }}
-            style={{
-              width: '100%',
-              padding: '12px',
-              marginBottom: '20px',
-              border: '2px solid #e5e7eb',
-              borderRadius: '8px',
-              fontSize: '16px'
-            }}
-          />
+  <div className="container">
+    <h2>Question Sets</h2>
+    
+    {/* Filter Tabs */}
+    <div style={{
+      display: 'flex', 
+      gap: '10px', 
+      marginTop: '20px',
+      marginBottom: '20px',
+      flexWrap: 'wrap'
+    }}>
+      <button 
+        className={`btn ${setsFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+        onClick={() => {
+          setSetsFilter('all');
+          setDisplayCount(10);
+        }}
+      >
+        All Sets ({questionSets.length})
+      </button>
+      <button 
+        className={`btn ${setsFilter === 'completed' ? 'btn-primary' : 'btn-secondary'}`}
+        onClick={() => {
+          setSetsFilter('completed');
+          setDisplayCount(10);
+        }}
+      >
+        ✅ Completed ({questionSets.filter(s => s.questions_attempted === s.total_questions && s.total_questions > 0).length})
+      </button>
+      <button 
+        className={`btn ${setsFilter === 'in-progress' ? 'btn-primary' : 'btn-secondary'}`}
+        onClick={() => {
+          setSetsFilter('in-progress');
+          setDisplayCount(10);
+        }}
+      >
+        ⏳ In Progress ({questionSets.filter(s => s.questions_attempted > 0 && s.questions_attempted < s.total_questions).length})
+      </button>
+      <button 
+        className={`btn ${setsFilter === 'unattempted' ? 'btn-primary' : 'btn-secondary'}`}
+        onClick={() => {
+          setSetsFilter('unattempted');
+          setDisplayCount(10);
+        }}
+      >
+        🆕 Unattempted ({questionSets.filter(s => !s.questions_attempted || s.questions_attempted === 0).length})
+      </button>
+    </div>
+    
+    <input
+      type="text"
+      placeholder="Search by name or tag..."
+      value={searchTerm}
+      onChange={(e) => {
+        setSearchTerm(e.target.value);
+        setDisplayCount(10);
+      }}
+      style={{
+        width: '100%',
+        padding: '12px',
+        marginBottom: '20px',
+        border: '2px solid #e5e7eb',
+        borderRadius: '8px',
+        fontSize: '16px'
+      }}
+    />
 
-          {filteredSets.length === 0 ? (
-            <div className="empty-state">
-              <h3>No Question Sets Yet</h3>
-              <p>Go to the Upload tab to add your first TSV file!</p>
-            </div>
-          ) : (
-            <>
-              <div className="set-list">
-                {displayedSets.map((set) => (
-                  <div
-                    key={set.id}
-                    className="set-card"
-                    onClick={() => startPractice(set)}
-                    style={{cursor: 'pointer'}}
-                  >
-                    <h3>{set.name}</h3>
-                    <div className="set-info">
-                      <span>📝 {set.total_questions} questions</span>
-                      <span>✅ {set.questions_attempted || 0} attempted</span>
-                      <span>👤 {set.uploaded_by_username}</span>
-                      {set.tags && <span>🏷️ {set.tags}</span>}
-                    </div>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-fill"
-                        style={{
-                          width: `${((set.questions_attempted || 0) / set.total_questions) * 100}%`
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              
-              {hasMore && (
-                <div style={{textAlign: 'center', marginTop: '20px'}}>
-                  <button 
-                    className="btn btn-primary"
-                    onClick={() => setDisplayCount(prev => prev + 10)}
-                  >
-                    Load More ({filteredSets.length - displayCount} remaining)
-                  </button>
+    {(() => {
+      // Apply filter logic
+      let setsToDisplay = questionSets;
+      
+      // Apply status filter
+      if (setsFilter === 'completed') {
+        setsToDisplay = setsToDisplay.filter(s => 
+          s.questions_attempted === s.total_questions && s.total_questions > 0
+        );
+      } else if (setsFilter === 'in-progress') {
+        setsToDisplay = setsToDisplay.filter(s => 
+          s.questions_attempted > 0 && s.questions_attempted < s.total_questions
+        );
+      } else if (setsFilter === 'unattempted') {
+        setsToDisplay = setsToDisplay.filter(s => 
+          !s.questions_attempted || s.questions_attempted === 0
+        );
+      }
+      
+      // Apply search filter
+      const filteredSets = setsToDisplay.filter(set =>
+        set.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (set.tags && set.tags.toLowerCase().includes(searchTerm.toLowerCase()))
+      );
+      
+      const displayedSets = filteredSets.slice(0, displayCount);
+      const hasMore = filteredSets.length > displayCount;
+      
+      if (filteredSets.length === 0) {
+        return (
+          <div className="empty-state">
+            <h3>No Question Sets Found</h3>
+            <p>
+              {searchTerm 
+                ? `No sets match "${searchTerm}"` 
+                : setsFilter === 'all'
+                ? 'Go to the Upload tab to add your first TSV file!'
+                : `No ${setsFilter.replace('-', ' ')} sets available`
+              }
+            </p>
+          </div>
+        );
+      }
+      
+      return (
+        <>
+          <div className="set-list">
+            {displayedSets.map((set) => (
+              <div
+                key={set.id}
+                className="set-card"
+                onClick={() => startPractice(set)}
+                style={{cursor: 'pointer'}}
+              >
+                <h3>{set.name}</h3>
+                <div className="set-info">
+                  <span>📝 {set.total_questions} questions</span>
+                  <span>✅ {set.questions_attempted || 0} attempted</span>
+                  <span>👤 {set.uploaded_by_username}</span>
+                  {set.tags && <span>🏷️ {set.tags}</span>}
                 </div>
-              )}
-            </>
+                <div className="progress-bar">
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width: `${((set.questions_attempted || 0) / set.total_questions) * 100}%`
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {hasMore && (
+            <div style={{textAlign: 'center', marginTop: '20px'}}>
+              <button 
+                className="btn btn-primary"
+                onClick={() => setDisplayCount(prev => prev + 10)}
+              >
+                Load More ({filteredSets.length - displayCount} remaining)
+              </button>
+            </div>
           )}
-        </div>
-      )}
+        </>
+      );
+    })()}
+  </div>
+)}
 
       {view === 'upload' && (
         <div className="container">
