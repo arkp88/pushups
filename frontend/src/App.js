@@ -17,6 +17,7 @@ function App() {
   const [practiceMode, setPracticeMode] = useState('single'); // 'single' or 'mixed'
   const [mixedFilter, setMixedFilter] = useState('all'); // 'all', 'unattempted', 'missed'
   const [displayCount, setDisplayCount] = useState(10);
+  const [uploadTags, setUploadTags] = useState(''); // Tags for upload
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -71,7 +72,7 @@ const handleUpload = async (event) => {
       const setName = file.name.replace('.tsv', '');
       
       try {
-        await api.uploadTSV(file, setName, '');
+        await api.uploadTSV(file, setName, '', uploadTags);
         successCount++;
       } catch (error) {
         console.error(`Error uploading ${file.name}:`, error);
@@ -79,12 +80,30 @@ const handleUpload = async (event) => {
     }
     
     await loadQuestionSets();
+    setUploadTags(''); // Clear tags after upload
     alert(`Successfully uploaded ${successCount} of ${files.length} files!`);
   } catch (error) {
     alert('Error uploading files: ' + error.message);
   } finally {
     setLoading(false);
     event.target.value = '';
+  }
+};
+
+const handleDeleteSet = async (setId, setName) => {
+  if (!window.confirm(`Delete "${setName}"? This will hide it from all users (can be restored from database).`)) {
+    return;
+  }
+  
+  try {
+    setLoading(true);
+    await api.deleteQuestionSet(setId);
+    await loadQuestionSets();
+    alert('Question set deleted successfully!');
+  } catch (error) {
+    alert('Error deleting set: ' + error.message);
+  } finally {
+    setLoading(false);
   }
 };
 
@@ -125,7 +144,7 @@ const startPractice = async (set) => {
       }
       
       setQuestions(data.questions);
-      setCurrentSet({ name: `Mixed Practice (${filter})`, id: 'mixed' });
+      setCurrentSet({ name: `Mixed Mode (${filter})`, id: 'mixed' });
       setCurrentQuestionIndex(0);
       setIsFlipped(false);
       setPracticeMode('mixed');
@@ -166,8 +185,8 @@ const startPractice = async (set) => {
       localStorage.setItem(`quiz-position-${currentSet.id}`, newIndex);
     }
     } else {
-      // Practice session complete
-      alert('Practice session complete!');
+      // Session complete
+      alert('Session complete!');
     if (currentSet.id !== 'mixed') {
       localStorage.removeItem(`quiz-position-${currentSet.id}`);
     }
@@ -248,7 +267,7 @@ return (
 
       {view === 'home' && stats && (
         <div className="home-container">
-          <h2 style={{marginBottom: '30px', textAlign: 'center'}}>Good to go?</h2>
+          <h2 style={{marginBottom: '30px', textAlign: 'center'}}>Ready to Play?</h2>
           
           {/* Quick Stats Cards */}
           <div className="quick-stats-grid">
@@ -290,7 +309,7 @@ return (
             >
               <div className="practice-mode-icon">🎲</div>
               <div className="practice-mode-content">
-                <h4>Mixed Mode - All Questions</h4>
+                <h4>Randomized Mode - All Questions</h4>
                 <p>Random questions from all sets</p>
               </div>
             </button>
@@ -304,7 +323,7 @@ return (
             >
               <div className="practice-mode-icon">🆕</div>
               <div className="practice-mode-content">
-                <h4>Mixed Mode - Unattempted</h4>
+                <h4>Randomized Mode - Unattempted</h4>
                 <p>Only questions you haven't seen yet</p>
               </div>
             </button>
@@ -320,7 +339,7 @@ return (
               <div className="practice-mode-icon">❌</div>
               <div className="practice-mode-content">
                 <h4>Retry Missed Questions</h4>
-                <p>Tier-1s don't have this section - ({stats.missed} questions)</p>
+                <p>Review what you got wrong ({stats.missed} questions)</p>
               </div>
             </button>
           </div>
@@ -398,6 +417,7 @@ return (
                       <span>📝 {set.total_questions} questions</span>
                       <span>✅ {set.questions_attempted || 0} attempted</span>
                       <span>👤 {set.uploaded_by_username}</span>
+                      {set.tags && <span>🏷️ {set.tags}</span>}
                     </div>
                     <div className="progress-bar">
                       <div
@@ -430,12 +450,35 @@ return (
         <div className="container">
           <h2>Upload Question Sets</h2>
           <p style={{color: '#666', marginBottom: '30px'}}>
-            Upload TSV files to add new question sets. All users will be able to see and practice from your uploaded sets.
+            Upload mimir-format TSV files to add new question sets. All users will be able to see and play your uploaded sets.
           </p>
           
           <div className="upload-section">
             <h3>Upload New Question Set</h3>
-            <p style={{color: '#666', marginBottom: '15px'}}>Upload TSV files with your questions</p>
+            <p style={{color: '#666', marginBottom: '15px'}}>Upload Mimir-format TSV files</p>
+            
+            <div style={{marginBottom: '15px'}}>
+              <label style={{display: 'block', marginBottom: '8px', color: '#555', fontWeight: '500'}}>
+                Tags (optional)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g., B612, Films, History"
+                value={uploadTags}
+                onChange={(e) => setUploadTags(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '2px solid #e5e7eb',
+                  borderRadius: '8px',
+                  fontSize: '14px'
+                }}
+              />
+              <p style={{color: '#999', fontSize: '12px', marginTop: '5px'}}>
+                Separate multiple tags with commas. These tags will be applied to all uploaded files.
+              </p>
+            </div>
+            
             <input
               type="file"
               id="file-upload"
@@ -463,12 +506,29 @@ return (
                 {questionSets
                   .filter(set => set.uploaded_by_username === session.user.email.split('@')[0])
                   .map((set) => (
-                    <div key={set.id} className="set-card">
+                    <div key={set.id} className="set-card" style={{position: 'relative'}}>
                       <h3>{set.name}</h3>
                       <div className="set-info">
                         <span>📝 {set.total_questions} questions</span>
                         <span>✅ {set.questions_attempted || 0} attempted by users</span>
+                        {set.tags && <span>🏷️ {set.tags}</span>}
                       </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteSet(set.id, set.name);
+                        }}
+                        className="btn btn-danger"
+                        style={{
+                          position: 'absolute',
+                          top: '15px',
+                          right: '15px',
+                          padding: '6px 12px',
+                          fontSize: '12px'
+                        }}
+                      >
+                        🗑️ Delete
+                      </button>
                     </div>
                   ))}
               </div>
@@ -486,13 +546,13 @@ return (
                 className={`btn ${practiceMode === 'single' ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => setPracticeMode('single')}
               >
-                Practice by Set
+                Play Specific Set
               </button>
               <button 
                 className={`btn ${practiceMode === 'mixed' ? 'btn-primary' : 'btn-secondary'}`}
                 onClick={() => setPracticeMode('mixed')}
               >
-                Mixed Practice
+                Randomized Mode
               </button>
             </div>
           </div>
@@ -505,8 +565,8 @@ return (
               padding: '20px',
               marginBottom: '20px'
             }}>
-              <h3 style={{marginBottom: '15px', color: '#333'}}>Mixed Practice Mode</h3>
-              <p style={{color: '#666', marginBottom: '15px'}}>Practice questions from all sets combined</p>
+              <h3 style={{marginBottom: '15px', color: '#333'}}>Randomized Mode</h3>
+              <p style={{color: '#666', marginBottom: '15px'}}>Attempt questions from all sets combined</p>
               
               <div style={{display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: 'wrap'}}>
                 <button 
@@ -534,7 +594,7 @@ return (
                 onClick={() => startMixedPractice(mixedFilter)}
                 style={{width: '100%'}}
               >
-                Start Mixed Practice ({mixedFilter})
+                Start Randomized Mode ({mixedFilter})
               </button>
             </div>
           )}

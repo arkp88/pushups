@@ -103,6 +103,7 @@ def upload_tsv():
     file = request.files['file']
     set_name = request.form.get('set_name', file.filename)
     set_description = request.form.get('description', '')
+    tags = request.form.get('tags', '')  # Comma-separated tags
     
     if not file.filename.endswith('.tsv'):
         return jsonify({'error': 'File must be a TSV file'}), 400
@@ -117,8 +118,8 @@ def upload_tsv():
         
         # Create question set
         cur.execute(
-            'INSERT INTO question_sets (name, description, uploaded_by) VALUES (%s, %s, %s) RETURNING id',
-            (set_name, set_description, request.current_user['id'])
+            'INSERT INTO question_sets (name, description, uploaded_by, tags, is_deleted) VALUES (%s, %s, %s, %s, %s) RETURNING id',
+            (set_name, set_description, request.current_user['id'], tags, False)
         )
         set_id = cur.fetchone()['id']
         
@@ -180,6 +181,7 @@ def get_question_sets():
             LEFT JOIN users u ON qs.uploaded_by = u.id
             LEFT JOIN questions q ON q.set_id = qs.id
             LEFT JOIN user_progress up ON up.question_id = q.id
+            WHERE qs.is_deleted = false
             GROUP BY qs.id, u.username
             ORDER BY qs.created_at DESC
         ''', (request.current_user['id'],))
@@ -325,6 +327,39 @@ def get_missed_questions():
         conn.close()
         
         return jsonify({'missed_questions': questions})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/question-sets/<int:set_id>', methods=['DELETE'])
+@token_required
+def delete_question_set(set_id):
+    """Soft delete a question set (only if user owns it)"""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        
+        # Check if set exists and user owns it
+        cur.execute('SELECT uploaded_by FROM question_sets WHERE id = %s', (set_id,))
+        question_set = cur.fetchone()
+        
+        if not question_set:
+            return jsonify({'error': 'Question set not found'}), 404
+        
+        if question_set['uploaded_by'] != request.current_user['id']:
+            return jsonify({'error': 'Unauthorized - you can only delete your own sets'}), 403
+        
+        # Soft delete (mark as deleted)
+        cur.execute(
+            'UPDATE question_sets SET is_deleted = true WHERE id = %s',
+            (set_id,)
+        )
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'message': 'Question set deleted'})
     
     except Exception as e:
         return jsonify({'error': str(e)}), 500
