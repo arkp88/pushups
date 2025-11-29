@@ -6,7 +6,7 @@ import './App.css';
 function App() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('sets'); // 'sets', 'practice', 'stats'
+  const [view, setView] = useState('home'); // 'home', 'sets', 'upload', 'practice', 'stats'
   const [questionSets, setQuestionSets] = useState([]);
   const [currentSet, setCurrentSet] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -171,7 +171,7 @@ const startPractice = async (set) => {
     if (currentSet.id !== 'mixed') {
       localStorage.removeItem(`quiz-position-${currentSet.id}`);
     }
-      setView('sets');
+      setView('home');
       loadQuestionSets();
       loadStats();
     }
@@ -211,25 +211,121 @@ return (
           </p>
         </div>
         
-        {stats && (
-          <div style={{color: '#666', fontSize: '14px'}}>
-            {stats.total_questions} questions • {questionSets.length} sets
-          </div>
-        )}
-        
         <div className="user-info">
           <span className="user-email">{session.user.email}</span>
-          <button className="btn btn-secondary" onClick={() => setView('stats')}>
-            Stats
-          </button>
-          <button className="btn btn-secondary" onClick={() => setView('sets')}>
-            Question Sets
-          </button>
           <button className="btn btn-danger" onClick={() => supabase.auth.signOut()}>
             Logout
           </button>
         </div>
       </header>
+
+      <nav className="tab-navigation">
+        <button 
+          className={`tab-button ${view === 'home' ? 'active' : ''}`}
+          onClick={() => setView('home')}
+        >
+          🏠 Home
+        </button>
+        <button 
+          className={`tab-button ${view === 'sets' ? 'active' : ''}`}
+          onClick={() => setView('sets')}
+        >
+          📚 Browse Sets
+        </button>
+        <button 
+          className={`tab-button ${view === 'upload' ? 'active' : ''}`}
+          onClick={() => setView('upload')}
+        >
+          ⬆️ Upload
+        </button>
+        <button 
+          className={`tab-button ${view === 'stats' ? 'active' : ''}`}
+          onClick={() => setView('stats')}
+        >
+          📊 Stats
+        </button>
+      </nav>
+
+      {view === 'home' && stats && (
+        <div className="home-container">
+          <h2 style={{marginBottom: '30px', textAlign: 'center'}}>Ready to Practice?</h2>
+          
+          {/* Quick Stats Cards */}
+          <div className="quick-stats-grid">
+            <div className="quick-stat-card">
+              <div className="quick-stat-value">{stats.total_questions}</div>
+              <div className="quick-stat-label">Questions Available</div>
+            </div>
+            <div className="quick-stat-card">
+              <div className="quick-stat-value">{stats.attempted}</div>
+              <div className="quick-stat-label">Attempted ({Math.round((stats.attempted / stats.total_questions) * 100)}%)</div>
+            </div>
+            <div className="quick-stat-card">
+              <div className="quick-stat-value">{stats.accuracy}%</div>
+              <div className="quick-stat-label">Accuracy</div>
+            </div>
+          </div>
+
+          {/* Practice Mode Buttons */}
+          <div className="practice-modes">
+            <h3 style={{marginBottom: '20px'}}>Choose Practice Mode</h3>
+            
+            <button 
+              className="practice-mode-button"
+              onClick={() => setView('sets')}
+            >
+              <div className="practice-mode-icon">📚</div>
+              <div className="practice-mode-content">
+                <h4>Browse Question Sets</h4>
+                <p>Practice by individual question set ({questionSets.length} sets available)</p>
+              </div>
+            </button>
+
+            <button 
+              className="practice-mode-button"
+              onClick={() => {
+                setMixedFilter('all');
+                startMixedPractice('all');
+              }}
+            >
+              <div className="practice-mode-icon">🎲</div>
+              <div className="practice-mode-content">
+                <h4>Mixed Practice - All Questions</h4>
+                <p>Random questions from all sets</p>
+              </div>
+            </button>
+
+            <button 
+              className="practice-mode-button"
+              onClick={() => {
+                setMixedFilter('unattempted');
+                startMixedPractice('unattempted');
+              }}
+            >
+              <div className="practice-mode-icon">🆕</div>
+              <div className="practice-mode-content">
+                <h4>Mixed Practice - Unattempted</h4>
+                <p>Only questions you haven't seen yet</p>
+              </div>
+            </button>
+
+            <button 
+              className="practice-mode-button"
+              onClick={() => {
+                setMixedFilter('missed');
+                startMixedPractice('missed');
+              }}
+              disabled={stats.missed === 0}
+            >
+              <div className="practice-mode-icon">❌</div>
+              <div className="practice-mode-content">
+                <h4>Practice Missed Questions</h4>
+                <p>Review what you got wrong ({stats.missed} questions)</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
 
       {view === 'stats' && stats && (
         <div className="stats-container">
@@ -259,7 +355,129 @@ return (
         </div>
       )}
 
+
 {view === 'sets' && (
+        <div className="container">
+          <h2>Question Sets</h2>
+          
+          <input
+            type="text"
+            placeholder="Search question sets..."
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setDisplayCount(10);
+            }}
+            style={{
+              width: '100%',
+              padding: '12px',
+              marginBottom: '20px',
+              border: '2px solid #e5e7eb',
+              borderRadius: '8px',
+              fontSize: '16px'
+            }}
+          />
+
+          {filteredSets.length === 0 ? (
+            <div className="empty-state">
+              <h3>No Question Sets Yet</h3>
+              <p>Go to the Upload tab to add your first TSV file!</p>
+            </div>
+          ) : (
+            <>
+              <div className="set-list">
+                {displayedSets.map((set) => (
+                  <div
+                    key={set.id}
+                    className="set-card"
+                    onClick={() => startPractice(set)}
+                    style={{cursor: 'pointer'}}
+                  >
+                    <h3>{set.name}</h3>
+                    <div className="set-info">
+                      <span>📝 {set.total_questions} questions</span>
+                      <span>✅ {set.questions_attempted || 0} attempted</span>
+                      <span>👤 {set.uploaded_by_username}</span>
+                    </div>
+                    <div className="progress-bar">
+                      <div
+                        className="progress-fill"
+                        style={{
+                          width: `${((set.questions_attempted || 0) / set.total_questions) * 100}%`
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              {hasMore && (
+                <div style={{textAlign: 'center', marginTop: '20px'}}>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => setDisplayCount(prev => prev + 10)}
+                  >
+                    Load More ({filteredSets.length - displayCount} remaining)
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      {view === 'upload' && (
+        <div className="container">
+          <h2>Upload Question Sets</h2>
+          <p style={{color: '#666', marginBottom: '30px'}}>
+            Upload TSV files to add new question sets. All users will be able to see and practice from your uploaded sets.
+          </p>
+          
+          <div className="upload-section">
+            <h3>Upload New Question Set</h3>
+            <p style={{color: '#666', marginBottom: '15px'}}>Upload TSV files with your questions</p>
+            <input
+              type="file"
+              id="file-upload"
+              accept=".tsv"
+              multiple
+              onChange={handleUpload}
+            />
+            <label htmlFor="file-upload" className="upload-label">
+              Choose TSV File(s)
+            </label>
+          </div>
+
+          <div style={{marginTop: '40px'}}>
+            <h3>Your Uploaded Sets</h3>
+            <p style={{color: '#666', marginBottom: '20px'}}>
+              Sets you've uploaded are shown below
+            </p>
+            
+            {questionSets.filter(set => set.uploaded_by_username === session.user.email.split('@')[0]).length === 0 ? (
+              <div className="empty-state">
+                <p>You haven't uploaded any sets yet.</p>
+              </div>
+            ) : (
+              <div className="set-list">
+                {questionSets
+                  .filter(set => set.uploaded_by_username === session.user.email.split('@')[0])
+                  .map((set) => (
+                    <div key={set.id} className="set-card">
+                      <h3>{set.name}</h3>
+                      <div className="set-info">
+                        <span>📝 {set.total_questions} questions</span>
+                        <span>✅ {set.questions_attempted || 0} attempted by users</span>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+{view === 'sets-old' && (
         <div className="question-sets">
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px'}}>
             <h2 style={{margin: 0, width: '100%'}}>Question Sets</h2>
@@ -450,31 +668,59 @@ return (
           </div>
 
           <div className="flashcard-controls">
-            <button
-              className="btn btn-secondary"
-              onClick={handlePrevious}
-              disabled={currentQuestionIndex === 0}
-            >
-              ← Previous
-            </button>
-            <button
-              className="btn btn-success"
-              onClick={() => handleNext(true)}
-            >
-              ✓ Got it right
-            </button>
-            <button
-              className="btn btn-warning"
-              onClick={() => handleNext(false)}
-            >
-              ✗ Missed it
-            </button>
-            <button
-              className="btn btn-secondary"
-              onClick={() => handleNext(null)}
-            >
-              Skip →
-            </button>
+            {!isFlipped ? (
+              // Question showing - only allow reveal or skip
+              <>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handlePrevious}
+                  disabled={currentQuestionIndex === 0}
+                >
+                  ← Previous
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleFlip}
+                >
+                  Show Answer
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => handleNext(null)}
+                >
+                  Skip →
+                </button>
+              </>
+            ) : (
+              // Answer showing - allow self-assessment
+              <>
+                <button
+                  className="btn btn-secondary"
+                  onClick={handlePrevious}
+                  disabled={currentQuestionIndex === 0}
+                >
+                  ← Previous
+                </button>
+                <button
+                  className="btn btn-success"
+                  onClick={() => handleNext(true)}
+                >
+                  ✓ Got it right
+                </button>
+                <button
+                  className="btn btn-warning"
+                  onClick={() => handleNext(false)}
+                >
+                  ✗ Missed it
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => handleNext(null)}
+                >
+                  Skip →
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
