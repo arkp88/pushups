@@ -134,6 +134,17 @@ const handleDeleteSet = async (setId, setName) => {
 const startPractice = async (set) => {
   try {
     setLoading(true);
+    
+    // Mark set as directly opened (not via random mode)
+    try {
+      await api.markSetOpened(set.id);
+    } catch (error) {
+      console.error('Failed to mark set as opened:', error);
+    }
+    
+    // Track as last set for "Continue" feature
+    localStorage.setItem('last-set-id', set.id);
+    
     const data = await api.getQuestions(set.id);
     setQuestions(data.questions);
     setCurrentSet(set);
@@ -337,6 +348,27 @@ return (
                 </div>
               </button>
 
+                <button 
+                className="practice-mode-button"
+                onClick={() => {
+                  const unplayedSets = questionSets.filter(s => !s.directly_opened);
+                  if (unplayedSets.length === 0) {
+                    alert('No unplayed sets available! You\'ve started all sets.');
+                    return;
+                  }
+                  const randomSet = unplayedSets[Math.floor(Math.random() * unplayedSets.length)];
+                  startPractice(randomSet);
+                }}
+                disabled={questionSets.filter(s => !s.directly_opened).length === 0}
+              >
+                <div className="practice-mode-icon">🎰</div>
+                <div className="practice-mode-content">
+                  <h4>Random Unplayed Set</h4>
+                  <p>Jump into a set you haven't started ({questionSets.filter(s => !s.directly_opened).length} available)</p>
+                </div>
+                </button>
+
+
               <button 
                 className="practice-mode-button"
                 onClick={() => {
@@ -347,7 +379,7 @@ return (
                 <div className="practice-mode-icon">🎲</div>
                 <div className="practice-mode-content">
                   <h4>Random Mode - All Questions</h4>
-                  <p>Questions pulled randomly from all sets</p>
+                  <p>Randomized questions from across sets</p>
                 </div>
               </button>
 
@@ -361,7 +393,7 @@ return (
                 <div className="practice-mode-icon">🆕</div>
                 <div className="practice-mode-content">
                   <h4>Random Mode - Unattempted</h4>
-                  <p>Only questions you haven't seen yet</p>
+                  <p>Random mode, but only questions you haven't seen yet</p>
                 </div>
               </button>
 
@@ -379,6 +411,33 @@ return (
                   <p>Review what you got wrong ({stats.missed} questions)</p>
                 </div>
               </button>
+
+                <button 
+                  className="practice-mode-button"
+                  onClick={() => {
+                    const lastSetId = localStorage.getItem('last-set-id');
+                    if (!lastSetId) {
+                      alert('No recent set found. Start practicing a set first!');
+                      return;
+                    }
+                    
+                    const lastSet = questionSets.find(s => s.id === parseInt(lastSetId));
+                    if (!lastSet) {
+                      alert('Last practiced set no longer exists.');
+                      localStorage.removeItem('last-set-id');
+                      return;
+                    }
+                    
+                    startPractice(lastSet);
+                  }}
+                  disabled={!localStorage.getItem('last-set-id')}
+                >
+                  <div className="practice-mode-icon">🔄</div>
+                  <div className="practice-mode-content">
+                    <h4>Continue Last Set</h4>
+                    <p>Resume your most recent practice session</p>
+                  </div>
+                </button>
             </div>
           </div>
         </div>
@@ -910,9 +969,43 @@ return (
             <button className="btn btn-secondary" onClick={() => setView('sets')}>
               ← Back to Sets
             </button>
-            <div className="flashcard-progress">
-              Question {currentQuestionIndex + 1} of {questions.length}
+            <div style={{flex: 1, textAlign: 'center'}}>
+              <div style={{fontWeight: 'bold', color: '#333', marginBottom: '5px'}}>
+                {currentSet.name}
+              </div>
+              <div className="flashcard-progress">
+                Question {currentQuestionIndex + 1} of {questions.length}
+              </div>
             </div>
+            {practiceMode === 'single' && (
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  const unplayedSets = questionSets.filter(s => 
+                    s.id !== currentSet.id && 
+                    !s.directly_opened
+                  );
+                  if (unplayedSets.length === 0) {
+                    alert('No other unplayed sets available!');
+                    return;
+                  }
+                  const randomSet = unplayedSets[Math.floor(Math.random() * unplayedSets.length)];
+                  
+                  // Clear saved position for current set
+                  if (currentSet.id !== 'mixed') {
+                    localStorage.removeItem(`quiz-position-${currentSet.id}`);
+                  }
+                  
+                  startPractice(randomSet);
+                }}
+                disabled={questionSets.filter(s => 
+                  s.id !== currentSet.id && 
+                  !s.directly_opened
+                ).length === 0}
+              >
+                🎲 Random Unplayed
+              </button>
+            )}
           </div>
 
           <div
