@@ -126,7 +126,17 @@ export const api = {
     }
     return response.json();
   },
-
+  
+  async toggleBookmark(questionId) {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL}/api/questions/${questionId}/bookmark`, {
+      method: 'POST',
+      headers,
+    });
+    if (!response.ok) throw new Error('Failed to toggle bookmark');
+    return response.json();
+  },
+  
   // --- GOOGLE DRIVE METHODS (NEW) ---
   async listDriveFiles(folderId) {
     const headers = await getAuthHeaders();

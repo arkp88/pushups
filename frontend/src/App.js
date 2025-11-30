@@ -275,6 +275,27 @@ const startPractice = async (set) => {
     }
   };
 
+const handleBookmark = async (e) => {
+    e.stopPropagation(); // Prevent card flip
+    const currentQuestion = questions[currentQuestionIndex];
+    
+    // Optimistic UI Update (Instant toggle)
+    const updatedQuestions = [...questions];
+    updatedQuestions[currentQuestionIndex].is_bookmarked = !currentQuestion.is_bookmarked;
+    setQuestions(updatedQuestions);
+
+    try {
+      await api.toggleBookmark(currentQuestion.id);
+      // Reload stats to update the count on home screen
+      loadStats(); 
+    } catch (error) {
+      console.error('Bookmark failed:', error);
+      // Revert on error
+      updatedQuestions[currentQuestionIndex].is_bookmarked = !updatedQuestions[currentQuestionIndex].is_bookmarked;
+      setQuestions([...updatedQuestions]);
+    }
+  };
+
 const startMixedPractice = async (filter) => {
     try {
       setStartingPractice(true); // <--- Use Local State
@@ -323,8 +344,16 @@ const handleNext = async (markAsCorrect = null) => {
         // Important: Unlock UI only after we've moved to the next question
         setProcessingNext(false); 
       } else {
+        // Session complete
         alert('Session complete!');
-        if (currentSet.id !== 'mixed') localStorage.removeItem(`quiz-position-${currentSet.id}`);
+        
+        if (currentSet.id !== 'mixed') {
+          // Clear the progress for this specific set
+          localStorage.removeItem(`quiz-position-${currentSet.id}`);
+          // NEW: Clear the "Last Set" memory so the "Continue" button disables
+          localStorage.removeItem('last-set-id'); 
+        }
+        
         setView('home');
         loadQuestionSets();
         loadStats();
@@ -354,7 +383,7 @@ const handleNext = async (markAsCorrect = null) => {
         <div>
           <h1 style={{margin: 0}}>🎯 Pushups</h1>
           <p style={{color: '#666', fontSize: '14px', margin: '5px 0 0 0'}}>
-            Slightly too late for all this, no?
+            All this pushup is great, but who's releasing a new set today?
           </p>
         </div>
         <div className="user-info">
@@ -391,8 +420,29 @@ const handleNext = async (markAsCorrect = null) => {
 
           <div className="practice-modes">
             <h3 style={{marginBottom: '20px'}}>Choose Mode</h3>
-            <div className="practice-mode-grid">
+          <div className="practice-mode-grid">
               
+              {/* 1. CONTINUE */}
+              <button 
+                className="practice-mode-button" 
+                onClick={() => {
+                  const lastSetId = localStorage.getItem('last-set-id');
+                  if (!lastSetId) { alert('No recent set found.'); return; }
+                  const lastSet = questionSets.find(s => s.id === parseInt(lastSetId));
+                  if (!lastSet) { alert('Last practiced set not found.'); localStorage.removeItem('last-set-id'); return; }
+                  startPractice(lastSet);
+                }} 
+                disabled={startingPractice || !localStorage.getItem('last-set-id')}
+                style={{opacity: startingPractice ? 0.7 : 1, cursor: startingPractice ? 'wait' : 'pointer', border: '2px solid #667eea'}}
+              >
+                <div className="practice-mode-icon">🔄</div>
+                <div className="practice-mode-content">
+                  <h4>Continue Last Set</h4>
+                  <p>Resume your most recent session</p>
+                </div>
+              </button>
+
+              {/* 2. BROWSE */}
               <button 
                 className="practice-mode-button" 
                 onClick={() => setView('sets')}
@@ -402,10 +452,11 @@ const handleNext = async (markAsCorrect = null) => {
                 <div className="practice-mode-icon">📚</div>
                 <div className="practice-mode-content">
                   <h4>Browse Question Sets</h4>
-                  <p>Play individual question set ({questionSets.length} sets available)</p>
+                  <p>Choose a specific topic to play</p>
                 </div>
               </button>
 
+              {/* 3. RANDOM SET */}
               <button 
                 className="practice-mode-button"
                 onClick={() => {
@@ -427,6 +478,7 @@ const handleNext = async (markAsCorrect = null) => {
                 </div>
               </button>
 
+              {/* 4. RANDOM MODE - ALL (Restored for Symmetry & Mindless Play) */}
               <button 
                 className="practice-mode-button" 
                 onClick={() => { setMixedFilter('all'); startMixedPractice('all'); }}
@@ -437,26 +489,12 @@ const handleNext = async (markAsCorrect = null) => {
                     {startingPractice && mixedFilter === 'all' ? '⏳' : '🎲'}
                 </div>
                 <div className="practice-mode-content">
-                  <h4>Random Mode - All Questions</h4>
-                  <p>Randomized questions from across sets</p>
+                  <h4>Random Mode - All</h4>
+                  <p>Shuffle all questions from all sets</p>
                 </div>
               </button>
 
-              <button 
-                className="practice-mode-button" 
-                onClick={() => { setMixedFilter('unattempted'); startMixedPractice('unattempted'); }}
-                disabled={startingPractice}
-                style={{opacity: startingPractice ? 0.7 : 1, cursor: startingPractice ? 'wait' : 'pointer'}}
-              >
-                <div className="practice-mode-icon">
-                  {startingPractice && mixedFilter === 'unattempted' ? '⏳' : '🆕'}
-                </div>
-                <div className="practice-mode-content">
-                  <h4>Random Mode - Unattempted</h4>
-                  <p>Only questions you haven't seen yet</p>
-                </div>
-              </button>
-
+              {/* 5. MISSED */}
               <button 
                 className="practice-mode-button" 
                 onClick={() => { setMixedFilter('missed'); startMixedPractice('missed'); }} 
@@ -472,24 +510,22 @@ const handleNext = async (markAsCorrect = null) => {
                 </div>
               </button>
 
+              {/* 6. BOOKMARKS */}
               <button 
                 className="practice-mode-button" 
-                onClick={() => {
-                  const lastSetId = localStorage.getItem('last-set-id');
-                  if (!lastSetId) { alert('No recent set found.'); return; }
-                  const lastSet = questionSets.find(s => s.id === parseInt(lastSetId));
-                  if (!lastSet) { alert('Last practiced set not found.'); localStorage.removeItem('last-set-id'); return; }
-                  startPractice(lastSet);
-                }} 
-                disabled={startingPractice || !localStorage.getItem('last-set-id')}
+                onClick={() => { setMixedFilter('bookmarks'); startMixedPractice('bookmarks'); }} 
+                disabled={startingPractice || !stats.bookmarks || stats.bookmarks === 0}
                 style={{opacity: startingPractice ? 0.7 : 1, cursor: startingPractice ? 'wait' : 'pointer'}}
               >
-                <div className="practice-mode-icon">🔄</div>
+                <div className="practice-mode-icon">
+                  {startingPractice && mixedFilter === 'bookmarks' ? '⏳' : '⭐'}
+                </div>
                 <div className="practice-mode-content">
-                  <h4>Continue Last Set</h4>
-                  <p>Resume your most recent set</p>
+                  <h4>Review Bookmarks</h4>
+                  <p>Play questions you saved ({stats.bookmarks || 0})</p>
                 </div>
               </button>
+
             </div>
           </div>
         </div>
@@ -516,9 +552,11 @@ const handleNext = async (markAsCorrect = null) => {
           <div style={{marginTop: '30px'}}>
             <h3 style={{color: '#667eea', marginBottom: '15px'}}>📚 Getting Started</h3>
             <ul style={{lineHeight: '1.8', color: '#666', marginLeft: '20px'}}>
-              <li><strong>Upload Sets:</strong> Go to Upload tab and add TSV files in Mimir format</li>
-              <li><strong>Browse Sets:</strong> View all available question sets from you and others</li>
-              <li><strong>Practice Modes:</strong> Choose from individual sets or randomized questions</li>
+              <li><strong>Browse Sets:</strong> Browse/Search among available question sets and play what you want.</li>
+              <li><strong>Add Sets:</strong> Add sets you want to play to the library either from your device or from B612 Drive. Currently supporting only mimir format TSV files.</li>
+              <li><strong>Delete Sets:</strong> Uploaders can delete sets they uploaded if they want- they are only deleted from the site, not from the B612 Drive.</li>
+              <li><strong>Modes:</strong> Choose from individual sets or randomized modes</li>
+              <li><strong>Storage:</strong> The site is running on a 500 MB Base free tier on Supabase - I would recommend only adding sets as you play them and not a very large number (100s or more) up front. But don't worry about deleting files after you play them, leave them on for others and for yourself to retry, we will revisit the policy if space becomes an issue.</li>
             </ul>
           </div>
 
@@ -526,9 +564,10 @@ const handleNext = async (markAsCorrect = null) => {
             <h3 style={{color: '#667eea', marginBottom: '15px'}}>🎯 User Tips</h3>
             <ul style={{lineHeight: '1.8', color: '#666', marginLeft: '20px'}}>
               <li><strong>Flashcard Mode:</strong> Click anywhere on the card to flip between question and answer</li>
-              <li><strong>Self-Assessment:</strong> Mark yourself "Got it right" or "Missed it" for tracking</li>
+              <li><strong>Self-Assessment:</strong> Mark yourself "Got it right" or "Missed it" for tracking. Your stats are visible only to you.</li>
               <li><strong>Resume Later:</strong> Your progress is saved - you can come back anytime</li>
               <li><strong>Missed Questions:</strong> Questions marked as missed are added to review mode</li>
+              <li><strong>Bookmarked Questions:</strong> Bookmark feature allows you to tag questions to review later.</li>
             </ul>
           </div>
 
@@ -964,6 +1003,35 @@ const handleNext = async (markAsCorrect = null) => {
           </div>
 
           <div className={`flashcard ${isFlipped ? 'flipped' : ''}`} onClick={handleFlip}>
+            
+            {/* UPDATED: Bookmark Icon */}
+            <div 
+              onClick={handleBookmark}
+              style={{
+                position: 'absolute', 
+                top: '12px',              /* Moved down slightly to avoid border curve */
+                right: '12px',            /* Moved left slightly */
+                fontSize: '32px',
+                cursor: 'pointer',
+                zIndex: 10,
+                /* Visual Logic: 
+                   - Active: Gold
+                   - Inactive (Front): Darker Gray (Better contrast on white)
+                   - Inactive (Back): Bright White (Better contrast on purple) 
+                */
+                color: questions[currentQuestionIndex].is_bookmarked 
+                  ? '#fbbf24' 
+                  : (isFlipped ? 'rgba(255,255,255,0.9)' : '#6b7280'),
+                
+                /* Shadow makes it pop against any background */
+                filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.2))',
+                transition: 'all 0.2s ease'
+              }}
+              title="Toggle Bookmark"
+            >
+              {questions[currentQuestionIndex].is_bookmarked ? '★' : '☆'}
+            </div>
+
             <div className="round-info">{practiceMode === 'mixed' ? questions[currentQuestionIndex].set_name : `${questions[currentQuestionIndex].round_no} - ${questions[currentQuestionIndex].question_no}`}</div>
             {!isFlipped ? (
               <>

@@ -276,13 +276,15 @@ def get_questions(set_id):
         cur.execute('''
             SELECT q.*,
                    up.attempted, up.correct, up.attempt_count, up.last_attempted,
-                   mq.id IS NOT NULL as is_missed
+                   mq.id IS NOT NULL as is_missed,
+                   b.id IS NOT NULL as is_bookmarked  -- <--- ADD THIS
             FROM questions q
             LEFT JOIN user_progress up ON up.question_id = q.id AND up.user_id = %s
             LEFT JOIN missed_questions mq ON mq.question_id = q.id AND mq.user_id = %s
+            LEFT JOIN bookmarks b ON b.question_id = q.id AND b.user_id = %s -- <--- JOIN THIS
             WHERE q.set_id = %s
             ORDER BY q.id
-        ''', (request.current_user['id'], request.current_user['id'], set_id))
+        ''', (request.current_user['id'], request.current_user['id'], request.current_user['id'], set_id))
         questions = cur.fetchall()
         cur.close()
         conn.close()
@@ -448,6 +450,15 @@ def get_stats():
         ''', (request.current_user['id'],))
         missed = cur.fetchone()['missed']
         
+        cur.execute('''
+            SELECT COUNT(b.id) as bookmarks 
+            FROM bookmarks b
+            JOIN questions q ON b.question_id = q.id
+            JOIN question_sets qs ON q.set_id = qs.id
+            WHERE b.user_id = %s AND qs.is_deleted = false
+        ''', (request.current_user['id'],))
+        bookmarks = cur.fetchone()['bookmarks']
+
         cur.close()
         conn.close()
         
@@ -456,8 +467,42 @@ def get_stats():
             'attempted': attempted,
             'correct': correct,
             'missed': missed,
+            'bookmarks': bookmarks,
             'accuracy': round((correct / attempted * 100) if attempted > 0 else 0, 1)
         })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/questions/<int:question_id>/bookmark', methods=['POST'])
+@token_required
+def toggle_bookmark(question_id):
+    """Toggle bookmark status for a question"""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        
+        # Check if exists
+        cur.execute('SELECT id FROM bookmarks WHERE user_id = %s AND question_id = %s', 
+                   (request.current_user['id'], question_id))
+        existing = cur.fetchone()
+        
+        if existing:
+            # Remove
+            cur.execute('DELETE FROM bookmarks WHERE id = %s', (existing['id'],))
+            action = 'removed'
+            is_bookmarked = False
+        else:
+            # Add
+            cur.execute('INSERT INTO bookmarks (user_id, question_id) VALUES (%s, %s)', 
+                       (request.current_user['id'], question_id))
+            action = 'added'
+            is_bookmarked = True
+            
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return jsonify({'success': True, 'action': action, 'is_bookmarked': is_bookmarked})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -469,24 +514,32 @@ def get_mixed_questions():
         conn = get_db()
         cur = conn.cursor()
         
+        # Base query now includes is_bookmarked
         base_query = '''
             SELECT q.*, up.attempted, up.correct, up.attempt_count, up.last_attempted,
-                   mq.id IS NOT NULL as is_missed, qs.name as set_name
+                   mq.id IS NOT NULL as is_missed, 
+                   b.id IS NOT NULL as is_bookmarked, -- <--- ADD THIS
+                   qs.name as set_name
             FROM questions q
             JOIN question_sets qs ON q.set_id = qs.id
             LEFT JOIN user_progress up ON up.question_id = q.id AND up.user_id = %s
             LEFT JOIN missed_questions mq ON mq.question_id = q.id AND mq.user_id = %s
+            LEFT JOIN bookmarks b ON b.question_id = q.id AND b.user_id = %s -- <--- JOIN THIS
             WHERE qs.is_deleted = false
         '''
         
+        params = [request.current_user['id'], request.current_user['id'], request.current_user['id']]
+
         if filter_type == 'unattempted':
             query = base_query + ' AND (up.id IS NULL OR up.attempted = false) ORDER BY RANDOM()'
         elif filter_type == 'missed':
             query = base_query + ' AND mq.id IS NOT NULL ORDER BY RANDOM()'
+        elif filter_type == 'bookmarks': # <--- NEW FILTER
+            query = base_query + ' AND b.id IS NOT NULL ORDER BY RANDOM()'
         else:
             query = base_query + ' ORDER BY RANDOM()'
             
-        cur.execute(query, (request.current_user['id'], request.current_user['id']))
+        cur.execute(query, params)
         questions = cur.fetchall()
         cur.close()
         conn.close()

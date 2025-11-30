@@ -100,12 +100,25 @@ def init_db():
         )
     ''')
     
+    # Bookmarks table
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS bookmarks (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            question_id INTEGER REFERENCES questions(id) ON DELETE CASCADE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, question_id)
+        )
+    ''')
+    
     # Indexes
     cur.execute('CREATE INDEX IF NOT EXISTS idx_questions_set_id ON questions(set_id)')
     cur.execute('CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON user_progress(user_id)')
     cur.execute('CREATE INDEX IF NOT EXISTS idx_user_progress_question_id ON user_progress(question_id)')
     cur.execute('CREATE INDEX IF NOT EXISTS idx_missed_questions_user_id ON missed_questions(user_id)')
-    
+    cur.execute('CREATE INDEX IF NOT EXISTS idx_bookmarks_user_id ON bookmarks(user_id)')
+
+
     conn.commit()
     cur.close()
     conn.close()
