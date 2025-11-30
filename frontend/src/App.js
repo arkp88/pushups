@@ -417,7 +417,7 @@ return (
                   onClick={() => {
                     const lastSetId = localStorage.getItem('last-set-id');
                     if (!lastSetId) {
-                      alert('No recent set found. Start practicing a set first!');
+                      alert('No recent set found. Start playing a set first!');
                       return;
                     }
                     
@@ -435,7 +435,7 @@ return (
                   <div className="practice-mode-icon">🔄</div>
                   <div className="practice-mode-content">
                     <h4>Continue Last Set</h4>
-                    <p>Resume your most recent practice session</p>
+                    <p>Resume your most recent set</p>
                   </div>
                 </button>
             </div>
@@ -485,7 +485,7 @@ return (
     </div>
 
     <div style={{marginTop: '30px'}}>
-      <h3 style={{color: '#667eea', marginBottom: '15px'}}>🎯 Practice Tips</h3>
+      <h3 style={{color: '#667eea', marginBottom: '15px'}}>🎯 User Tips</h3>
       <ul style={{lineHeight: '1.8', color: '#666', marginLeft: '20px'}}>
         <li><strong>Flashcard Mode:</strong> Click anywhere on the card to flip between question and answer</li>
         <li><strong>Self-Assessment:</strong> Mark yourself "Got it right" or "Missed it" for tracking</li>
@@ -507,7 +507,7 @@ return (
       <ul style={{lineHeight: '1.8', color: '#666', marginLeft: '20px'}}>
         <li>View your stats anytime in the Stats tab</li>
         <li>Each set shows a progress bar for questions attempted</li>
-        <li>Accuracy percentage updates as you practice</li>
+        <li>Accuracy percentage updates as you play more</li>
       </ul>
     </div>
 

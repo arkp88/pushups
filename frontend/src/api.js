@@ -14,12 +14,13 @@ async function getAuthHeaders() {
 }
 
 export const api = {
-  async uploadTSV(file, setName, description) {
+  async uploadTSV(file, setName, description, tags = '') {
     const { data: { session } } = await supabase.auth.getSession();
     const formData = new FormData();
     formData.append('file', file);
     formData.append('set_name', setName);
     formData.append('description', description);
+    formData.append('tags', tags);
 
     const response = await fetch(`${API_URL}/api/upload-tsv`, {
       method: 'POST',
@@ -100,6 +101,29 @@ export const api = {
     const headers = await getAuthHeaders();
     const response = await fetch(`${API_URL}/api/questions/mixed?filter=${filter}`, { headers });
     if (!response.ok) throw new Error('Failed to fetch mixed questions');
+    return response.json();
+  },
+
+  async markSetOpened(setId) {
+  const headers = await getAuthHeaders();
+  const response = await fetch(`${API_URL}/api/question-sets/${setId}/mark-opened`, {
+    method: 'POST',
+    headers,
+  });
+  if (!response.ok) throw new Error('Failed to mark set as opened');
+  return response.json();
+  },
+
+  async deleteQuestionSet(setId) {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL}/api/question-sets/${setId}`, {
+      method: 'DELETE',
+      headers,
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to delete question set');
+    }
     return response.json();
   },
 };
