@@ -1003,7 +1003,7 @@ return (
                   !s.directly_opened
                 ).length === 0}
               >
-                🎲 Random Unplayed
+                🎲 Jump to another random set
               </button>
             )}
           </div>
