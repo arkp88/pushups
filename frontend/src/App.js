@@ -43,7 +43,9 @@ function App() {
   const [deletingSetId, setDeletingSetId] = useState(null);
   const [setToDelete, setSetToDelete] = useState(null); // Tracks which set is asking for confirmation
   const [deleteNotification, setDeleteNotification] = useState(''); // Success message for deletion
-
+  const [practiceNotification, setPracticeNotification] = useState(''); // Replaces system alert
+  const [enlargedImage, setEnlargedImage] = useState(null); // Track image for lightbox
+  const [processingNext, setProcessingNext] = useState(false); // Tracks card transitions
   // Reference to the top of the drive browser
   const driveTopRef = useRef(null);  // <--- ADD THIS
 
@@ -244,8 +246,7 @@ const handleDeleteSet = async (setId) => {
 
 const startPractice = async (set) => {
     try {
-      setStartingPractice(true); // <--- Use Local State
-      
+      setStartingPractice(true);
       await api.markSetOpened(set.id);
       localStorage.setItem('last-set-id', set.id);
       
@@ -261,11 +262,16 @@ const startPractice = async (set) => {
       setPracticeMode('single');
       setView('practice');
       
-      if (savedPosition) alert(`Resuming from question ${startIndex + 1}`);
+      // FIX: Use local notification instead of window.alert
+      if (savedPosition) {
+        setPracticeNotification(`Resuming from question ${startIndex + 1}`);
+        // Auto-hide after 3 seconds
+        setTimeout(() => setPracticeNotification(''), 3000);
+      }
     } catch (error) {
       alert('Error loading questions: ' + error.message);
     } finally {
-      setStartingPractice(false); // <--- Stop Local State
+      setStartingPractice(false);
     }
   };
 
@@ -294,27 +300,39 @@ const startMixedPractice = async (filter) => {
 
   const handleFlip = () => setIsFlipped(!isFlipped);
 
-  const handleNext = async (markAsCorrect = null) => {
-    const currentQuestion = questions[currentQuestionIndex];
+const handleNext = async (markAsCorrect = null) => {
+    if (processingNext) return; // Prevent double-clicks
+    
     try {
+      setProcessingNext(true); // Lock UI
+      
+      const currentQuestion = questions[currentQuestionIndex];
+      
+      // 1. Database Update (The cause of the delay)
       await api.updateProgress(currentQuestion.id, true, markAsCorrect);
       if (markAsCorrect === false) await api.markMissed(currentQuestion.id);
       if (markAsCorrect === true && currentQuestion.is_missed) await api.unmarkMissed(currentQuestion.id);
+
+      // 2. Navigation Logic
+      if (currentQuestionIndex < questions.length - 1) {
+        const newIndex = currentQuestionIndex + 1;
+        setCurrentQuestionIndex(newIndex);
+        setIsFlipped(false);
+        if (currentSet.id !== 'mixed') localStorage.setItem(`quiz-position-${currentSet.id}`, newIndex);
+        
+        // Important: Unlock UI only after we've moved to the next question
+        setProcessingNext(false); 
+      } else {
+        alert('Session complete!');
+        if (currentSet.id !== 'mixed') localStorage.removeItem(`quiz-position-${currentSet.id}`);
+        setView('home');
+        loadQuestionSets();
+        loadStats();
+        setProcessingNext(false);
+      }
     } catch (error) {
       console.error('Error updating progress:', error);
-    }
-
-    if (currentQuestionIndex < questions.length - 1) {
-      const newIndex = currentQuestionIndex + 1;
-      setCurrentQuestionIndex(newIndex);
-      setIsFlipped(false);
-      if (currentSet.id !== 'mixed') localStorage.setItem(`quiz-position-${currentSet.id}`, newIndex);
-    } else {
-      alert('Session complete!');
-      if (currentSet.id !== 'mixed') localStorage.removeItem(`quiz-position-${currentSet.id}`);
-      setView('home');
-      loadQuestionSets();
-      loadStats();
+      setProcessingNext(false); // Unlock even if error occurs
     }
   };
 
@@ -908,28 +926,33 @@ const startMixedPractice = async (filter) => {
 
       {view === 'practice' && questions.length > 0 && (
         <div className="flashcard-container">
-          <div className="flashcard-header" style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>  
-            {/* Top Row: Navigation Buttons */}
+          
+          {/* 1. NEW: Notification Banner */}
+          {practiceNotification && (
+            <div className="notification-banner">
+              ℹ️ {practiceNotification}
+            </div>
+          )}
+
+          <div className="flashcard-header" style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
             <div style={{display: 'flex', justifyContent: 'space-between', width: '100%'}}>
               <button className="btn btn-secondary" onClick={() => setView('sets')}>← Back</button>
               
               {practiceMode === 'single' && (
                 <button 
                   className="btn btn-primary" 
-                  disabled={startingPractice} // <--- Disable button while loading
+                  disabled={startingPractice}
                   onClick={() => {
                     const unplayed = questionSets.filter(s => s.id !== currentSet.id && !s.directly_opened);
                     if (unplayed.length === 0) return alert('No other unplayed sets!');
                     startPractice(unplayed[Math.floor(Math.random() * unplayed.length)]);
                   }}
                 >
-                  {/* Show Loading text if busy, otherwise show original text */}
-                  {startingPractice ? 'Loading...' : '🎲 Play another random set'}
+                  {startingPractice ? 'Loading...' : '🎲 Next Random'}
                 </button>
               )}
             </div>
 
-            {/* Bottom Row: Title & Progress (Centered) */}
             <div style={{textAlign: 'center', width: '100%'}}>
               <div style={{fontWeight: 'bold', color: '#333', fontSize: '18px', marginBottom: '5px', wordBreak: 'break-word'}}>
                 {currentSet.name}
@@ -938,7 +961,6 @@ const startMixedPractice = async (filter) => {
                 Question {currentQuestionIndex + 1} / {questions.length}
               </div>
             </div>
-
           </div>
 
           <div className={`flashcard ${isFlipped ? 'flipped' : ''}`} onClick={handleFlip}>
@@ -946,7 +968,20 @@ const startMixedPractice = async (filter) => {
             {!isFlipped ? (
               <>
                 <div className="question-text" dangerouslySetInnerHTML={{ __html: questions[currentQuestionIndex].question_text }} />
-                {questions[currentQuestionIndex].image_url && <img src={questions[currentQuestionIndex].image_url} alt="Q" className="question-image" />}
+                
+                {/* 2. UPDATED: Image with click-to-expand */}
+                {questions[currentQuestionIndex].image_url && (
+                  <img 
+                    src={questions[currentQuestionIndex].image_url} 
+                    alt="Q" 
+                    className="question-image"
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent card flip
+                      setEnlargedImage(questions[currentQuestionIndex].image_url);
+                    }}
+                  />
+                )}
+                
                 <div className="flip-hint">Click to reveal</div>
               </>
             ) : (
@@ -957,22 +992,86 @@ const startMixedPractice = async (filter) => {
             )}
           </div>
 
-          <div className="flashcard-controls">
+<div className="flashcard-controls">
             {!isFlipped ? (
               <>
-                <button className="btn btn-secondary" onClick={handlePrevious} disabled={currentQuestionIndex === 0}>← Prev</button>
-                <button className="btn btn-primary" onClick={handleFlip}>Show Answer</button>
-                <button className="btn btn-secondary" onClick={() => handleNext(null)}>Skip →</button>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={handlePrevious} 
+                  disabled={currentQuestionIndex === 0 || processingNext} // Disable if processing
+                >
+                  ← Prev
+                </button>
+                <button 
+                  className="btn btn-primary" 
+                  onClick={handleFlip}
+                  disabled={processingNext} // Disable if processing
+                >
+                  Show Answer
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => handleNext(null)}
+                  disabled={processingNext} // Disable if processing
+                  style={{opacity: processingNext ? 0.7 : 1, cursor: processingNext ? 'wait' : 'pointer'}}
+                >
+                  {processingNext ? '...' : 'Skip →'}
+                </button>
               </>
             ) : (
               <>
-                <button className="btn btn-secondary" onClick={handlePrevious} disabled={currentQuestionIndex === 0}>← Prev</button>
-                <button className="btn btn-success" onClick={() => handleNext(true)}>✓ Right</button>
-                <button className="btn btn-warning" onClick={() => handleNext(false)}>✗ Wrong</button>
-                <button className="btn btn-secondary" onClick={() => handleNext(null)}>Skip →</button>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={handlePrevious} 
+                  disabled={currentQuestionIndex === 0 || processingNext}
+                >
+                  ← Prev
+                </button>
+                <button 
+                  className="btn btn-success" 
+                  onClick={() => handleNext(true)}
+                  disabled={processingNext}
+                  style={{opacity: processingNext ? 0.7 : 1, cursor: processingNext ? 'wait' : 'pointer'}}
+                >
+                  {processingNext ? '...' : '✓ Right'}
+                </button>
+                <button 
+                  className="btn btn-warning" 
+                  onClick={() => handleNext(false)}
+                  disabled={processingNext}
+                  style={{opacity: processingNext ? 0.7 : 1, cursor: processingNext ? 'wait' : 'pointer'}}
+                >
+                  {processingNext ? '...' : '✗ Wrong'}
+                </button>
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => handleNext(null)}
+                  disabled={processingNext}
+                  style={{opacity: processingNext ? 0.7 : 1, cursor: processingNext ? 'wait' : 'pointer'}}
+                >
+                  {processingNext ? '...' : 'Skip →'}
+                </button>
               </>
             )}
           </div>
+
+          {/* 3. NEW: Image Modal/Lightbox */}
+          {enlargedImage && (
+            <div className="image-modal" onClick={() => setEnlargedImage(null)}>
+              <img src={enlargedImage} alt="Enlarged view" onClick={(e) => e.stopPropagation()} />
+              <button 
+                style={{
+                  position: 'absolute', top: '20px', right: '20px', 
+                  background: 'white', border: 'none', borderRadius: '50%', 
+                  width: '40px', height: '40px', fontSize: '20px', cursor: 'pointer'
+                }}
+                onClick={() => setEnlargedImage(null)}
+              >
+                ✕
+              </button>
+            </div>
+          )}
+          
         </div>
       )}
     </div>

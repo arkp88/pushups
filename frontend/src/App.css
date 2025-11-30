@@ -549,11 +549,63 @@ body {
   width: 100%;
 }
 
+/* --- UPDATED IMAGE STYLES --- */
 .question-image {
   max-width: 100%;
-  max-height: 300px;
-  margin: 20px 0;
+  max-height: 150px; /* Reduced to prevent overflow */
+  object-fit: contain;
+  margin: 15px 0;
   border-radius: 8px;
+  cursor: zoom-in; /* Click to expand */
+  border: 1px solid #f0f0f0;
+  background: #fff;
+  transition: transform 0.2s;
+}
+
+.question-image:hover {
+  transform: scale(1.02);
+}
+
+/* --- NEW: IMAGE MODAL (LIGHTBOX) --- */
+.image-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000; /* On top of everything */
+  cursor: zoom-out;
+  padding: 20px;
+}
+
+.image-modal img {
+  max-width: 100%;
+  max-height: 95vh;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+/* --- NEW: NOTIFICATION BANNER --- */
+.notification-banner {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e40af;
+  padding: 10px 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  text-align: center;
+  font-size: 14px;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .flip-hint {
@@ -636,7 +688,7 @@ body {
 }
 
 .btn-warning:hover {
-  background: #d97706;
+  background: #f59e0b;
 }
 
 /* Stats */
