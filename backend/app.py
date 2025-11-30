@@ -9,6 +9,8 @@ from flask_cors import CORS
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaIoBaseDownload
 
 load_dotenv()
 
@@ -19,111 +21,77 @@ CORS(app)
 app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-change-this')
 DATABASE_URL = os.getenv('DATABASE_URL')
 SUPABASE_JWT_SECRET = os.getenv('SUPABASE_JWT_SECRET')
+GOOGLE_DRIVE_API_KEY = os.getenv('GOOGLE_DRIVE_API_KEY')
 
 def get_db():
-    """Get database connection"""
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
 
 def verify_supabase_token(token):
-    """Verify Supabase JWT token"""
     try:
-        # Supabase sends JWT tokens, decode and verify
         payload = jwt.decode(token, SUPABASE_JWT_SECRET, algorithms=['HS256'], audience='authenticated')
         return payload
     except jwt.InvalidTokenError:
         return None
 
 def token_required(f):
-    """Decorator to require authentication"""
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get('Authorization')
-        
         if not token:
             return jsonify({'error': 'Token is missing'}), 401
-        
         try:
-            # Remove 'Bearer ' prefix if present
             if token.startswith('Bearer '):
                 token = token[7:]
-            
-            # Verify Supabase token
             payload = verify_supabase_token(token)
             if not payload:
                 return jsonify({'error': 'Invalid token'}), 401
             
-            # Get or create user in our database
             conn = get_db()
             cur = conn.cursor()
-            
             supabase_user_id = payload.get('sub')
             email = payload.get('email')
-            
-            # Check if user exists
             cur.execute('SELECT * FROM users WHERE supabase_user_id = %s', (supabase_user_id,))
             user = cur.fetchone()
-            
             if not user:
-                # Create new user
-                username = email.split('@')[0]  # Simple username from email
-                cur.execute(
-                    'INSERT INTO users (supabase_user_id, email, username) VALUES (%s, %s, %s) RETURNING *',
-                    (supabase_user_id, email, username)
-                )
+                username = email.split('@')[0]
+                cur.execute('INSERT INTO users (supabase_user_id, email, username) VALUES (%s, %s, %s) RETURNING *', (supabase_user_id, email, username))
                 user = cur.fetchone()
                 conn.commit()
-            
             cur.close()
             conn.close()
-            
-            # Add user to request context
             request.current_user = user
-            
         except Exception as e:
             return jsonify({'error': f'Token validation failed: {str(e)}'}), 401
-        
         return f(*args, **kwargs)
-    
     return decorated
 
-# ============= ROUTES =============
-
-@app.route('/health', methods=['GET'])
-def health_check():
-    """Health check endpoint"""
-    return jsonify({'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()})
-
-@app.route('/api/upload-tsv', methods=['POST'])
-@token_required
-def upload_tsv():
-    """Upload TSV file and parse questions"""
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
+# --- HELPER: Parse and Save ---
+def parse_and_save_set(content, set_name, description, user_id, tags='', google_id=None):
+    """Parses TSV content and saves to DB. Returns (set_id, question_count)."""
+    # Fix for Excel-copied TSVs that might use carriage returns
+    content = content.replace('\r\n', '\n').replace('\r', '\n')
+    reader = csv.DictReader(io.StringIO(content), delimiter='\t')
     
-    file = request.files['file']
-    set_name = request.form.get('set_name', file.filename)
-    set_description = request.form.get('description', '')
-    tags = request.form.get('tags', '')  # Comma-separated tags
-    
-    if not file.filename.endswith('.tsv'):
-        return jsonify({'error': 'File must be a TSV file'}), 400
+    # Validate headers
+    required_headers = ['questionText', 'answerText']
+    if not reader.fieldnames or not all(h in reader.fieldnames for h in required_headers):
+        if ',' in content.split('\n')[0] and '\t' not in content.split('\n')[0]:
+             raise Exception("File appears to be CSV, not TSV. Please save as Tab-Separated Values.")
+        raise Exception(f"Missing required columns. Found: {reader.fieldnames}")
+
+    conn = get_db()
+    cur = conn.cursor()
     
     try:
-        # Read TSV content
-        content = file.read().decode('utf-8')
-        reader = csv.DictReader(io.StringIO(content), delimiter='\t')
-        
-        conn = get_db()
-        cur = conn.cursor()
-        
-        # Create question set
         cur.execute(
-            'INSERT INTO question_sets (name, description, uploaded_by, tags, is_deleted) VALUES (%s, %s, %s, %s, %s) RETURNING id',
-            (set_name, set_description, request.current_user['id'], tags, False)
+            '''INSERT INTO question_sets 
+               (name, description, uploaded_by, tags, is_deleted, google_drive_id) 
+               VALUES (%s, %s, %s, %s, %s, %s) 
+               RETURNING id''',
+            (set_name, description, user_id, tags, False, google_id)
         )
         set_id = cur.fetchone()['id']
         
-        # Parse and insert questions
         question_count = 0
         for row in reader:
             round_no = row.get('roundNo', '').strip()
@@ -132,7 +100,6 @@ def upload_tsv():
             image_url = row.get('imageUrl', '').strip()
             answer_text = row.get('answerText', '').strip()
             
-            # Extract image URL from markdown format if present
             if image_url.startswith('__') and image_url.endswith('__'):
                 image_url = image_url.strip('_')
             
@@ -146,22 +113,130 @@ def upload_tsv():
                 )
                 question_count += 1
         
-        # Update total questions count
-        cur.execute(
-            'UPDATE question_sets SET total_questions = %s WHERE id = %s',
-            (question_count, set_id)
-        )
-        
+        cur.execute('UPDATE question_sets SET total_questions = %s WHERE id = %s', (question_count, set_id))
         conn.commit()
+        return set_id, question_count
+    except Exception as e:
+        conn.rollback()
+        raise e
+    finally:
         cur.close()
         conn.close()
+
+# --- GOOGLE DRIVE ---
+def get_drive_service():
+    if not GOOGLE_DRIVE_API_KEY:
+        raise Exception("GOOGLE_DRIVE_API_KEY not set")
+    return build('drive', 'v3', developerKey=GOOGLE_DRIVE_API_KEY)
+
+@app.route('/api/drive/files', methods=['GET'])
+@token_required
+def list_drive_files():
+    try:
+        service = get_drive_service()
+        root_folder_id = request.args.get('folderId')
+        if not root_folder_id:
+            return jsonify({'error': 'Folder ID required'}), 400
+
+        query = f"'{root_folder_id}' in parents and (mimeType = 'application/vnd.google-apps.folder' or name contains '.tsv') and trashed = false"
         
-        return jsonify({
-            'success': True,
-            'set_id': set_id,
-            'questions_imported': question_count,
-            'set_name': set_name
-        })
+        all_files = []
+        page_token = None
+        
+        while True:
+            results = service.files().list(
+                q=query, 
+                pageSize=1000,  # Increased page size
+                orderBy="folder,name",
+                fields="nextPageToken, files(id, name, mimeType)",
+                pageToken=page_token
+            ).execute()
+            
+            items = results.get('files', [])
+            all_files.extend(items)
+            
+            page_token = results.get('nextPageToken')
+            if not page_token:
+                break
+        
+        return jsonify({'files': all_files})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/drive/import', methods=['POST'])
+@token_required
+def import_drive_file():
+    data = request.json
+    file_id = data.get('fileId')
+    set_name = data.get('setName') 
+    tags = data.get('tags', '')
+    
+    conn = get_db()
+    cur = conn.cursor()
+    
+    # 1. Check if already imported
+    cur.execute('SELECT id FROM question_sets WHERE google_drive_id = %s AND is_deleted = false', (file_id,))
+    existing = cur.fetchone()
+    if existing:
+        return jsonify({'success': True, 'set_id': existing['id'], 'message': 'Already imported'})
+
+    try:
+        service = get_drive_service()
+        # For public files, simple get_media usually works with API Key
+        request_drive = service.files().get_media(fileId=file_id)
+        fh = io.BytesIO()
+        downloader = MediaIoBaseDownload(fh, request_drive)
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
+            
+        content = fh.getvalue().decode('utf-8')
+        
+        set_id, count = parse_and_save_set(
+            content=content,
+            set_name=set_name,
+            description="Imported from Google Drive",
+            user_id=request.current_user['id'],
+            tags=tags,
+            google_id=file_id
+        )
+        
+        return jsonify({'success': True, 'set_id': set_id, 'questions_imported': count})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# --- ROUTES ---
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()})
+
+@app.route('/api/upload-tsv', methods=['POST'])
+@token_required
+def upload_tsv():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided'}), 400
+    
+    file = request.files['file']
+    set_name = request.form.get('set_name', file.filename)
+    set_description = request.form.get('description', '')
+    tags = request.form.get('tags', '')
+    
+    if not file.filename.endswith('.tsv'):
+        return jsonify({'error': 'File must be a TSV file'}), 400
+    
+    try:
+        content = file.read().decode('utf-8')
+        set_id, count = parse_and_save_set(
+            content=content,
+            set_name=set_name,
+            description=set_description,
+            user_id=request.current_user['id'],
+            tags=tags
+        )
+        
+        return jsonify({'success': True, 'set_id': set_id, 'questions_imported': count, 'set_name': set_name})
     
     except Exception as e:
         return jsonify({'error': f'Failed to parse TSV: {str(e)}'}), 500
@@ -169,42 +244,35 @@ def upload_tsv():
 @app.route('/api/question-sets', methods=['GET'])
 @token_required
 def get_question_sets():
-    """Get all question sets"""
     try:
         conn = get_db()
         cur = conn.cursor()
-        
         cur.execute('''
-    SELECT qs.*, u.username as uploaded_by_username,
-           COUNT(up.id) FILTER (WHERE up.user_id = %s AND up.attempted = true) as questions_attempted,
-           so.id IS NOT NULL as directly_opened
-    FROM question_sets qs
-    LEFT JOIN users u ON qs.uploaded_by = u.id
-    LEFT JOIN questions q ON q.set_id = qs.id
-    LEFT JOIN user_progress up ON up.question_id = q.id
-    LEFT JOIN set_opens so ON so.set_id = qs.id AND so.user_id = %s
-    WHERE qs.is_deleted = false   -- <--- THIS WAS MISSING
-    GROUP BY qs.id, u.username, so.id
-    ORDER BY qs.created_at DESC
-''', (request.current_user['id'], request.current_user['id']))
-        
+            SELECT qs.*, u.username as uploaded_by_username,
+                   COUNT(up.id) FILTER (WHERE up.user_id = %s AND up.attempted = true) as questions_attempted,
+                   so.id IS NOT NULL as directly_opened
+            FROM question_sets qs
+            LEFT JOIN users u ON qs.uploaded_by = u.id
+            LEFT JOIN questions q ON q.set_id = qs.id
+            LEFT JOIN user_progress up ON up.question_id = q.id
+            LEFT JOIN set_opens so ON so.set_id = qs.id AND so.user_id = %s
+            WHERE qs.is_deleted = false
+            GROUP BY qs.id, u.username, so.id
+            ORDER BY qs.created_at DESC
+        ''', (request.current_user['id'], request.current_user['id']))
         sets = cur.fetchall()
         cur.close()
         conn.close()
-        
         return jsonify({'sets': sets})
-    
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/question-sets/<int:set_id>/questions', methods=['GET'])
 @token_required
 def get_questions(set_id):
-    """Get all questions for a set with user progress"""
     try:
         conn = get_db()
         cur = conn.cursor()
-        
         cur.execute('''
             SELECT q.*,
                    up.attempted, up.correct, up.attempt_count, up.last_attempted,
@@ -215,29 +283,40 @@ def get_questions(set_id):
             WHERE q.set_id = %s
             ORDER BY q.id
         ''', (request.current_user['id'], request.current_user['id'], set_id))
-        
         questions = cur.fetchall()
         cur.close()
         conn.close()
-        
         return jsonify({'questions': questions})
-    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/question-sets/<int:set_id>/mark-opened', methods=['POST'])
+@token_required
+def mark_set_opened(set_id):
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute('''
+            INSERT INTO set_opens (user_id, set_id, opened_at)
+            VALUES (%s, %s, CURRENT_TIMESTAMP)
+            ON CONFLICT (user_id, set_id) DO UPDATE SET opened_at = CURRENT_TIMESTAMP
+        ''', (request.current_user['id'], set_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/questions/<int:question_id>/progress', methods=['POST'])
 @token_required
 def update_progress(question_id):
-    """Update user progress for a question"""
     try:
         data = request.json
         attempted = data.get('attempted', True)
         correct = data.get('correct', None)
-        
         conn = get_db()
         cur = conn.cursor()
-        
-        # Upsert progress
         cur.execute('''
             INSERT INTO user_progress (user_id, question_id, attempted, correct, attempt_count, last_attempted)
             VALUES (%s, %s, %s, %s, 1, CURRENT_TIMESTAMP)
@@ -249,72 +328,55 @@ def update_progress(question_id):
                 last_attempted = CURRENT_TIMESTAMP
             RETURNING *
         ''', (request.current_user['id'], question_id, attempted, correct))
-        
         progress = cur.fetchone()
         conn.commit()
         cur.close()
         conn.close()
-        
         return jsonify({'success': True, 'progress': progress})
-    
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/questions/<int:question_id>/mark-missed', methods=['POST'])
 @token_required
 def mark_missed(question_id):
-    """Mark a question as missed for Anki export"""
     try:
         conn = get_db()
         cur = conn.cursor()
-        
         cur.execute('''
             INSERT INTO missed_questions (user_id, question_id)
             VALUES (%s, %s)
             ON CONFLICT (user_id, question_id) DO NOTHING
             RETURNING *
         ''', (request.current_user['id'], question_id))
-        
         result = cur.fetchone()
         conn.commit()
         cur.close()
         conn.close()
-        
         return jsonify({'success': True, 'missed': result})
-    
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/questions/<int:question_id>/unmark-missed', methods=['POST'])
 @token_required
 def unmark_missed(question_id):
-    """Remove a question from missed list"""
     try:
         conn = get_db()
         cur = conn.cursor()
-        
-        cur.execute(
-            'DELETE FROM missed_questions WHERE user_id = %s AND question_id = %s',
-            (request.current_user['id'], question_id)
-        )
-        
+        cur.execute('DELETE FROM missed_questions WHERE user_id = %s AND question_id = %s',
+            (request.current_user['id'], question_id))
         conn.commit()
         cur.close()
         conn.close()
-        
         return jsonify({'success': True})
-    
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/missed-questions', methods=['GET'])
 @token_required
 def get_missed_questions():
-    """Get all missed questions for export (excluding deleted sets)"""
     try:
         conn = get_db()
         cur = conn.cursor()
-        
         cur.execute('''
             SELECT q.*, mq.added_at, qs.name as set_name
             FROM missed_questions mq
@@ -325,98 +387,64 @@ def get_missed_questions():
             AND qs.is_deleted = false
             ORDER BY mq.added_at DESC
         ''', (request.current_user['id'],))
-        
         questions = cur.fetchall()
         cur.close()
         conn.close()
-        
         return jsonify({'missed_questions': questions})
-    
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/question-sets/<int:set_id>', methods=['DELETE'])
 @token_required
 def delete_question_set(set_id):
-    """Soft delete a question set (only if user owns it)"""
     try:
         conn = get_db()
         cur = conn.cursor()
-        
-        # Check if set exists and user owns it
         cur.execute('SELECT uploaded_by FROM question_sets WHERE id = %s', (set_id,))
         question_set = cur.fetchone()
-        
         if not question_set:
             return jsonify({'error': 'Question set not found'}), 404
-        
         if question_set['uploaded_by'] != request.current_user['id']:
-            return jsonify({'error': 'Unauthorized - you can only delete your own sets'}), 403
-        
-        # Soft delete (mark as deleted)
-        cur.execute(
-            'UPDATE question_sets SET is_deleted = true WHERE id = %s',
-            (set_id,)
-        )
-        
+            return jsonify({'error': 'Unauthorized'}), 403
+        cur.execute('UPDATE question_sets SET is_deleted = true WHERE id = %s', (set_id,))
         conn.commit()
         cur.close()
         conn.close()
-        
-        return jsonify({'success': True, 'message': 'Question set deleted'})
-    
+        return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/stats', methods=['GET'])
 @token_required
 def get_stats():
-    """Get user statistics (excluding deleted sets)"""
     try:
         conn = get_db()
         cur = conn.cursor()
         
-        # Total questions (only from non-deleted sets)
-        cur.execute('''
-            SELECT COUNT(q.id) as total 
-            FROM questions q
-            JOIN question_sets qs ON q.set_id = qs.id
-            WHERE qs.is_deleted = false
-        ''')
+        cur.execute('SELECT COUNT(q.id) as total FROM questions q JOIN question_sets qs ON q.set_id = qs.id WHERE qs.is_deleted = false')
         total_questions = cur.fetchone()['total']
         
-        # Questions attempted
         cur.execute('''
-            SELECT COUNT(up.id) as attempted 
-            FROM user_progress up
+            SELECT COUNT(up.id) as attempted FROM user_progress up
             JOIN questions q ON up.question_id = q.id
             JOIN question_sets qs ON q.set_id = qs.id
-            WHERE up.user_id = %s 
-            AND up.attempted = true
-            AND qs.is_deleted = false
+            WHERE up.user_id = %s AND up.attempted = true AND qs.is_deleted = false
         ''', (request.current_user['id'],))
         attempted = cur.fetchone()['attempted']
         
-        # Correct answers
         cur.execute('''
-            SELECT COUNT(up.id) as correct 
-            FROM user_progress up
+            SELECT COUNT(up.id) as correct FROM user_progress up
             JOIN questions q ON up.question_id = q.id
             JOIN question_sets qs ON q.set_id = qs.id
-            WHERE up.user_id = %s 
-            AND up.correct = true
-            AND qs.is_deleted = false
+            WHERE up.user_id = %s AND up.correct = true AND qs.is_deleted = false
         ''', (request.current_user['id'],))
         correct = cur.fetchone()['correct']
         
-        # Missed questions
         cur.execute('''
-            SELECT COUNT(mq.id) as missed 
-            FROM missed_questions mq
+            SELECT COUNT(mq.id) as missed FROM missed_questions mq
             JOIN questions q ON mq.question_id = q.id
             JOIN question_sets qs ON q.set_id = qs.id
-            WHERE mq.user_id = %s
-            AND qs.is_deleted = false
+            WHERE mq.user_id = %s AND qs.is_deleted = false
         ''', (request.current_user['id'],))
         missed = cur.fetchone()['missed']
         
@@ -430,100 +458,43 @@ def get_stats():
             'missed': missed,
             'accuracy': round((correct / attempted * 100) if attempted > 0 else 0, 1)
         })
-    
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/questions/mixed', methods=['GET'])
 @token_required
 def get_mixed_questions():
-    """Get mixed questions from all sets with optional filters"""
     try:
-        filter_type = request.args.get('filter', 'all')  # all, unattempted, missed
-        
+        filter_type = request.args.get('filter', 'all')
         conn = get_db()
         cur = conn.cursor()
         
+        base_query = '''
+            SELECT q.*, up.attempted, up.correct, up.attempt_count, up.last_attempted,
+                   mq.id IS NOT NULL as is_missed, qs.name as set_name
+            FROM questions q
+            JOIN question_sets qs ON q.set_id = qs.id
+            LEFT JOIN user_progress up ON up.question_id = q.id AND up.user_id = %s
+            LEFT JOIN missed_questions mq ON mq.question_id = q.id AND mq.user_id = %s
+            WHERE qs.is_deleted = false
+        '''
+        
         if filter_type == 'unattempted':
-            # Get questions user hasn't attempted AND set is not deleted
-            cur.execute('''
-                SELECT q.*,
-                       up.attempted, up.correct, up.attempt_count, up.last_attempted,
-                       mq.id IS NOT NULL as is_missed,
-                       qs.name as set_name
-                FROM questions q
-                JOIN question_sets qs ON q.set_id = qs.id
-                LEFT JOIN user_progress up ON up.question_id = q.id AND up.user_id = %s
-                LEFT JOIN missed_questions mq ON mq.question_id = q.id AND mq.user_id = %s
-                WHERE (up.id IS NULL OR up.attempted = false) AND qs.is_deleted = false
-                ORDER BY RANDOM()
-            ''', (request.current_user['id'], request.current_user['id']))
-        
+            query = base_query + ' AND (up.id IS NULL OR up.attempted = false) ORDER BY RANDOM()'
         elif filter_type == 'missed':
-            # Get only missed questions AND set is not deleted
-            cur.execute('''
-                SELECT q.*,
-                       up.attempted, up.correct, up.attempt_count, up.last_attempted,
-                       mq.id IS NOT NULL as is_missed,
-                       qs.name as set_name
-                FROM questions q
-                JOIN question_sets qs ON q.set_id = qs.id
-                JOIN missed_questions mq ON mq.question_id = q.id AND mq.user_id = %s
-                LEFT JOIN user_progress up ON up.question_id = q.id AND up.user_id = %s
-                WHERE qs.is_deleted = false
-                ORDER BY RANDOM()
-            ''', (request.current_user['id'], request.current_user['id']))
-        
-        else:  # all
-            # Get all questions, shuffled AND set is not deleted
-            cur.execute('''
-                SELECT q.*,
-                       up.attempted, up.correct, up.attempt_count, up.last_attempted,
-                       mq.id IS NOT NULL as is_missed,
-                       qs.name as set_name
-                FROM questions q
-                JOIN question_sets qs ON q.set_id = qs.id
-                LEFT JOIN user_progress up ON up.question_id = q.id AND up.user_id = %s
-                LEFT JOIN missed_questions mq ON mq.question_id = q.id AND mq.user_id = %s
-                WHERE qs.is_deleted = false
-                ORDER BY RANDOM()
-            ''', (request.current_user['id'], request.current_user['id']))
-        
+            query = base_query + ' AND mq.id IS NOT NULL ORDER BY RANDOM()'
+        else:
+            query = base_query + ' ORDER BY RANDOM()'
+            
+        cur.execute(query, (request.current_user['id'], request.current_user['id']))
         questions = cur.fetchall()
         cur.close()
         conn.close()
         
-        return jsonify({
-            'questions': questions,
-            'filter_type': filter_type,
-            'total': len(questions)
-        })
-    
+        return jsonify({'questions': questions, 'filter_type': filter_type, 'total': len(questions)})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
-@app.route('/api/question-sets/<int:set_id>/mark-opened', methods=['POST'])
-@token_required
-def mark_set_opened(set_id):
-    """Mark that user has directly opened this set"""
-    try:
-        conn = get_db()
-        cur = conn.cursor()
-        
-        cur.execute('''
-            INSERT INTO set_opens (user_id, set_id, opened_at)
-            VALUES (%s, %s, CURRENT_TIMESTAMP)
-            ON CONFLICT (user_id, set_id) DO NOTHING
-        ''', (request.current_user['id'], set_id))
-        
-        conn.commit()
-        cur.close()
-        conn.close()
-        
-        return jsonify({'success': True})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)

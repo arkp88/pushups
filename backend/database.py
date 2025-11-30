@@ -14,7 +14,7 @@ def init_db():
     conn = get_db_connection()
     cur = conn.cursor()
     
-    # Users table (we'll rely on Supabase Auth, but store additional user data)
+    # Users table
     cur.execute('''
         CREATE TABLE IF NOT EXISTS users (
             id SERIAL PRIMARY KEY,
@@ -33,9 +33,21 @@ def init_db():
             description TEXT,
             uploaded_by INTEGER REFERENCES users(id),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            total_questions INTEGER DEFAULT 0
+            total_questions INTEGER DEFAULT 0,
+            tags TEXT,
+            is_deleted BOOLEAN DEFAULT FALSE,
+            google_drive_id VARCHAR(255) UNIQUE
         )
     ''')
+
+    # Migration: Add columns safely for existing databases
+    try:
+        cur.execute("ALTER TABLE question_sets ADD COLUMN IF NOT EXISTS google_drive_id VARCHAR(255) UNIQUE")
+        cur.execute("ALTER TABLE question_sets ADD COLUMN IF NOT EXISTS tags TEXT")
+        cur.execute("ALTER TABLE question_sets ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE")
+    except Exception as e:
+        print(f"Migration note (safe to ignore if columns exist): {e}")
+        conn.rollback()
     
     # Questions table
     cur.execute('''
@@ -65,7 +77,7 @@ def init_db():
         )
     ''')
     
-    # Missed questions for Anki export
+    # Missed questions
     cur.execute('''
         CREATE TABLE IF NOT EXISTS missed_questions (
             id SERIAL PRIMARY KEY,
@@ -77,7 +89,18 @@ def init_db():
         )
     ''')
     
-    # Create indexes for better performance
+    # Set opens (for "Continue" functionality)
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS set_opens (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            set_id INTEGER REFERENCES question_sets(id) ON DELETE CASCADE,
+            opened_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(user_id, set_id)
+        )
+    ''')
+    
+    # Indexes
     cur.execute('CREATE INDEX IF NOT EXISTS idx_questions_set_id ON questions(set_id)')
     cur.execute('CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON user_progress(user_id)')
     cur.execute('CREATE INDEX IF NOT EXISTS idx_user_progress_question_id ON user_progress(question_id)')

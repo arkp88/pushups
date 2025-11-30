@@ -14,13 +14,12 @@ async function getAuthHeaders() {
 }
 
 export const api = {
-  async uploadTSV(file, setName, description, tags = '') {
+  async uploadTSV(file, setName, description) {
     const { data: { session } } = await supabase.auth.getSession();
     const formData = new FormData();
     formData.append('file', file);
     formData.append('set_name', setName);
     formData.append('description', description);
-    formData.append('tags', tags);
 
     const response = await fetch(`${API_URL}/api/upload-tsv`, {
       method: 'POST',
@@ -103,46 +102,4 @@ export const api = {
     if (!response.ok) throw new Error('Failed to fetch mixed questions');
     return response.json();
   },
-
-  async markSetOpened(setId) {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${API_URL}/api/question-sets/${setId}/mark-opened`, {
-      method: 'POST',
-      headers,
-    });
-    if (!response.ok) throw new Error('Failed to mark set as opened');
-    return response.json();
-  },
-
-  async deleteQuestionSet(setId) {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${API_URL}/api/question-sets/${setId}`, {
-      method: 'DELETE',
-      headers,
-    });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Failed to delete question set');
-    }
-    return response.json();
-  },
-
-  // --- GOOGLE DRIVE METHODS (NEW) ---
-  async listDriveFiles(folderId) {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${API_URL}/api/drive/files?folderId=${folderId}`, { headers });
-    if (!response.ok) throw new Error('Failed to list Drive files');
-    return response.json();
-  },
-
-  async importDriveFile(fileId, fileName, tags = '', setName = '') {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${API_URL}/api/drive/import`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ fileId, fileName, tags, setName }),
-    });
-    if (!response.ok) throw new Error('Failed to import file');
-    return response.json();
-  }
 };
