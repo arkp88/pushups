@@ -175,16 +175,18 @@ def get_question_sets():
         cur = conn.cursor()
         
         cur.execute('''
-            SELECT qs.*, u.username as uploaded_by_username,
-                   COUNT(up.id) FILTER (WHERE up.user_id = %s AND up.attempted = true) as questions_attempted
-            FROM question_sets qs
-            LEFT JOIN users u ON qs.uploaded_by = u.id
-            LEFT JOIN questions q ON q.set_id = qs.id
-            LEFT JOIN user_progress up ON up.question_id = q.id
-            WHERE qs.is_deleted = false
-            GROUP BY qs.id, u.username
-            ORDER BY qs.created_at DESC
-        ''', (request.current_user['id'],))
+    SELECT qs.*, u.username as uploaded_by_username,
+           COUNT(up.id) FILTER (WHERE up.user_id = %s AND up.attempted = true) as questions_attempted,
+           so.id IS NOT NULL as directly_opened
+    FROM question_sets qs
+    LEFT JOIN users u ON qs.uploaded_by = u.id
+    LEFT JOIN questions q ON q.set_id = qs.id
+    LEFT JOIN user_progress up ON up.question_id = q.id
+    LEFT JOIN set_opens so ON so.set_id = qs.id AND so.user_id = %s
+    WHERE qs.is_deleted = false   -- <--- THIS WAS MISSING
+    GROUP BY qs.id, u.username, so.id
+    ORDER BY qs.created_at DESC
+''', (request.current_user['id'], request.current_user['id']))
         
         sets = cur.fetchall()
         cur.close()
@@ -308,7 +310,7 @@ def unmark_missed(question_id):
 @app.route('/api/missed-questions', methods=['GET'])
 @token_required
 def get_missed_questions():
-    """Get all missed questions for export"""
+    """Get all missed questions for export (excluding deleted sets)"""
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -318,7 +320,9 @@ def get_missed_questions():
             FROM missed_questions mq
             JOIN questions q ON mq.question_id = q.id
             JOIN question_sets qs ON q.set_id = qs.id
-            WHERE mq.user_id = %s AND mq.exported_to_anki = false
+            WHERE mq.user_id = %s 
+            AND mq.exported_to_anki = false 
+            AND qs.is_deleted = false
             ORDER BY mq.added_at DESC
         ''', (request.current_user['id'],))
         
@@ -367,36 +371,52 @@ def delete_question_set(set_id):
 @app.route('/api/stats', methods=['GET'])
 @token_required
 def get_stats():
-    """Get user statistics"""
+    """Get user statistics (excluding deleted sets)"""
     try:
         conn = get_db()
         cur = conn.cursor()
         
-        # Total questions
-        cur.execute('SELECT COUNT(*) as total FROM questions')
+        # Total questions (only from non-deleted sets)
+        cur.execute('''
+            SELECT COUNT(q.id) as total 
+            FROM questions q
+            JOIN question_sets qs ON q.set_id = qs.id
+            WHERE qs.is_deleted = false
+        ''')
         total_questions = cur.fetchone()['total']
         
         # Questions attempted
         cur.execute('''
-            SELECT COUNT(*) as attempted 
-            FROM user_progress 
-            WHERE user_id = %s AND attempted = true
+            SELECT COUNT(up.id) as attempted 
+            FROM user_progress up
+            JOIN questions q ON up.question_id = q.id
+            JOIN question_sets qs ON q.set_id = qs.id
+            WHERE up.user_id = %s 
+            AND up.attempted = true
+            AND qs.is_deleted = false
         ''', (request.current_user['id'],))
         attempted = cur.fetchone()['attempted']
         
         # Correct answers
         cur.execute('''
-            SELECT COUNT(*) as correct 
-            FROM user_progress 
-            WHERE user_id = %s AND correct = true
+            SELECT COUNT(up.id) as correct 
+            FROM user_progress up
+            JOIN questions q ON up.question_id = q.id
+            JOIN question_sets qs ON q.set_id = qs.id
+            WHERE up.user_id = %s 
+            AND up.correct = true
+            AND qs.is_deleted = false
         ''', (request.current_user['id'],))
         correct = cur.fetchone()['correct']
         
         # Missed questions
         cur.execute('''
-            SELECT COUNT(*) as missed 
-            FROM missed_questions 
-            WHERE user_id = %s
+            SELECT COUNT(mq.id) as missed 
+            FROM missed_questions mq
+            JOIN questions q ON mq.question_id = q.id
+            JOIN question_sets qs ON q.set_id = qs.id
+            WHERE mq.user_id = %s
+            AND qs.is_deleted = false
         ''', (request.current_user['id'],))
         missed = cur.fetchone()['missed']
         
@@ -425,7 +445,7 @@ def get_mixed_questions():
         cur = conn.cursor()
         
         if filter_type == 'unattempted':
-            # Get questions user hasn't attempted
+            # Get questions user hasn't attempted AND set is not deleted
             cur.execute('''
                 SELECT q.*,
                        up.attempted, up.correct, up.attempt_count, up.last_attempted,
@@ -435,12 +455,12 @@ def get_mixed_questions():
                 JOIN question_sets qs ON q.set_id = qs.id
                 LEFT JOIN user_progress up ON up.question_id = q.id AND up.user_id = %s
                 LEFT JOIN missed_questions mq ON mq.question_id = q.id AND mq.user_id = %s
-                WHERE up.id IS NULL OR up.attempted = false
+                WHERE (up.id IS NULL OR up.attempted = false) AND qs.is_deleted = false
                 ORDER BY RANDOM()
             ''', (request.current_user['id'], request.current_user['id']))
         
         elif filter_type == 'missed':
-            # Get only missed questions
+            # Get only missed questions AND set is not deleted
             cur.execute('''
                 SELECT q.*,
                        up.attempted, up.correct, up.attempt_count, up.last_attempted,
@@ -450,11 +470,12 @@ def get_mixed_questions():
                 JOIN question_sets qs ON q.set_id = qs.id
                 JOIN missed_questions mq ON mq.question_id = q.id AND mq.user_id = %s
                 LEFT JOIN user_progress up ON up.question_id = q.id AND up.user_id = %s
+                WHERE qs.is_deleted = false
                 ORDER BY RANDOM()
             ''', (request.current_user['id'], request.current_user['id']))
         
         else:  # all
-            # Get all questions, shuffled
+            # Get all questions, shuffled AND set is not deleted
             cur.execute('''
                 SELECT q.*,
                        up.attempted, up.correct, up.attempt_count, up.last_attempted,
@@ -464,6 +485,7 @@ def get_mixed_questions():
                 JOIN question_sets qs ON q.set_id = qs.id
                 LEFT JOIN user_progress up ON up.question_id = q.id AND up.user_id = %s
                 LEFT JOIN missed_questions mq ON mq.question_id = q.id AND mq.user_id = %s
+                WHERE qs.is_deleted = false
                 ORDER BY RANDOM()
             ''', (request.current_user['id'], request.current_user['id']))
         
@@ -480,6 +502,28 @@ def get_mixed_questions():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
     
+@app.route('/api/question-sets/<int:set_id>/mark-opened', methods=['POST'])
+@token_required
+def mark_set_opened(set_id):
+    """Mark that user has directly opened this set"""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        
+        cur.execute('''
+            INSERT INTO set_opens (user_id, set_id, opened_at)
+            VALUES (%s, %s, CURRENT_TIMESTAMP)
+            ON CONFLICT (user_id, set_id) DO NOTHING
+        ''', (request.current_user['id'], set_id))
+        
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
