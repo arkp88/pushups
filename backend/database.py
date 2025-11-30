@@ -118,6 +118,13 @@ def init_db():
     cur.execute('CREATE INDEX IF NOT EXISTS idx_missed_questions_user_id ON missed_questions(user_id)')
     cur.execute('CREATE INDEX IF NOT EXISTS idx_bookmarks_user_id ON bookmarks(user_id)')
 
+    # Migration: Add content_hash for duplicate detection
+    try:
+        cur.execute("ALTER TABLE question_sets ADD COLUMN IF NOT EXISTS content_hash VARCHAR(64)")
+        cur.execute("CREATE INDEX IF NOT EXISTS idx_question_sets_hash ON question_sets(content_hash)")
+    except Exception as e:
+        print(f"Migration note (safe to ignore): {e}")
+        conn.rollback()
 
     conn.commit()
     cur.close()

@@ -47,7 +47,9 @@ function App() {
   const [enlargedImage, setEnlargedImage] = useState(null); // Track image for lightbox
   const [processingNext, setProcessingNext] = useState(false); // Tracks card transitions
   // Reference to the top of the drive browser
-  const driveTopRef = useRef(null);  // <--- ADD THIS
+  const driveTopRef = useRef(null);  
+  const [renamingSet, setRenamingSet] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
 
 useEffect(() => {
     // We check !driveLoading to ensure we only scroll AFTER the new list is rendered
@@ -241,6 +243,22 @@ const handleDeleteSet = async (setId) => {
     } finally {
       setDeletingSetId(null);
       setSetToDelete(null); // Reset confirmation state
+    }
+  };
+
+const openRenameModal = (set) => {
+    setRenamingSet(set);
+    setRenameValue(set.name);
+  };
+
+  const saveRename = async () => {
+    if (!renamingSet || !renameValue.trim()) return;
+    try {
+      await api.renameSet(renamingSet.id, renameValue.trim());
+      await loadQuestionSets(); 
+      setRenamingSet(null);
+    } catch (error) {
+      alert('Failed to rename: ' + error.message);
     }
   };
 
@@ -918,6 +936,18 @@ const handleNext = async (markAsCorrect = null) => {
                           
                           {/* TWO-STEP DELETE BUTTON */}
                           <div style={{display: 'flex', gap: '5px', flexShrink: 0, marginLeft: 'auto'}}>
+                            {/* RENAME BUTTON */}
+                            {setToDelete !== set.id && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); openRenameModal(set); }}
+                                className="btn btn-secondary"
+                                style={{padding: '6px 12px', fontSize: '12px', whiteSpace: 'nowrap'}}
+                                title="Rename Set"
+                              >
+                                ✏️
+                              </button>
+                            )}
+                            
                             {setToDelete === set.id ? (
                               <>
                                 <button
@@ -1142,6 +1172,51 @@ const handleNext = async (markAsCorrect = null) => {
           
         </div>
       )}
+
+{renamingSet && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', justifyContent: 'center', alignItems: 'center'
+        }} onClick={() => setRenamingSet(null)}>
+          
+          <div style={{
+            background: 'white', padding: '25px', borderRadius: '12px', 
+            width: '90%', maxWidth: '400px', boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+          }} onClick={(e) => e.stopPropagation()}>
+            
+            <h3 style={{marginTop: 0, color: '#333'}}>Rename Set</h3>
+            
+            <input 
+              type="text" 
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              autoFocus
+              style={{
+                width: '100%', padding: '10px', margin: '15px 0', 
+                borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px'
+              }}
+            />
+            
+            <div style={{display: 'flex', gap: '10px', justifyContent: 'flex-end'}}>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setRenamingSet(null)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={saveRename}
+                disabled={!renameValue.trim() || renameValue.trim() === renamingSet.name}
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

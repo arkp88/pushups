@@ -145,6 +145,21 @@ export const api = {
     return response.json();
   },
 
+async renameSet(setId, newName) {
+    const headers = await getAuthHeaders();
+    const response = await fetch(`${API_URL}/api/question-sets/${setId}/rename`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ name: newName }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to rename set');
+    }
+    return response.json();
+  },
+
   async importDriveFile(fileId, fileName, tags = '', setName = '') {
     const headers = await getAuthHeaders();
     const response = await fetch(`${API_URL}/api/drive/import`, {

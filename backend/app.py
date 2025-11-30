@@ -2,6 +2,7 @@ import os
 import csv
 import io
 import jwt
+import hashlib
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, request, jsonify
@@ -68,27 +69,43 @@ def token_required(f):
 # --- HELPER: Parse and Save ---
 def parse_and_save_set(content, set_name, description, user_id, tags='', google_id=None):
     """Parses TSV content and saves to DB. Returns (set_id, question_count)."""
-    # Fix for Excel-copied TSVs that might use carriage returns
-    content = content.replace('\r\n', '\n').replace('\r', '\n')
-    reader = csv.DictReader(io.StringIO(content), delimiter='\t')
     
-    # Validate headers
-    required_headers = ['questionText', 'answerText']
-    if not reader.fieldnames or not all(h in reader.fieldnames for h in required_headers):
-        if ',' in content.split('\n')[0] and '\t' not in content.split('\n')[0]:
-             raise Exception("File appears to be CSV, not TSV. Please save as Tab-Separated Values.")
-        raise Exception(f"Missing required columns. Found: {reader.fieldnames}")
+    # 1. Generate Content Hash (SHA-256)
+    content_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
 
     conn = get_db()
     cur = conn.cursor()
     
     try:
+        # 2. Check for DUPLICATES
+        # Check if THIS user has already uploaded this EXACT content
+        cur.execute('''
+            SELECT id FROM question_sets 
+            WHERE content_hash = %s AND uploaded_by = %s AND is_deleted = false
+        ''', (content_hash, user_id))
+        
+        existing = cur.fetchone()
+        if existing:
+            # STOP: Return existing ID. 
+            return existing['id'], 0
+
+        # ... (Standard parsing logic) ...
+        content = content.replace('\r\n', '\n').replace('\r', '\n')
+        reader = csv.DictReader(io.StringIO(content), delimiter='\t')
+        
+        required_headers = ['questionText', 'answerText']
+        if not reader.fieldnames or not all(h in reader.fieldnames for h in required_headers):
+             if ',' in content.split('\n')[0] and '\t' not in content.split('\n')[0]:
+                 raise Exception("File appears to be CSV, not TSV.")
+             raise Exception(f"Missing required columns. Found: {reader.fieldnames}")
+
+        # 3. Insert New Set (Include content_hash)
         cur.execute(
             '''INSERT INTO question_sets 
-               (name, description, uploaded_by, tags, is_deleted, google_drive_id) 
-               VALUES (%s, %s, %s, %s, %s, %s) 
+               (name, description, uploaded_by, tags, is_deleted, google_drive_id, content_hash) 
+               VALUES (%s, %s, %s, %s, %s, %s, %s) 
                RETURNING id''',
-            (set_name, description, user_id, tags, False, google_id)
+            (set_name, description, user_id, tags, False, google_id, content_hash)
         )
         set_id = cur.fetchone()['id']
         
@@ -116,6 +133,7 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
         cur.execute('UPDATE question_sets SET total_questions = %s WHERE id = %s', (question_count, set_id))
         conn.commit()
         return set_id, question_count
+
     except Exception as e:
         conn.rollback()
         raise e
@@ -335,6 +353,39 @@ def update_progress(question_id):
         cur.close()
         conn.close()
         return jsonify({'success': True, 'progress': progress})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/question-sets/<int:set_id>/rename', methods=['PUT'])
+@token_required
+def rename_question_set(set_id):
+    """Rename a question set"""
+    try:
+        data = request.json
+        new_name = data.get('name')
+        
+        if not new_name or not new_name.strip():
+            return jsonify({'error': 'Name cannot be empty'}), 400
+
+        conn = get_db()
+        cur = conn.cursor()
+        
+        # Check ownership
+        cur.execute('SELECT uploaded_by FROM question_sets WHERE id = %s', (set_id,))
+        question_set = cur.fetchone()
+        
+        if not question_set:
+            return jsonify({'error': 'Question set not found'}), 404
+        if question_set['uploaded_by'] != request.current_user['id']:
+            return jsonify({'error': 'Unauthorized'}), 403
+            
+        # Update name
+        cur.execute('UPDATE question_sets SET name = %s WHERE id = %s', (new_name.strip(), set_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
