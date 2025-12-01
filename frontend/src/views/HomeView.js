@@ -8,7 +8,8 @@ const HomeView = memo(function HomeView({
   startMixedPracticeWrapper, 
   mixedFilter, 
   setMixedFilter,
-  setView 
+  setView,
+  setAppNotification // NEW PROP
 }) {
   return (
     <div className="home-container">
@@ -23,9 +24,18 @@ const HomeView = memo(function HomeView({
             className="practice-mode-button" 
             onClick={() => {
               const lastSetId = localStorage.getItem('pushups-last-set-id');
-              if (!lastSetId) { alert('No recent set found.'); return; }
+              if (!lastSetId) { 
+                // REPLACE alert()
+                setAppNotification('No recent set found. Start a set first!', false); 
+                return; 
+              }
               const lastSet = questionSets.find(s => s.id === parseInt(lastSetId));
-              if (!lastSet) { alert('Last practiced set not found.'); localStorage.removeItem('pushups-last-set-id'); return; }
+              if (!lastSet) { 
+                // REPLACE alert()
+                setAppNotification('Last practiced set not found. Cleared session.', false); 
+                localStorage.removeItem('pushups-last-set-id'); 
+                return; 
+              }
               startPracticeWrapper(lastSet);
             }} 
             disabled={practice.startingPractice || !localStorage.getItem('pushups-last-set-id')}
@@ -58,7 +68,8 @@ const HomeView = memo(function HomeView({
             onClick={() => {
               const unplayedSets = questionSets.filter(s => !s.questions_attempted || s.questions_attempted === 0);
               if (unplayedSets.length === 0) {
-                alert('No unplayed sets available! All sets have progress.');
+                // REPLACE alert()
+                setAppNotification('No unplayed sets available! All sets have progress.', false);
                 return;
               }
               // Clear session tracking and start fresh random session

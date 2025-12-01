@@ -6,21 +6,27 @@ function Auth() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState(''); // REINTRODUCED local error state
 
   const handleAuth = async (e) => {
     e.preventDefault();
-    setError('');
+    setError(''); // Clear local error state
     setLoading(true);
     const email = `${username.toLowerCase().trim()}@quiz.local`;
     try {
       const { error } = isSignUp 
         ? await supabase.auth.signUp({ email, password })
         : await supabase.auth.signInWithPassword({ email, password });
+      
       if (error) throw error;
-      if (isSignUp) alert('Account created! Sign in now.');
+      
+      if (isSignUp) {
+        // Use local state for message
+        setError('Account created! Sign in now.'); 
+      }
     } catch (error) {
-      setError(error.message);
+      // Set error locally to display on Auth screen
+      setError(error.message); 
     } finally {
       setLoading(false);
     }
@@ -29,7 +35,7 @@ function Auth() {
   return (
     <div className="auth-container">
       <h2>{isSignUp ? 'Sign Up' : 'Sign In'}</h2>
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className="error-message">{error}</div>} {/* REINTRODUCED local error display */}
       <form onSubmit={handleAuth}>
         <div className="form-group">
           <label>Username</label>

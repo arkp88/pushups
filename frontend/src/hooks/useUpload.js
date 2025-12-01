@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../api';
 
-export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session) {
+export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotification = () => {}) {
   // Upload State
   const [uploadTags, setUploadTags] = useState('');
   const [customName, setCustomName] = useState('');
@@ -41,7 +41,8 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session) {
       setDriveFiles(data.files);
     } catch (error) {
       console.error('Error loading Drive files:', error);
-      alert('Failed to load Drive files. Check API key and folder ID.');
+      // REPLACE alert()
+      setAppNotification('Failed to load Drive files. Check API key and folder ID.', true);
     } finally {
       setDriveLoading(false);
     }

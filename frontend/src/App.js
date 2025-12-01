@@ -28,15 +28,27 @@ function App() {
   const [setToDelete, setSetToDelete] = useState(null);
   const [renamingSet, setRenamingSet] = useState(null);
   const [renameValue, setRenameValue] = useState('');
+  // NEW: State for showing rename loading indicator
+  const [renamingInProgressId, setRenamingInProgressId] = useState(null); 
+  
+  // Global notification state for general errors/info outside of practice
+  const [globalNotification, setGlobalNotification] = useState(null); 
   
   // Drive folder ID from environment
   const ROOT_FOLDER_ID = process.env.REACT_APP_GOOGLE_DRIVE_FOLDER_ID || '1WucWdJWvvRdqwY7y8r-B1VFBo0Bh8L9_';
-  
-  // Custom hooks
+
+  // Generic notification setter with auto-clear
+  const setGlobalNotificationWrapper = useCallback((message, isError = false) => {
+    const type = isError ? '❌ Error: ' : 'ℹ️ ';
+    setGlobalNotification(type + message);
+    setTimeout(() => setGlobalNotification(null), 4000);
+  }, []);
+
+  // Custom hooks - pass new wrapper
   const { stats, loadStats } = useStats(session);
   const { questionSets, loadQuestionSets } = useQuestionSets(session);
-  const practice = usePractice();
-  const upload = useUpload(ROOT_FOLDER_ID, view, uploadMode, session);
+  const practice = usePractice(setGlobalNotificationWrapper); // Pass setter
+  const upload = useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setGlobalNotificationWrapper); // Pass setter
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -123,14 +135,24 @@ function App() {
 
   const saveRename = useCallback(async () => {
     if (!renamingSet || !renameValue.trim()) return;
+    
+    // START loading state
+    setRenamingInProgressId(renamingSet.id); 
+    
     try {
       await api.renameSet(renamingSet.id, renameValue.trim());
       await loadQuestionSets();
       setRenamingSet(null);
+      // Use global notification
+      setGlobalNotificationWrapper('✅ Set renamed successfully.', false);
     } catch (error) {
-      alert('Failed to rename: ' + error.message);
+      // Use global notification
+      setGlobalNotificationWrapper('❌ Failed to rename: ' + error.message, true);
+    } finally {
+      // END loading state
+      setRenamingInProgressId(null); 
     }
-  }, [renamingSet, renameValue, loadQuestionSets]);
+  }, [renamingSet, renameValue, loadQuestionSets, setGlobalNotificationWrapper]);
 
   // Loading component (must be defined before early returns)
   const LoadingFallback = useMemo(() => (
@@ -147,16 +169,25 @@ function App() {
   ), []);
 
   if (loading) return <div className="loading">Loading...</div>;
-  if (!session) return <Auth />;
+  if (!session) return <Auth />; // Auth manages its own errors now
 
   return (
     <div className="App">
       <Navbar view={view} setView={setView} showNavbar={showNavbar} session={session} />
 
       <Suspense fallback={LoadingFallback}>
+        {/* Global Notification Banner for non-practice views */}
+        {globalNotification && (
+          <div className="notification-banner">
+            {globalNotification}
+          </div>
+        )}
+
         {/* HOME VIEW */}
         {view === 'home' && stats && (
         <HomeView 
+          // Pass notification setter to HomeView
+          setAppNotification={setGlobalNotificationWrapper}
           stats={stats}
           questionSets={questionSets}
           practice={practice}
@@ -198,6 +229,8 @@ function App() {
           deletingSetId={deletingSetId}
           handleDeleteSet={handleDeleteSet}
           openRenameModal={openRenameModal}
+          // NEW PROP
+          renamingInProgressId={renamingInProgressId} 
         />
       )}
 
@@ -243,15 +276,16 @@ function App() {
               <button 
                 className="btn btn-secondary" 
                 onClick={() => setRenamingSet(null)}
+                disabled={renamingInProgressId} // Disable Cancel during rename
               >
                 Cancel
               </button>
               <button 
                 className="btn btn-primary" 
                 onClick={saveRename}
-                disabled={!renameValue.trim() || renameValue.trim() === renamingSet.name}
+                disabled={!renameValue.trim() || renameValue.trim() === renamingSet.name || renamingInProgressId}
               >
-                Save
+                {renamingInProgressId ? 'Renaming...' : 'Save'}
               </button>
             </div>
           </div>
@@ -263,4 +297,4 @@ function App() {
   );
 }
 
-export default App;
+export default App; 

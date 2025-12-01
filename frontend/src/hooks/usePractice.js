@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { api } from '../api';
 
-export function usePractice() {
+export function usePractice(setAppNotification = () => {}) {
   const [questions, setQuestions] = useState([]);
   const [currentSet, setCurrentSet] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -44,7 +44,8 @@ export function usePractice() {
 
       return true; // Success
     } catch (error) {
-      alert('Error loading questions: ' + error.message);
+      // REPLACE alert()
+      setAppNotification('Error loading questions: ' + error.message, true);
       return false;
     } finally {
       setStartingPractice(false);
@@ -61,7 +62,9 @@ export function usePractice() {
       const data = await api.getMixedQuestions(filter);
       
       if (data.questions.length === 0) {
-        alert(`No ${filter} questions found!`);
+        // REPLACE alert()
+        setPracticeNotification(`ℹ️ No ${filter} questions found!`);
+        setTimeout(() => setPracticeNotification(''), 4000);
         return false;
       }
       
@@ -73,7 +76,8 @@ export function usePractice() {
       
       return true;
     } catch (error) {
-      alert('Error loading randomized questions: ' + error.message);
+      // REPLACE alert()
+      setAppNotification('Error loading randomized questions: ' + error.message, true);
       return false;
     } finally {
       setStartingPractice(false);
@@ -102,7 +106,9 @@ export function usePractice() {
         
         setProcessingNext(false);
       } else {
-        alert('Session complete!');
+        // REPLACE alert()
+        setPracticeNotification('🎉 Session complete!');
+        setTimeout(() => setPracticeNotification(''), 4000);
         
         if (currentSet.id !== 'mixed') {
           localStorage.removeItem(`pushups-quiz-position-${currentSet.id}`);
@@ -114,6 +120,8 @@ export function usePractice() {
       }
     } catch (error) {
       console.error('Error updating progress:', error);
+      // Use general app notification for hard error
+      setAppNotification('Error saving progress: ' + error.message, true);
       setProcessingNext(false);
     }
   };
