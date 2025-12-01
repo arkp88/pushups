@@ -257,9 +257,7 @@ def list_drive_files():
         return jsonify({'files': all_files})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    finally:
-        if conn:
-            return_db(conn)
+    # The erroneous 'finally' block is now removed.
 
 @app.route('/api/drive/import', methods=['POST'])
 @token_required
