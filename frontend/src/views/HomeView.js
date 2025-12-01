@@ -56,15 +56,17 @@ const HomeView = memo(function HomeView({
           <button 
             className="practice-mode-button"
             onClick={() => {
-              const unplayedSets = questionSets.filter(s => !s.directly_opened);
+              const unplayedSets = questionSets.filter(s => !s.questions_attempted || s.questions_attempted === 0);
               if (unplayedSets.length === 0) {
-                alert('No unplayed sets available! You\'ve started all sets.');
+                alert('No unplayed sets available! All sets have progress.');
                 return;
               }
+              // Clear session tracking and start fresh random session
+              practice.clearSessionTracking();
               const randomSet = unplayedSets[Math.floor(Math.random() * unplayedSets.length)];
-              startPracticeWrapper(randomSet);
+              startPracticeWrapper(randomSet, true);
             }}
-            disabled={practice.startingPractice || questionSets.filter(s => !s.directly_opened).length === 0}
+            disabled={practice.startingPractice || questionSets.filter(s => !s.questions_attempted || s.questions_attempted === 0).length === 0}
             style={{opacity: practice.startingPractice ? 0.7 : 1, cursor: practice.startingPractice ? 'wait' : 'pointer'}}
           >
             <div className="practice-mode-icon">🎰</div>

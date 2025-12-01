@@ -241,7 +241,7 @@ function UploadView({
                 {myUploadedSets.map((set) => (
                   <div key={set.id} className="set-card">
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', marginBottom: '10px', flexWrap: 'wrap'}}>
-                      <h2 style={{margin: 0, wordBreak: 'break-word', lineHeight: '1.4', flex: '1 1 200px'}}>{set.name}</h2>
+                      <h2 style={{margin: 0, wordBreak: 'break-word', lineHeight: '1.4', flex: '1 1 200px', fontSize: '17px'}}>{set.name}</h2>
                       
                       <div style={{display: 'flex', gap: '5px', flexShrink: 0, marginLeft: 'auto'}}>
                         {setToDelete !== set.id && (

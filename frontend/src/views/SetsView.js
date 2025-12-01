@@ -8,7 +8,7 @@ function SetsView({ questionSets, practice, startPracticeWrapper }) {
   let sets = questionSets;
   if (setsFilter === 'completed') sets = sets.filter(s => s.questions_attempted === s.total_questions && s.total_questions > 0);
   else if (setsFilter === 'in-progress') sets = sets.filter(s => s.questions_attempted > 0 && s.questions_attempted < s.total_questions);
-  else if (setsFilter === 'unattempted') sets = sets.filter(s => !s.questions_attempted);
+  else if (setsFilter === 'unattempted') sets = sets.filter(s => !s.questions_attempted || s.questions_attempted === 0);  // Zero questions answered
   
   const filtered = sets.filter(set => 
     set.name.toLowerCase().includes(searchTerm.toLowerCase()) || 

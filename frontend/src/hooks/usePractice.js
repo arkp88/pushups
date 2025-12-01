@@ -11,12 +11,20 @@ export function usePractice() {
   const [processingNext, setProcessingNext] = useState(false);
   const [practiceNotification, setPracticeNotification] = useState('');
   const [enlargedImage, setEnlargedImage] = useState(null);
+  
+  // Track sets opened in current random session (to prevent cycling)
+  const [setsOpenedThisSession, setSetsOpenedThisSession] = useState([]);
 
-  const startPractice = async (set) => {
+  const startPractice = async (set, isRandomSession = false) => {
     try {
       setStartingPractice(true);
       await api.markSetOpened(set.id);
       localStorage.setItem('pushups-last-set-id', set.id);
+      
+      // Track this set in the current random session
+      if (isRandomSession) {
+        setSetsOpenedThisSession(prev => [...prev, set.id]);
+      }
       
       const data = await api.getQuestions(set.id);
       setQuestions(data.questions);
@@ -46,6 +54,10 @@ export function usePractice() {
   const startMixedPractice = async (filter) => {
     try {
       setStartingPractice(true);
+      
+      // Clear random session tracking when entering mixed mode
+      setSetsOpenedThisSession([]);
+      
       const data = await api.getMixedQuestions(filter);
       
       if (data.questions.length === 0) {
@@ -143,6 +155,11 @@ export function usePractice() {
     processingNext,
     practiceNotification,
     enlargedImage,
+    
+    // Session tracking
+    setsOpenedThisSession,
+    clearSessionTracking: () => setSetsOpenedThisSession([]),
+    setPracticeNotification,
     
     // Actions
     startPractice,

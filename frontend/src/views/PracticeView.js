@@ -29,12 +29,23 @@ function PracticeView({
               className="btn btn-primary" 
               disabled={practice.startingPractice}
               onClick={() => {
-                const unplayed = questionSets.filter(s => s.id !== practice.currentSet.id && !s.directly_opened);
-                if (unplayed.length === 0) return alert('No other unplayed sets!');
-                startPracticeWrapper(unplayed[Math.floor(Math.random() * unplayed.length)]);
+                // Unplayed = zero questions answered AND not opened in this session
+                const unplayed = questionSets.filter(s => 
+                  s.id !== practice.currentSet.id && 
+                  (!s.questions_attempted || s.questions_attempted === 0) &&
+                  !practice.setsOpenedThisSession.includes(s.id)
+                );
+                if (unplayed.length === 0) {
+                  practice.setPracticeNotification('🎉 You\'ve tried all unplayed sets in this session!');
+                  setTimeout(() => practice.setPracticeNotification(''), 4000);
+                  return;
+                }
+                const randomSet = unplayed[Math.floor(Math.random() * unplayed.length)];
+                // Mark as random session so it gets tracked
+                practice.startPractice(randomSet, true);
               }}
             >
-              {practice.startingPractice ? 'Loading...' : '🎲 Next Random'}
+              {practice.startingPractice ? 'Loading...' : '🎲 Another Random Set'}
             </button>
           )}
         </div>

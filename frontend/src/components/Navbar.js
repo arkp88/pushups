@@ -26,7 +26,7 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session }) {
             <span className="brand-icon">💪</span>
             <h1>Pushups</h1>
           </div>
-          <span className="brand-quote"> Tired of being productive? </span>
+          <span className="brand-quote"> Pooja, what is this Tier-1 behavior? </span>
         </div>
 
         {/* Navigation Tabs */}

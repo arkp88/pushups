@@ -46,10 +46,28 @@ function HelpView() {
       <div style={{marginTop: '30px'}}>
         <h3 style={{color: '#667eea', marginBottom: '15px'}}>👥 Join B612!</h3>
         <ul style={{lineHeight: '1.8', color: '#666', marginLeft: '20px'}}>
-          <li>I would likely not have made this effort without the inspiration (and the content!) from the B612 Friendlies group, and the people there who are one of the best quizzing communities out there.</li>
-          <li>This site is meant as a fun way to try mimir sets yourself OR for doing pushups if you are a serious minded quizzer. But nothing beats playing in a group, so if you aren't a member, I encourage you to join the group and to set and play friendlies! </li>
+          <li>I would likely not have made this effort without the inspiration (and the content!) from the B612 Friendlies group, one of the most welcoming quizzing communities around.</li>
+          <li>This site is meant as a fun way to try mimir sets yourself OR for doing pushups if you are a <italic>serious-minded quizzer</italic>. But nothing beats playing in a group, so if you aren't a member, I encourage you to join the group and to set and play friendlies! </li>
           <li>Have fun!</li>
         </ul>
+      </div>
+
+      <div style={{marginTop: '40px', padding: '20px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', borderRadius: '12px', color: 'white'}}>
+        <h3 style={{marginBottom: '15px', fontSize: '18px'}}>💬 Feedback & Feature Requests</h3>
+        <p style={{lineHeight: '1.6', marginBottom: '15px'}}>
+          Have suggestions or found a bug? 
+        </p>
+        <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
+          <div>
+            <strong>📧 Email:</strong>{' '}
+            <a href="mailto:araouf88@gmail.com" style={{color: 'white', textDecoration: 'underline'}}>
+              araouf88@gmail.com
+            </a>
+          </div>
+          <div>
+            <strong>💬 WhatsApp:</strong> If you know where to find me.
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -73,8 +73,8 @@ function App() {
   }, []);
 
   // Wrapper functions that call hook methods and handle view transitions (memoized)
-  const startPracticeWrapper = useCallback(async (set) => {
-    const success = await practice.startPractice(set);
+  const startPracticeWrapper = useCallback(async (set, isRandomSession = false) => {
+    const success = await practice.startPractice(set, isRandomSession);
     if (success) {
       setView('practice');
     }
