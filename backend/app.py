@@ -3,15 +3,24 @@ import csv
 import io
 import jwt
 import hashlib
+import logging
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import psycopg2
+from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -24,8 +33,46 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 SUPABASE_JWT_SECRET = os.getenv('SUPABASE_JWT_SECRET')
 GOOGLE_DRIVE_API_KEY = os.getenv('GOOGLE_DRIVE_API_KEY')
 
+# Validate required environment variables
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is required")
+if not SUPABASE_JWT_SECRET:
+    raise ValueError("SUPABASE_JWT_SECRET environment variable is required")
+
+# Connection pool for better performance
+connection_pool = None
+try:
+    connection_pool = psycopg2.pool.ThreadedConnectionPool(
+        minconn=1,
+        maxconn=10,
+        dsn=DATABASE_URL
+    )
+    logger.info("Database connection pool created successfully")
+except Exception as e:
+    logger.error(f"Failed to create connection pool: {str(e)}")
+    raise
+
 def get_db():
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    """Get database connection from pool"""
+    try:
+        conn = connection_pool.getconn()
+        # Set cursor factory for this connection
+        conn.cursor_factory = RealDictCursor
+        return conn
+    except Exception as e:
+        logger.error(f"Failed to get database connection: {str(e)}")
+        raise
+
+def return_db(conn):
+    """Return database connection to pool"""
+    if conn:
+        try:
+            # Rollback any pending transaction before returning
+            if not conn.closed:
+                conn.rollback()
+            connection_pool.putconn(conn)
+        except Exception as e:
+            logger.error(f"Failed to return connection to pool: {str(e)}")
 
 def verify_supabase_token(token):
     try:
@@ -39,30 +86,59 @@ def token_required(f):
     def decorated(*args, **kwargs):
         token = request.headers.get('Authorization')
         if not token:
-            return jsonify({'error': 'Token is missing'}), 401
+            logger.warning("Missing authorization header")
+            return jsonify({'error': 'Authentication required', 'message': 'Token is missing'}), 401
+        
+        conn = None
         try:
             if token.startswith('Bearer '):
                 token = token[7:]
+            
             payload = verify_supabase_token(token)
             if not payload:
-                return jsonify({'error': 'Invalid token'}), 401
+                logger.warning("Invalid token provided")
+                return jsonify({'error': 'Invalid token', 'message': 'Token verification failed'}), 401
+            
+            supabase_user_id = payload.get('sub')
+            email = payload.get('email')
+            
+            if not supabase_user_id or not email:
+                logger.error("Token missing required fields")
+                return jsonify({'error': 'Invalid token structure'}), 401
             
             conn = get_db()
             cur = conn.cursor()
-            supabase_user_id = payload.get('sub')
-            email = payload.get('email')
+            
             cur.execute('SELECT * FROM users WHERE supabase_user_id = %s', (supabase_user_id,))
             user = cur.fetchone()
+            
             if not user:
                 username = email.split('@')[0]
-                cur.execute('INSERT INTO users (supabase_user_id, email, username) VALUES (%s, %s, %s) RETURNING *', (supabase_user_id, email, username))
+                cur.execute(
+                    'INSERT INTO users (supabase_user_id, email, username) VALUES (%s, %s, %s) RETURNING *',
+                    (supabase_user_id, email, username)
+                )
                 user = cur.fetchone()
                 conn.commit()
+                logger.info(f"Created new user: {username}")
+            
             cur.close()
-            conn.close()
             request.current_user = user
+            
+        except jwt.InvalidTokenError as e:
+            logger.error(f"JWT validation error: {str(e)}")
+            return jsonify({'error': 'Invalid token', 'message': 'Token verification failed'}), 401
+        except psycopg2.Error as e:
+            logger.error(f"Database error in auth: {str(e)}")
+            if conn:
+                conn.rollback()
+            return jsonify({'error': 'Database error', 'message': 'Failed to authenticate user'}), 500
         except Exception as e:
-            return jsonify({'error': f'Token validation failed: {str(e)}'}), 401
+            logger.error(f"Unexpected auth error: {str(e)}")
+            return jsonify({'error': 'Authentication failed', 'message': str(e)}), 401
+        finally:
+            if conn:
+                return_db(conn)
         return f(*args, **kwargs)
     return decorated
 
@@ -138,8 +214,9 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
         conn.rollback()
         raise e
     finally:
-        cur.close()
-        conn.close()
+        if cur:
+            cur.close()
+        return_db(conn)
 
 # --- GOOGLE DRIVE ---
 def get_drive_service():
@@ -180,6 +257,9 @@ def list_drive_files():
         return jsonify({'files': all_files})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
 
 @app.route('/api/drive/import', methods=['POST'])
 @token_required
@@ -223,6 +303,9 @@ def import_drive_file():
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
 
 # --- ROUTES ---
 
@@ -258,10 +341,14 @@ def upload_tsv():
     
     except Exception as e:
         return jsonify({'error': f'Failed to parse TSV: {str(e)}'}), 500
+    finally:
+        if conn:
+            return_db(conn)
 
 @app.route('/api/question-sets', methods=['GET'])
 @token_required
 def get_question_sets():
+    conn = None
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -280,14 +367,18 @@ def get_question_sets():
         ''', (request.current_user['id'], request.current_user['id']))
         sets = cur.fetchall()
         cur.close()
-        conn.close()
         return jsonify({'sets': sets})
     except Exception as e:
+        logger.error(f"Error fetching question sets: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
 
 @app.route('/api/question-sets/<int:set_id>/questions', methods=['GET'])
 @token_required
 def get_questions(set_id):
+    conn = None
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -305,14 +396,18 @@ def get_questions(set_id):
         ''', (request.current_user['id'], request.current_user['id'], request.current_user['id'], set_id))
         questions = cur.fetchall()
         cur.close()
-        conn.close()
         return jsonify({'questions': questions})
     except Exception as e:
+        logger.error(f"Error fetching questions for set {set_id}: {str(e)}")
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
 
 @app.route('/api/question-sets/<int:set_id>/mark-opened', methods=['POST'])
 @token_required
 def mark_set_opened(set_id):
+    conn = None
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -323,10 +418,12 @@ def mark_set_opened(set_id):
         ''', (request.current_user['id'], set_id))
         conn.commit()
         cur.close()
-        conn.close()
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
 
 @app.route('/api/questions/<int:question_id>/progress', methods=['POST'])
 @token_required
@@ -351,10 +448,12 @@ def update_progress(question_id):
         progress = cur.fetchone()
         conn.commit()
         cur.close()
-        conn.close()
         return jsonify({'success': True, 'progress': progress})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
 
 @app.route('/api/question-sets/<int:set_id>/rename', methods=['PUT'])
 @token_required
@@ -388,10 +487,14 @@ def rename_question_set(set_id):
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
 
 @app.route('/api/questions/<int:question_id>/mark-missed', methods=['POST'])
 @token_required
 def mark_missed(question_id):
+    conn = None
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -404,14 +507,17 @@ def mark_missed(question_id):
         result = cur.fetchone()
         conn.commit()
         cur.close()
-        conn.close()
         return jsonify({'success': True, 'missed': result})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
 
 @app.route('/api/questions/<int:question_id>/unmark-missed', methods=['POST'])
 @token_required
 def unmark_missed(question_id):
+    conn = None
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -419,14 +525,17 @@ def unmark_missed(question_id):
             (request.current_user['id'], question_id))
         conn.commit()
         cur.close()
-        conn.close()
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
 
 @app.route('/api/missed-questions', methods=['GET'])
 @token_required
 def get_missed_questions():
+    conn = None
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -442,14 +551,17 @@ def get_missed_questions():
         ''', (request.current_user['id'],))
         questions = cur.fetchall()
         cur.close()
-        conn.close()
         return jsonify({'missed_questions': questions})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
 
 @app.route('/api/question-sets/<int:set_id>', methods=['DELETE'])
 @token_required
 def delete_question_set(set_id):
+    conn = None
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -462,14 +574,18 @@ def delete_question_set(set_id):
         cur.execute('UPDATE question_sets SET is_deleted = true WHERE id = %s', (set_id,))
         conn.commit()
         cur.close()
-        conn.close()
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
 
 @app.route('/api/stats', methods=['GET'])
 @token_required
 def get_stats():
+    conn = None
+    cur = None
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -510,8 +626,8 @@ def get_stats():
         ''', (request.current_user['id'],))
         bookmarks = cur.fetchone()['bookmarks']
 
-        cur.close()
-        conn.close()
+        if cur:
+            cur.close()
         
         return jsonify({
             'total_questions': total_questions,
@@ -522,12 +638,19 @@ def get_stats():
             'accuracy': round((correct / attempted * 100) if attempted > 0 else 0, 1)
         })
     except Exception as e:
+        logger.error(f"Error fetching stats: {str(e)}")
+        if conn:
+            conn.rollback()
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
 
 @app.route('/api/questions/<int:question_id>/bookmark', methods=['POST'])
 @token_required
 def toggle_bookmark(question_id):
     """Toggle bookmark status for a question"""
+    conn = None
     try:
         conn = get_db()
         cur = conn.cursor()
@@ -556,6 +679,9 @@ def toggle_bookmark(question_id):
         return jsonify({'success': True, 'action': action, 'is_bookmarked': is_bookmarked})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
 
 @app.route('/api/questions/mixed', methods=['GET'])
 @token_required
@@ -598,6 +724,9 @@ def get_mixed_questions():
         return jsonify({'questions': questions, 'filter_type': filter_type, 'total': len(questions)})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
     
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))

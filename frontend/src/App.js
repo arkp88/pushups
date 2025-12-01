@@ -1,18 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, lazy, Suspense, useCallback, useMemo } from 'react';
 import { supabase } from './supabaseClient';
 import { api } from './api';
 import Auth from './components/Auth';
+import Navbar from './components/Navbar';
 import { useStats } from './hooks/useStats';
 import { useQuestionSets } from './hooks/useQuestionSets';
 import { usePractice } from './hooks/usePractice';
 import { useUpload } from './hooks/useUpload';
-import HomeView from './views/HomeView';
-import SetsView from './views/SetsView';
-import UploadView from './views/UploadView';
-import PracticeView from './views/PracticeView';
-import StatsView from './views/StatsView';
-import HelpView from './views/HelpView';
 import './App.css';
+
+// Lazy load view components for code splitting
+const HomeView = lazy(() => import('./views/HomeView'));
+const SetsView = lazy(() => import('./views/SetsView'));
+const UploadView = lazy(() => import('./views/UploadView'));
+const PracticeView = lazy(() => import('./views/PracticeView'));
+const StatsView = lazy(() => import('./views/StatsView'));
+const HelpView = lazy(() => import('./views/HelpView'));
 
 function App() {
   const [session, setSession] = useState(null);
@@ -69,35 +72,35 @@ function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Wrapper functions that call hook methods and handle view transitions
-  const startPracticeWrapper = async (set) => {
+  // Wrapper functions that call hook methods and handle view transitions (memoized)
+  const startPracticeWrapper = useCallback(async (set) => {
     const success = await practice.startPractice(set);
     if (success) {
       setView('practice');
     }
-  };
+  }, [practice]);
 
-  const startMixedPracticeWrapper = async (filter) => {
+  const startMixedPracticeWrapper = useCallback(async (filter) => {
     const success = await practice.startMixedPractice(filter);
     if (success) {
       setView('practice');
     }
-  };
+  }, [practice]);
 
-  const handleNextWrapper = async (markAsCorrect = null) => {
+  const handleNextWrapper = useCallback(async (markAsCorrect = null) => {
     await practice.handleNext(markAsCorrect, () => {
       setView('home');
       loadQuestionSets();
       loadStats();
     });
-  };
+  }, [practice, loadQuestionSets, loadStats]);
 
-  const handleBookmarkWrapper = async (e) => {
+  const handleBookmarkWrapper = useCallback(async (e) => {
     await practice.handleBookmark(e);
     loadStats();
-  };
+  }, [practice, loadStats]);
 
-  const handleDeleteSet = async (setId) => {
+  const handleDeleteSet = useCallback(async (setId) => {
     try {
       setDeletingSetId(setId);
       await api.deleteQuestionSet(setId);
@@ -111,14 +114,14 @@ function App() {
       setDeletingSetId(null);
       setSetToDelete(null);
     }
-  };
+  }, [loadQuestionSets]);
 
-  const openRenameModal = (set) => {
+  const openRenameModal = useCallback((set) => {
     setRenamingSet(set);
     setRenameValue(set.name);
-  };
+  }, []);
 
-  const saveRename = async () => {
+  const saveRename = useCallback(async () => {
     if (!renamingSet || !renameValue.trim()) return;
     try {
       await api.renameSet(renamingSet.id, renameValue.trim());
@@ -127,67 +130,32 @@ function App() {
     } catch (error) {
       alert('Failed to rename: ' + error.message);
     }
-  };
+  }, [renamingSet, renameValue, loadQuestionSets]);
+
+  // Loading component (must be defined before early returns)
+  const LoadingFallback = useMemo(() => (
+    <div style={{
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      minHeight: '400px',
+      color: '#667eea',
+      fontSize: '18px'
+    }}>
+      Loading...
+    </div>
+  ), []);
 
   if (loading) return <div className="loading">Loading...</div>;
   if (!session) return <Auth />;
 
   return (
     <div className="App">
-      {/* Mobile-only top header */}
-      <div className={`mobile-header ${showNavbar ? '' : 'hidden'}`}>
-        <div className="mobile-header-brand">
-          <span className="brand-icon">💪</span>
-          <h1>Pushups</h1>
-        </div>
-        <div className="mobile-header-user">
-          <span className="username">{session.user.email.split('@')[0]}</span>
-          <button className="btn-logout-mobile" onClick={() => supabase.auth.signOut()}>
-            Logout
-          </button>
-        </div>
-      </div>
+      <Navbar view={view} setView={setView} showNavbar={showNavbar} session={session} />
 
-      <nav className={`navbar ${showNavbar ? '' : 'hidden'}`}>
-        {/* Logo & Quote */}
-        <div className="nav-brand">
-          <div className="brand-row">
-            <span className="brand-icon">💪</span>
-            <h1>Pushups</h1>
-          </div>
-          <span className="brand-quote"> Tired of being productive? </span>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="nav-links">
-          <button data-icon="🏠" onClick={() => setView('home')} className={`nav-btn ${view === 'home' ? 'active' : ''}`}>
-            Home
-          </button>
-          <button data-icon="📚" onClick={() => setView('sets')} className={`nav-btn ${view === 'sets' ? 'active' : ''}`}>
-            Sets
-          </button>
-          <button data-icon="📥" onClick={() => setView('upload')} className={`nav-btn ${view === 'upload' ? 'active' : ''}`}>
-            Upload
-          </button>
-          <button data-icon="📊" onClick={() => setView('stats')} className={`nav-btn ${view === 'stats' ? 'active' : ''}`}>
-            Stats
-          </button>
-          <button data-icon="❓" onClick={() => setView('help')} className={`nav-btn ${view === 'help' ? 'active' : ''}`}>
-            Help
-          </button>
-        </div>
-
-        {/* User & Logout */}
-        <div className="nav-user">
-          <span>{session.user.email.split('@')[0]}</span>
-          <button className="btn-logout" onClick={() => supabase.auth.signOut()}>
-            Logout
-          </button>
-        </div>
-      </nav>
-
-      {/* HOME VIEW */}
-      {view === 'home' && stats && (
+      <Suspense fallback={LoadingFallback}>
+        {/* HOME VIEW */}
+        {view === 'home' && stats && (
         <HomeView 
           stats={stats}
           questionSets={questionSets}
@@ -289,6 +257,7 @@ function App() {
           </div>
         </div>
       )}
+      </Suspense>
 
     </div>
   );

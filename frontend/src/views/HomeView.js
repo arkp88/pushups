@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { memo } from 'react';
 
-function HomeView({ 
+const HomeView = memo(function HomeView({ 
   stats, 
   questionSets, 
   practice, 
@@ -142,6 +142,6 @@ function HomeView({
       </div>
     </div>
   );
-}
+});
 
 export default HomeView;

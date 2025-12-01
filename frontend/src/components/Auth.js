@@ -41,6 +41,13 @@ function Auth() {
         </div>
         <button className="btn btn-primary" type="submit" disabled={loading}>{loading ? '...' : isSignUp ? 'Sign Up' : 'Sign In'}</button>
       </form>
+      
+      {isSignUp && (
+        <p style={{fontSize: '13px', color: '#9ca3af', textAlign: 'center', margin: '15px 0', lineHeight: '1.4'}}>
+          💡 No email required. Please save your password – we can't recover accounts.
+        </p>
+      )}
+
       <div className="auth-toggle">
         <button onClick={() => setIsSignUp(!isSignUp)}>{isSignUp ? 'Switch to Sign In' : 'Switch to Sign Up'}</button>
       </div>
