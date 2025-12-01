@@ -1,35 +1,68 @@
-# 🎯 Quiz Practice App
+# 💪 Pushups Quiz App
 
-A full-stack quiz practice application with flashcard-style learning, progress tracking, and multi-user support.
+A modern, production-ready flashcard quiz application with multi-user support, mobile-first design, and premium UI.
 
-## Features
+![React](https://img.shields.io/badge/React-18-blue)
+![Python](https://img.shields.io/badge/Python-3.9-green)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-- 🔐 **Multi-user authentication** with Supabase
-- 📤 **Bulk TSV upload** for questions
-- 🃏 **Flashcard interface** for practice
-- 📊 **Progress tracking** per user
-- ✅ **Mark questions** as correct/missed
-- 📱 **Mobile-responsive** design
-- 🎯 **Personal review deck** for missed questions
-- 📈 **Statistics dashboard**
-- ☁️ **100% Free hosting** with Supabase + Vercel
+## ✨ Features
 
-## Tech Stack
+- 🔐 Multi-user authentication via Supabase
+- 📥 Import from TSV or Google Drive
+- 🃏 Flashcard interface with smooth animations
+- ⭐ Bookmark important questions
+- 📊 Personal progress tracking & statistics
+- 🎲 Multiple practice modes (Random, Missed, Bookmarks, etc.)
+- 📱 Mobile-first responsive design with bottom navigation
+- ✨ Premium UI with gradients and glassmorphism
+- 🏷️ Tagging and search functionality
+- ☁️ 100% free hosting (Supabase + Vercel + Render)
 
-**Frontend:**
-- React 18
-- Supabase Auth
-- Responsive CSS
+## 🚀 Quick Start
 
-**Backend:**
-- Python Flask
-- PostgreSQL (via Supabase)
-- JWT authentication
+**[📖 Read Complete Documentation](./DOCS.md)**
 
-**Hosting:**
-- Frontend: Vercel (free)
-- Backend: Render.com (free)
-- Database: Supabase (free)
+### Prerequisites
+- Node.js 16+
+- Python 3.9+
+- Supabase account (free)
+
+### Setup (5 minutes)
+
+```bash
+# Clone repo
+git clone <your-repo>
+cd quiz-app
+
+# Backend
+cd backend
+pip install -r requirements.txt
+cp .env.example .env  # Add your Supabase credentials
+
+# Frontend
+cd ../frontend
+npm install
+cp .env.example .env  # Add your Supabase credentials
+
+# Run locally
+python backend/app.py  # Terminal 1
+npm start --prefix frontend  # Terminal 2
+```
+
+Visit `http://localhost:3000` and sign up!
+
+## 📚 Documentation
+
+- **[Complete Documentation](./DOCS.md)** - Setup, deployment, architecture, API reference
+- **[Backend README](./backend/README.md)** - Backend-specific details
+- **[Frontend README](./frontend/README.md)** - Frontend-specific details
+
+## 🛠️ Tech Stack
+
+**Frontend:** React 18, Supabase Auth, Inter Typography, CSS3  
+**Backend:** Python Flask, PostgreSQL, JWT Auth  
+**Hosting:** Vercel + Render.com + Supabase (all free tiers)
 
 ## Quick Start
 
