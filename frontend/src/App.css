@@ -385,16 +385,17 @@ body {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 25px;
-  padding: 25px;
-  border: 2px solid #f3f4f6;
-  border-left: 4px solid #667eea;
-  border-radius: 16px;
-  background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+  gap: 20px;
+  padding: 18px 20px;
+  border: 1px solid rgba(102, 126, 234, 0.15);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-align: left;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   position: relative;
   overflow: hidden;
 }
@@ -417,11 +418,10 @@ body {
 }
 
 .practice-mode-button:hover:not(:disabled) {
-  border-color: #667eea;
-  border-left-color: #667eea;
-  transform: translateY(-6px);
-  box-shadow: 0 12px 30px rgba(102, 126, 234, 0.2);
-  background: linear-gradient(135deg, #fafbff 0%, #f5f7ff 100%);
+  border-color: rgba(102, 126, 234, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .practice-mode-button:disabled { 
@@ -433,38 +433,39 @@ body {
 }
 
 .practice-mode-icon { 
-  font-size: 36px; 
-  min-width: 70px;
-  height: 70px;
+  font-size: 32px; 
+  min-width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.12);
+  background: linear-gradient(135deg, rgba(238, 242, 255, 0.8) 0%, rgba(224, 231, 255, 0.6) 100%);
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.1);
   position: relative;
   z-index: 1;
   transition: all 0.3s ease;
+  border: 1px solid rgba(102, 126, 234, 0.1);
 }
 
 .practice-mode-button:hover:not(:disabled) .practice-mode-icon {
-  background: linear-gradient(135deg, #ddd6fe 0%, #c7d2fe 100%);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
-  transform: scale(1.05);
+  background: linear-gradient(135deg, rgba(221, 214, 254, 0.9) 0%, rgba(199, 210, 254, 0.7) 100%);
+  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.18);
+  transform: scale(1.03);
 }
 
 .practice-mode-content h4 { 
   color: #1f2937; 
-  font-size: 19px; 
-  margin-bottom: 6px; 
-  font-weight: 700; 
+  font-size: 16px; 
+  margin-bottom: 4px; 
+  font-weight: 600; 
 }
 
 .practice-mode-content p { 
   color: #6b7280; 
-  font-size: 14px; 
+  font-size: 13px; 
   margin: 0; 
-  line-height: 1.5; 
+  line-height: 1.4; 
 }
 
 /* --- FLASHCARDS --- */

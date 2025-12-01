@@ -269,7 +269,6 @@ quiz-app/
 - [ ] Export missed questions to Anki deck
 - [ ] Spaced repetition algorithm
 - [ ] Category filtering
-- [ ] Leaderboards
 - [ ] Dark mode
 - [ ] Offline support (PWA)
 - [ ] Native mobile apps
