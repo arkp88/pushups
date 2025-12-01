@@ -10,8 +10,8 @@ function HelpView() {
         <ul style={{lineHeight: '1.8', color: '#666', marginLeft: '20px'}}>
           <li><strong>Browse Sets:</strong> Browse/Search among available question sets to play what you want. You can play specific sets or at random. </li>
           <li><strong>Add Sets:</strong> Add new sets you want to play to the library either from your device or from B612 Drive. Currently supporting only mimir format TSV files.</li>
-          <li><strong>Delete Sets:</strong> Uploaders can delete sets they uploaded if they want- they are only deleted from the site, not from the B612 Drive.</li>
-          <li><strong>Modes:</strong> I have intentionally not loaded a large number of files from B612 or elsewhere to keep storage in mind. The site is running on a 500 MB Base free tier on Supabase - I would recommend only adding sets as you play them and not a very large number (100s or more) up front. But don't worry about deleting files after you play them, leave them on for others and for yourself to retry, we will revisit the policy if space becomes an issue.</li>
+          <li><strong>Delete Sets:</strong> Uploaders can delete sets they uploaded if they want - they are only deleted from this site, not from the B612 Drive.</li>
+          <li><strong>Modes:</strong> I have intentionally not loaded a large number of files out of the box, keeping limited free storage in mind - I would recommend only adding sets as you play them and not a very large number (100s or more) up front. But don't worry about deleting files after you play them, leave them on for others and for yourself to retry, we will revisit the policy if space becomes an issue.</li>
         </ul>
       </div>
 
@@ -43,12 +43,13 @@ function HelpView() {
         </ul>
       </div>
 
-      <div style={{marginTop: '30px', padding: '20px', background: '#f9fafb', borderRadius: '8px'}}>
-        <h3 style={{color: '#667eea', marginBottom: '10px'}}>💡 Pro Tip</h3>
-        <p style={{color: '#666', lineHeight: '1.6', margin: 0}}>
-          Tag your uploaded sets with categories (like "Art", "History", "Films") if applicable to easily filter and find them later. 
-          All users can see all sets uploaded.
-        </p>
+      <div style={{marginTop: '30px'}}>
+        <h3 style={{color: '#667eea', marginBottom: '15px'}}>👥 Join B612!</h3>
+        <ul style={{lineHeight: '1.8', color: '#666', marginLeft: '20px'}}>
+          <li>I would likely not have made this effort without the inspiration (and the content!) from the B612 Friendlies group, and the people there who are one of the best quizzing communities out there.</li>
+          <li>This site is meant as a fun way to try mimir sets yourself OR for doing pushups if you are a serious minded quizzer. But nothing beats playing in a group, so if you aren't a member, I encourage you to join the group and to set and play friendlies! </li>
+          <li>Have fun!</li>
+        </ul>
       </div>
     </div>
   );

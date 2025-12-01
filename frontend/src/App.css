@@ -579,7 +579,7 @@ body {
   transform: translateY(-4px); 
   box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
 }
-.set-card h3 { color: #1f2937; margin-bottom: 12px; font-size: 20px; }
+.set-card h3 { color: #1f2937; margin-bottom: 12px; font-size: 17px; }
 .set-info { display: flex; gap: 25px; color: #6b7280; font-size: 15px; }
 
 .progress-bar { height: 10px; background: #f3f4f6; border-radius: 5px; margin-top: 15px; overflow: hidden; }
