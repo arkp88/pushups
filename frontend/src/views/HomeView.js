@@ -58,7 +58,7 @@ const HomeView = memo(function HomeView({
             <div className="practice-mode-icon">📚</div>
             <div className="practice-mode-content">
               <h4>Browse Question Sets</h4>
-              <p>Choose a specific topic to play</p>
+              <p>Choose a specific set to play</p>
             </div>
           </button>
 

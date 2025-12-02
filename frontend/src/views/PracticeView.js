@@ -51,7 +51,7 @@ function PracticeView({
         </div>
 
         <div style={{textAlign: 'center', width: '100%'}}>
-          <div style={{fontWeight: 'bold', color: '#333', fontSize: '18px', marginBottom: '5px', wordBreak: 'break-word'}}>
+          <div style={{fontWeight: 'bold', color: '#333', fontSize: '18px', marginBottom: '5px', wordBreak: 'break-word', paddingLeft: '40px', paddingRight: '40px'}}>
             {practice.currentSet.name}
           </div>
           <div className="flashcard-progress" style={{color: '#666', fontWeight: '600'}}>
@@ -106,12 +106,12 @@ function PracticeView({
               />
             )}
 
-            <div className="flip-hint">Click to reveal</div>
+            <div className="flip-hint">Click to reveal answer</div>
           </>
         ) : (
           <>
             <div className="answer-text" dangerouslySetInnerHTML={{ __html: practice.questions[practice.currentQuestionIndex].answer_text }} />
-            <div className="flip-hint">Click to question</div>
+            <div className="flip-hint">Click to see question</div>
           </>
         )}
 
