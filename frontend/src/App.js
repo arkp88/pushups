@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, lazy, Suspense, useCallback, useMemo } from 'react';
 import { supabase } from './supabaseClient';
-import { api } from './api';
+import { api, setBackendWakingCallback } from './api';
 import Auth from './components/Auth';
 import Navbar from './components/Navbar';
 import { useStats } from './hooks/useStats';
@@ -29,10 +29,13 @@ function App() {
   const [renamingSet, setRenamingSet] = useState(null);
   const [renameValue, setRenameValue] = useState('');
   // NEW: State for showing rename loading indicator
-  const [renamingInProgressId, setRenamingInProgressId] = useState(null); 
-  
+  const [renamingInProgressId, setRenamingInProgressId] = useState(null);
+
   // Global notification state for general errors/info outside of practice
-  const [globalNotification, setGlobalNotification] = useState(null); 
+  const [globalNotification, setGlobalNotification] = useState(null);
+
+  // Backend wake-up notification state
+  const [backendWaking, setBackendWaking] = useState(false); 
   
   // Drive folder ID from environment
   const ROOT_FOLDER_ID = process.env.REACT_APP_GOOGLE_DRIVE_FOLDER_ID || '1WucWdJWvvRdqwY7y8r-B1VFBo0Bh8L9_';
@@ -61,6 +64,13 @@ function App() {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  // Set up backend wake detection callback
+  useEffect(() => {
+    setBackendWakingCallback((isWaking) => {
+      setBackendWaking(isWaking);
+    });
   }, []);
 
   // Scroll logic for header
@@ -176,6 +186,13 @@ function App() {
       <Navbar view={view} setView={setView} showNavbar={showNavbar} session={session} />
 
       <Suspense fallback={LoadingFallback}>
+        {/* Backend Wake-Up Notification */}
+        {backendWaking && (
+          <div className="notification-banner wake-notification">
+            ⏳ Server is waking up from sleep... This may take 30-40 seconds. Please wait.
+          </div>
+        )}
+
         {/* Global Notification Banner for non-practice views */}
         {globalNotification && (
           <div className="notification-banner">

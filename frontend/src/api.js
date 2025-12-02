@@ -2,6 +2,13 @@ import { supabase } from './supabaseClient';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
+// Global callback for backend wake-up detection
+let onBackendWakingCallback = null;
+
+export function setBackendWakingCallback(callback) {
+  onBackendWakingCallback = callback;
+}
+
 async function getAuthHeaders() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
@@ -11,6 +18,37 @@ async function getAuthHeaders() {
     'Authorization': `Bearer ${session.access_token}`,
     'Content-Type': 'application/json',
   };
+}
+
+// Wrapper to detect slow requests (backend waking up)
+async function fetchWithWakeDetection(url, options = {}) {
+  let wakeNotificationShown = false;
+
+  // Set a timer to show "waking up" message after 3 seconds
+  const wakeTimer = setTimeout(() => {
+    if (onBackendWakingCallback) {
+      wakeNotificationShown = true;
+      onBackendWakingCallback(true);
+    }
+  }, 3000);
+
+  try {
+    const response = await fetch(url, options);
+    clearTimeout(wakeTimer);
+
+    // Clear wake notification if it was shown
+    if (wakeNotificationShown && onBackendWakingCallback) {
+      onBackendWakingCallback(false);
+    }
+
+    return response;
+  } catch (error) {
+    clearTimeout(wakeTimer);
+    if (wakeNotificationShown && onBackendWakingCallback) {
+      onBackendWakingCallback(false);
+    }
+    throw error;
+  }
 }
 
 export const api = {
@@ -40,21 +78,21 @@ export const api = {
 
   async getQuestionSets() {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_URL}/api/question-sets`, { headers });
+    const response = await fetchWithWakeDetection(`${API_URL}/api/question-sets`, { headers });
     if (!response.ok) throw new Error('Failed to fetch question sets');
     return response.json();
   },
 
   async getQuestions(setId) {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_URL}/api/question-sets/${setId}/questions`, { headers });
+    const response = await fetchWithWakeDetection(`${API_URL}/api/question-sets/${setId}/questions`, { headers });
     if (!response.ok) throw new Error('Failed to fetch questions');
     return response.json();
   },
 
   async updateProgress(questionId, attempted, correct) {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_URL}/api/questions/${questionId}/progress`, {
+    const response = await fetchWithWakeDetection(`${API_URL}/api/questions/${questionId}/progress`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ attempted, correct }),
@@ -65,7 +103,7 @@ export const api = {
 
   async markMissed(questionId) {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_URL}/api/questions/${questionId}/mark-missed`, {
+    const response = await fetchWithWakeDetection(`${API_URL}/api/questions/${questionId}/mark-missed`, {
       method: 'POST',
       headers,
     });
@@ -75,7 +113,7 @@ export const api = {
 
   async unmarkMissed(questionId) {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_URL}/api/questions/${questionId}/unmark-missed`, {
+    const response = await fetchWithWakeDetection(`${API_URL}/api/questions/${questionId}/unmark-missed`, {
       method: 'POST',
       headers,
     });
@@ -85,14 +123,14 @@ export const api = {
 
   async getMissedQuestions() {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_URL}/api/missed-questions`, { headers });
+    const response = await fetchWithWakeDetection(`${API_URL}/api/missed-questions`, { headers });
     if (!response.ok) throw new Error('Failed to fetch missed questions');
     return response.json();
   },
 
   async getStats() {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_URL}/api/stats`, { headers });
+    const response = await fetchWithWakeDetection(`${API_URL}/api/stats`, { headers });
     if (!response.ok) throw new Error('Failed to fetch stats');
     return response.json();
   },
