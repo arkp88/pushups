@@ -32,7 +32,7 @@ frontend_url = os.getenv('FRONTEND_URL', '').strip()
 if frontend_url:
     allowed_origins.append(frontend_url)
 
-CORS(app, origins=allowed_origins, supports_credentials=True)
+CORS(app, origins=allowed_origins)
 
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
