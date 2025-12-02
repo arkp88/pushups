@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, lazy, Suspense, useCallback, useMemo } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { supabase } from './supabaseClient';
 import { api } from './api';
 import Auth from './components/Auth';
@@ -173,6 +174,7 @@ function App() {
 
   return (
     <div className="App">
+      <Analytics />
       <Navbar view={view} setView={setView} showNavbar={showNavbar} session={session} />
 
       <Suspense fallback={LoadingFallback}>
