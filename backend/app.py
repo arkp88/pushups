@@ -25,10 +25,16 @@ logger = logging.getLogger(__name__)
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+
+# CORS configuration - whitelist specific origins
+CORS(app, origins=[
+    'http://localhost:3000',
+    os.getenv('FRONTEND_URL', '').strip()
+], supports_credentials=True)
 
 # Configuration
-app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'your-secret-key-change-this')
+app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 DATABASE_URL = os.getenv('DATABASE_URL')
 SUPABASE_JWT_SECRET = os.getenv('SUPABASE_JWT_SECRET')
 GOOGLE_DRIVE_API_KEY = os.getenv('GOOGLE_DRIVE_API_KEY')
@@ -38,6 +44,8 @@ if not DATABASE_URL:
     raise ValueError("DATABASE_URL environment variable is required")
 if not SUPABASE_JWT_SECRET:
     raise ValueError("SUPABASE_JWT_SECRET environment variable is required")
+if not app.config['SECRET_KEY']:
+    raise ValueError("JWT_SECRET_KEY environment variable is required")
 
 # Connection pool for better performance
 connection_pool = None
@@ -316,15 +324,15 @@ def health_check():
 def upload_tsv():
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
-    
+
     file = request.files['file']
     set_name = request.form.get('set_name', file.filename)
     set_description = request.form.get('description', '')
     tags = request.form.get('tags', '')
-    
+
     if not file.filename.endswith('.tsv'):
         return jsonify({'error': 'File must be a TSV file'}), 400
-    
+
     try:
         content = file.read().decode('utf-8')
         set_id, count = parse_and_save_set(
@@ -334,14 +342,12 @@ def upload_tsv():
             user_id=request.current_user['id'],
             tags=tags
         )
-        
+
         return jsonify({'success': True, 'set_id': set_id, 'questions_imported': count, 'set_name': set_name})
-    
+
     except Exception as e:
+        logger.error(f"Upload TSV error: {str(e)}")
         return jsonify({'error': f'Failed to parse TSV: {str(e)}'}), 500
-    finally:
-        if conn:
-            return_db(conn)
 
 @app.route('/api/question-sets', methods=['GET'])
 @token_required
@@ -480,10 +486,12 @@ def rename_question_set(set_id):
         cur.execute('UPDATE question_sets SET name = %s WHERE id = %s', (new_name.strip(), set_id))
         conn.commit()
         cur.close()
-        conn.close()
-        
+
         return jsonify({'success': True})
     except Exception as e:
+        logger.error(f"Rename set error: {str(e)}")
+        if conn:
+            conn.rollback()
         return jsonify({'error': str(e)}), 500
     finally:
         if conn:
@@ -669,13 +677,16 @@ def toggle_bookmark(question_id):
                        (request.current_user['id'], question_id))
             action = 'added'
             is_bookmarked = True
-            
+
+
         conn.commit()
         cur.close()
-        conn.close()
-        
+
         return jsonify({'success': True, 'action': action, 'is_bookmarked': is_bookmarked})
     except Exception as e:
+        logger.error(f"Toggle bookmark error: {str(e)}")
+        if conn:
+            conn.rollback()
         return jsonify({'error': str(e)}), 500
     finally:
         if conn:
@@ -717,10 +728,10 @@ def get_mixed_questions():
         cur.execute(query, params)
         questions = cur.fetchall()
         cur.close()
-        conn.close()
-        
+
         return jsonify({'questions': questions, 'filter_type': filter_type, 'total': len(questions)})
     except Exception as e:
+        logger.error(f"Get mixed questions error: {str(e)}")
         return jsonify({'error': str(e)}), 500
     finally:
         if conn:
