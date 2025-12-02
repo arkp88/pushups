@@ -11,9 +11,12 @@ export function usePractice(setAppNotification = () => {}) {
   const [processingNext, setProcessingNext] = useState(false);
   const [practiceNotification, setPracticeNotification] = useState('');
   const [enlargedImage, setEnlargedImage] = useState(null);
-  
+
   // Track sets opened in current random session (to prevent cycling)
   const [setsOpenedThisSession, setSetsOpenedThisSession] = useState([]);
+
+  // Text-to-speech state
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const startPractice = async (set, isRandomSession = false) => {
     try {
@@ -84,7 +87,10 @@ export function usePractice(setAppNotification = () => {}) {
     }
   };
 
-  const handleFlip = () => setIsFlipped(!isFlipped);
+  const handleFlip = () => {
+    stopSpeaking(); // Stop speech when flipping card
+    setIsFlipped(!isFlipped);
+  };
 
   const handleNext = async (markAsCorrect = null, onComplete) => {
     if (processingNext) return;
@@ -102,8 +108,9 @@ export function usePractice(setAppNotification = () => {}) {
         const newIndex = currentQuestionIndex + 1;
         setCurrentQuestionIndex(newIndex);
         setIsFlipped(false);
+        stopSpeaking(); // Stop speech when moving to next question
         if (currentSet.id !== 'mixed') localStorage.setItem(`pushups-quiz-position-${currentSet.id}`, newIndex);
-        
+
         setProcessingNext(false);
       } else {
         // REPLACE alert()
@@ -131,6 +138,7 @@ export function usePractice(setAppNotification = () => {}) {
       const newIndex = currentQuestionIndex - 1;
       setCurrentQuestionIndex(newIndex);
       setIsFlipped(false);
+      stopSpeaking(); // Stop speech when moving to previous question
       localStorage.setItem(`pushups-quiz-position-${currentSet.id}`, newIndex);
     }
   };
@@ -138,7 +146,7 @@ export function usePractice(setAppNotification = () => {}) {
   const handleBookmark = async (e) => {
     e.stopPropagation();
     const currentQuestion = questions[currentQuestionIndex];
-    
+
     const updatedQuestions = [...questions];
     updatedQuestions[currentQuestionIndex].is_bookmarked = !currentQuestion.is_bookmarked;
     setQuestions(updatedQuestions);
@@ -149,6 +157,71 @@ export function usePractice(setAppNotification = () => {}) {
       console.error('Bookmark failed:', error);
       updatedQuestions[currentQuestionIndex].is_bookmarked = !updatedQuestions[currentQuestionIndex].is_bookmarked;
       setQuestions([...updatedQuestions]);
+    }
+  };
+
+  // Text-to-speech functions
+  const speakText = (e) => {
+    e.stopPropagation(); // Prevent card flip
+
+    if (!window.speechSynthesis) {
+      setAppNotification('Text-to-speech is not supported in your browser.', true);
+      return;
+    }
+
+    // If already speaking, stop it
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+
+    const currentQuestion = questions[currentQuestionIndex];
+    const textToSpeak = isFlipped
+      ? currentQuestion.answer_text
+      : currentQuestion.question_text;
+
+    // Strip HTML tags for speech
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = textToSpeak;
+    const plainText = tempDiv.textContent || tempDiv.innerText || '';
+
+    const utterance = new SpeechSynthesisUtterance(plainText);
+
+    // Get available voices and prefer high-quality ones
+    const voices = window.speechSynthesis.getVoices();
+
+    // Prefer natural-sounding voices (Google, Microsoft, Apple Enhanced)
+    const preferredVoice = voices.find(voice =>
+      voice.name.includes('Google') ||
+      voice.name.includes('Enhanced') ||
+      voice.name.includes('Premium') ||
+      (voice.name.includes('Samantha') && voice.lang === 'en-US')
+    );
+
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+
+    // Slower, more natural rate
+    utterance.rate = 0.8;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setAppNotification('Speech error occurred.', true);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
     }
   };
 
@@ -163,12 +236,13 @@ export function usePractice(setAppNotification = () => {}) {
     processingNext,
     practiceNotification,
     enlargedImage,
-    
+    isSpeaking,
+
     // Session tracking
     setsOpenedThisSession,
     clearSessionTracking: () => setSetsOpenedThisSession([]),
     setPracticeNotification,
-    
+
     // Actions
     startPractice,
     startMixedPractice,
@@ -178,5 +252,7 @@ export function usePractice(setAppNotification = () => {}) {
     handleBookmark,
     setPracticeNotification,
     setEnlargedImage,
+    speakText,
+    stopSpeaking,
   };
 }

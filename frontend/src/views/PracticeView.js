@@ -63,17 +63,17 @@ function PracticeView({
       <div className={`flashcard ${practice.isFlipped ? 'flipped' : ''}`} onClick={practice.handleFlip}>
         
         {/* Bookmark Icon */}
-        <div 
+        <div
           onClick={handleBookmarkWrapper}
           style={{
-            position: 'absolute', 
+            position: 'absolute',
             top: '12px',
             right: '12px',
             fontSize: '32px',
             cursor: 'pointer',
             zIndex: 10,
-            color: practice.questions[practice.currentQuestionIndex].is_bookmarked 
-              ? '#fbbf24' 
+            color: practice.questions[practice.currentQuestionIndex].is_bookmarked
+              ? '#fbbf24'
               : (practice.isFlipped ? 'rgba(255,255,255,0.9)' : '#6b7280'),
             filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.2))',
             transition: 'all 0.2s ease'
@@ -105,7 +105,7 @@ function PracticeView({
                 }}
               />
             )}
-            
+
             <div className="flip-hint">Click to reveal</div>
           </>
         ) : (
@@ -114,6 +114,35 @@ function PracticeView({
             <div className="flip-hint">Click to question</div>
           </>
         )}
+
+        {/* Text-to-Speech Button - positioned at bottom of card */}
+        <div
+          onClick={practice.speakText}
+          className="speaker-button"
+          style={{
+            position: 'absolute',
+            bottom: '20px',
+            left: '20px',
+            fontSize: '28px',
+            cursor: 'pointer',
+            zIndex: 10,
+            color: practice.isSpeaking
+              ? (practice.isFlipped ? '#fff' : '#667eea')
+              : (practice.isFlipped ? 'rgba(255, 255, 255, 0.9)' : '#6b7280'),
+            filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.2))',
+            transition: 'all 0.2s ease',
+            background: practice.isFlipped ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.9)',
+            borderRadius: '50%',
+            width: '45px',
+            height: '45px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          title={practice.isSpeaking ? "Stop speaking" : "Read aloud"}
+        >
+          {practice.isSpeaking ? '🔊' : '🔈'}
+        </div>
       </div>
 
       <div className="flashcard-controls">

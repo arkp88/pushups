@@ -523,21 +523,34 @@ body {
 
 .flashcard.flipped .round-info { color: rgba(255, 255, 255, 0.6); }
 
-.question-text { font-size: 28px; line-height: 1.5; margin: 20px 0; width: 100%; font-weight: 500; }
-.answer-text { font-size: 24px; line-height: 1.5; width: 100%; font-weight: 500; }
+.question-text { font-size: 28px; line-height: 1.5; margin: 20px 0; width: 100%; font-weight: 500; text-align: left; }
+.answer-text { font-size: 24px; line-height: 1.5; width: 100%; font-weight: 500; text-align: center; }
+
+/* Style inline images within question/answer text */
+.question-text img,
+.answer-text img {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  display: block;
+  margin: 15px auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
 
 /* Question Images */
 .question-image {
   max-width: 100%;
   max-height: 200px; /* Slightly larger on desktop */
   object-fit: contain;
-  margin: 25px 0;
+  margin: 25px auto; /* Keep images centered */
   border-radius: 12px;
   cursor: zoom-in;
   border: 1px solid #f3f4f6;
   background: #fff;
   transition: transform 0.2s;
   box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  display: block; /* Required for margin auto centering */
 }
 
 .question-image:hover { transform: scale(1.02); }
@@ -618,6 +631,19 @@ body {
   50% { opacity: 0.85; }
 }
 
+/* Speaker button animation when speaking */
+.speaker-button {
+  transition: all 0.2s ease;
+}
+
+.speaker-button:hover {
+  transform: scale(1.1);
+}
+
+.speaker-button:active {
+  transform: scale(0.95);
+}
+
 .image-modal {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   background-color: rgba(0, 0, 0, 0.92);
@@ -681,7 +707,31 @@ body {
   .question-text { font-size: 20px; }
   .answer-text { font-size: 18px; }
   .question-image { max-height: 150px; }
-  
+
+  /* Mobile inline image sizing */
+  .question-text img,
+  .answer-text img {
+    max-height: 200px;
+  }
+
+  /* Mobile speaker button positioning */
+  .speaker-button {
+    bottom: 15px !important;
+    left: auto !important;
+    right: 15px !important;
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 26px !important;
+    background: rgba(102, 126, 234, 0.1) !important;
+    border: 2px solid rgba(102, 126, 234, 0.3) !important;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15) !important;
+  }
+
+  .flashcard.flipped .speaker-button {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border: 2px solid rgba(255, 255, 255, 0.4) !important;
+  }
+
   .flashcard-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .flashcard-controls .btn { grid-column: auto; padding: 12px; font-size: 14px; }
   

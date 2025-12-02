@@ -1,6 +1,7 @@
 import os
 import csv
 import io
+import re
 import jwt
 import hashlib
 import logging
@@ -156,9 +157,26 @@ def token_required(f):
     return decorated
 
 # --- HELPER: Parse and Save ---
+def convert_markdown_to_html(text):
+    """Convert simple markdown formatting to HTML."""
+    if not text:
+        return text
+
+    # Convert **bold** to <strong>bold</strong> (DOTALL flag to match across newlines)
+    text = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', text, flags=re.DOTALL)
+
+    # Convert *italic* to <em>italic</em> (but not if part of **)
+    # Use negative lookbehind and lookahead to avoid matching ** markers
+    text = re.sub(r'(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)', r'<em>\1</em>', text, flags=re.DOTALL)
+
+    # Convert _italic_ to <em>italic</em>
+    text = re.sub(r'_(.+?)_', r'<em>\1</em>', text, flags=re.DOTALL)
+
+    return text
+
 def parse_and_save_set(content, set_name, description, user_id, tags='', google_id=None):
     """Parses TSV content and saves to DB. Returns (set_id, question_count)."""
-    
+
     # 1. Generate Content Hash (SHA-256)
     content_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
 
@@ -205,16 +223,20 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
             question_text = row.get('questionText', '').strip()
             image_url = row.get('imageUrl', '').strip()
             answer_text = row.get('answerText', '').strip()
-            
+
             if image_url.startswith('__') and image_url.endswith('__'):
                 image_url = image_url.strip('_')
-            
+
+            # Convert markdown formatting to HTML
+            question_text = convert_markdown_to_html(question_text)
+            answer_text = convert_markdown_to_html(answer_text)
+
             if question_text and answer_text:
                 cur.execute(
-                    '''INSERT INTO questions 
+                    '''INSERT INTO questions
                        (set_id, round_no, question_no, question_text, image_url, answer_text)
                        VALUES (%s, %s, %s, %s, %s, %s)''',
-                    (set_id, round_no, question_no, question_text, 
+                    (set_id, round_no, question_no, question_text,
                      image_url if image_url else None, answer_text)
                 )
                 question_count += 1
@@ -364,14 +386,15 @@ def get_question_sets():
         cur.execute('''
             SELECT qs.*, u.username as uploaded_by_username,
                    COUNT(up.id) FILTER (WHERE up.user_id = %s AND up.attempted = true) as questions_attempted,
-                   so.id IS NOT NULL as directly_opened
+                   so.id IS NOT NULL as directly_opened,
+                   so.opened_at as last_opened
             FROM question_sets qs
             LEFT JOIN users u ON qs.uploaded_by = u.id
             LEFT JOIN questions q ON q.set_id = qs.id
             LEFT JOIN user_progress up ON up.question_id = q.id
             LEFT JOIN set_opens so ON so.set_id = qs.id AND so.user_id = %s
             WHERE qs.is_deleted = false
-            GROUP BY qs.id, u.username, so.id
+            GROUP BY qs.id, u.username, so.id, so.opened_at
             ORDER BY qs.created_at DESC
         ''', (request.current_user['id'], request.current_user['id']))
         sets = cur.fetchall()

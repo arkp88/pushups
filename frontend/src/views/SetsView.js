@@ -3,25 +3,44 @@ import React, { useState } from 'react';
 function SetsView({ questionSets, practice, startPracticeWrapper }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [setsFilter, setSetsFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('upload-date');
   const [displayCount, setDisplayCount] = useState(10);
 
   let sets = questionSets;
   if (setsFilter === 'completed') sets = sets.filter(s => s.questions_attempted === s.total_questions && s.total_questions > 0);
   else if (setsFilter === 'in-progress') sets = sets.filter(s => s.questions_attempted > 0 && s.questions_attempted < s.total_questions);
   else if (setsFilter === 'unattempted') sets = sets.filter(s => !s.questions_attempted || s.questions_attempted === 0);  // Zero questions answered
-  
-  const filtered = sets.filter(set => 
-    set.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+
+  const filtered = sets.filter(set =>
+    set.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (set.tags && set.tags.toLowerCase().includes(searchTerm.toLowerCase()))
   );
-  const displayed = filtered.slice(0, displayCount);
+
+  // Apply sorting
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === 'alphabetical') {
+      return a.name.localeCompare(b.name);
+    } else if (sortBy === 'upload-date') {
+      return new Date(b.created_at) - new Date(a.created_at); // Newest first
+    } else if (sortBy === 'last-played') {
+      // If both have last_opened, compare them; otherwise prioritize ones with last_opened
+      const aDate = a.last_opened ? new Date(a.last_opened) : new Date(0);
+      const bDate = b.last_opened ? new Date(b.last_opened) : new Date(0);
+      return bDate - aDate; // Most recent first
+    }
+    return 0;
+  });
+
+  const displayed = sorted.slice(0, displayCount);
 
   return (
     <div className="container">
       <h2>Question Sets</h2>
+
+      {/* Filter Buttons */}
       <div style={{display: 'flex', gap: '10px', margin: '20px 0', flexWrap: 'wrap'}}>
         {['all', 'completed', 'in-progress', 'unattempted'].map(filter => (
-          <button 
+          <button
             key={filter}
             className={`btn ${setsFilter === filter ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => { setSetsFilter(filter); setDisplayCount(10); }}
@@ -31,6 +50,32 @@ function SetsView({ questionSets, practice, startPracticeWrapper }) {
           </button>
         ))}
       </div>
+
+      {/* Sort Dropdown */}
+      <div style={{marginBottom: '20px'}}>
+        <label style={{display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151'}}>
+          Sort by:
+        </label>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+          style={{
+            padding: '10px 12px',
+            border: '2px solid #e5e7eb',
+            borderRadius: '8px',
+            fontSize: '14px',
+            backgroundColor: 'white',
+            cursor: 'pointer',
+            minWidth: '180px'
+          }}
+        >
+          <option value="upload-date">Upload Date (Newest)</option>
+          <option value="alphabetical">Alphabetical (A-Z)</option>
+          <option value="last-played">Last Played</option>
+        </select>
+      </div>
+
+      {/* Search Bar */}
       <input
         type="text"
         placeholder="Search by name or tag..."
