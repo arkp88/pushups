@@ -27,10 +27,12 @@ load_dotenv()
 app = Flask(__name__)
 
 # CORS configuration - whitelist specific origins
-CORS(app, origins=[
-    'http://localhost:3000',
-    os.getenv('FRONTEND_URL', '').strip()
-], supports_credentials=True)
+allowed_origins = ['http://localhost:3000']
+frontend_url = os.getenv('FRONTEND_URL', '').strip()
+if frontend_url:
+    allowed_origins.append(frontend_url)
+
+CORS(app, origins=allowed_origins, supports_credentials=True)
 
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
