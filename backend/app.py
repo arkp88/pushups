@@ -30,8 +30,11 @@ app = Flask(__name__)
 allowed_origins = ['http://localhost:3000']
 frontend_url = os.getenv('FRONTEND_URL', '').strip()
 if frontend_url:
+    # Remove trailing slash if present
+    frontend_url = frontend_url.rstrip('/')
     allowed_origins.append(frontend_url)
 
+logger.info(f"CORS allowed origins: {allowed_origins}")
 CORS(app, origins=allowed_origins)
 
 # Configuration
