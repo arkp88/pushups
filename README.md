@@ -9,14 +9,18 @@ A modern, production-ready flashcard quiz application with multi-user support, m
 ## ✨ Features
 
 - 🔐 Multi-user authentication via Supabase
-- 📥 Import from TSV or Google Drive
+- 📥 Import from TSV or Google Drive (with multi-file selection)
 - 🃏 Flashcard interface with smooth animations
 - ⭐ Bookmark important questions
 - 📊 Personal progress tracking & statistics
 - 🎲 Multiple practice modes (Random, Missed, Bookmarks, etc.)
 - 📱 Mobile-first responsive design with bottom navigation
+- ⌨️ Keyboard shortcuts & swipe gestures for power users
+- 🔥 Daily streak tracker to encourage consistent practice
 - ✨ Premium UI with gradients and glassmorphism
 - 🏷️ Tagging and search functionality
+- 🛡️ Security hardened (XSS protection, rate limiting, MIME validation)
+- ⚡ Optimized queries & error boundaries
 - ☁️ 100% free hosting (Supabase + Vercel + Render)
 
 ## 🚀 Quick Start
@@ -260,13 +264,21 @@ quiz-app/
 └── README.md               # This file
 ```
 
-## 🎯 Performance
+## 🎯 Performance & Security
 
-- **79% code reduction** - App.js: 1261 → 266 lines
+**Code Quality:**
+- **79% code reduction** - App.js: 1261 → 317 lines (refactored to custom hooks)
 - **Code splitting** - 6 lazy-loaded view chunks
 - **Connection pooling** - Handles 100+ concurrent users
 - **Memoization** - 10-15% fewer re-renders
-- **Mobile-optimized** - Bottom nav + auto-hiding header
+- **Mobile-optimized** - Swipe gestures, keyboard shortcuts, bottom nav
+
+**Security Hardening:**
+- **XSS Protection** - HTML sanitization with bleach library
+- **Rate Limiting** - 100 uploads/hour per user to prevent abuse
+- **MIME Validation** - Blocks malicious files with fake extensions
+- **Optimized Queries** - Stats query reduced from 6 queries to 1 CTE
+- **Error Boundaries** - React crash protection with friendly error UI
 
 ## 🔮 Future Enhancements
 

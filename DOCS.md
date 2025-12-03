@@ -22,12 +22,14 @@ A modern, production-ready flashcard quiz application with multi-user support, p
 ### Core Functionality
 - 🔐 **Multi-user authentication** via Supabase Auth
 - 📥 **Multiple import methods**: TSV upload or Google Drive integration
+- ☑️ **Multi-file selection** from Google Drive with checkboxes and batch import
 - 🃏 **Flashcard interface** with flip animations
 - 📊 **Personal progress tracking** per user per question
 - ⭐ **Bookmarking system** for important questions
 - ✅ **Answer tracking** (correct/incorrect/missed)
 - 🎲 **Multiple practice modes**: Continue, Browse, Random, Mixed, Missed, Bookmarks
 - 📈 **Statistics dashboard** with accuracy tracking
+- 🔥 **Daily streak tracker** to encourage consistent practice
 
 ### Design & UX
 - 📱 **Mobile-first responsive design** with bottom navigation
@@ -37,14 +39,25 @@ A modern, production-ready flashcard quiz application with multi-user support, p
 - 💎 **Consistent shadow system** throughout
 - 🔄 **Auto-hiding mobile header** on scroll
 - 🎯 **Icon-based bottom navigation** on mobile
+- ⌨️ **Keyboard shortcuts** (Space/Enter to flip, arrows to navigate, Esc to exit)
+- 👆 **Swipe gestures** (right = correct, left = missed) on mobile
 
 ### Features for Power Users
 - 🏷️ **Question set tagging** and filtering
 - 🔍 **Search functionality** by name or tags
 - ✏️ **Rename question sets** (owners only)
 - 🗑️ **Delete question sets** with two-step confirmation
-- 📂 **Google Drive folder navigation** for import
+- 📂 **Google Drive folder navigation** with compact list view
+- ☑️ **Multi-file selection** from Drive (select all, batch import)
 - 🔄 **Session persistence** (continue where you left off)
+
+### Security & Performance
+- 🛡️ **XSS Protection** - HTML sanitization with bleach library
+- 🚦 **Rate Limiting** - 100 uploads/hour per user to prevent abuse
+- 🔒 **MIME Type Validation** - Blocks malicious files with fake extensions
+- ⚡ **Optimized Queries** - Stats query reduced from 6 to 1 CTE
+- 🔧 **Error Boundaries** - React crash protection with friendly UI
+- 📄 **Pagination Support** - Optional limit/offset for large datasets
 
 ---
 
@@ -59,7 +72,9 @@ A modern, production-ready flashcard quiz application with multi-user support, p
 
 ### Backend
 - **Python 3.9** - Backend language
-- **Flask** - Web framework
+- **Flask 3.0** - Web framework
+- **Flask-Limiter** - Rate limiting protection
+- **Bleach** - HTML sanitization (XSS protection)
 - **PostgreSQL** - Database (via Supabase)
 - **Supabase** - Database hosting + Auth
 - **Render.com** - API hosting (free tier)
@@ -89,6 +104,7 @@ frontend/src/
 │
 ├── components/
 │   ├── Auth.js                      # Authentication UI
+│   ├── ErrorBoundary.js             # Error crash protection
 │   └── Navbar.js                    # Navigation component (mobile + desktop)
 │
 ├── hooks/
@@ -108,14 +124,21 @@ frontend/src/
 
 **Refactoring Evolution:**
 - **Original:** App.js was 1261 lines (monolithic)
-- **After Phase 4:** 298 lines (76% reduction) + 11 modular files
-- **After Phases 5-7:** 266 lines (79% reduction) + 12 modular files
+- **Current:** 317 lines (75% reduction) + 13 modular files
 
 **Performance Features:**
 - Code splitting with lazy loading (6 view chunks)
 - React.memo for optimized re-renders
 - useCallback hooks to prevent function recreation
 - Connection pooling on backend (1-10 connections)
+- Optimized stats query (6 queries → 1 CTE)
+- Error boundaries for crash protection
+
+**Security Features:**
+- HTML sanitization with bleach (prevents XSS)
+- Rate limiting (100 uploads/hour per user)
+- MIME type validation (blocks fake file extensions)
+- JWT authentication on all endpoints
 
 ### Backend Structure
 
@@ -127,8 +150,13 @@ backend/
 │                                    # - Structured logging (INFO/WARNING/ERROR)
 │                                    # - Enhanced error handling
 │                                    # - JWT validation & security
+│                                    # - HTML sanitization (bleach)
+│                                    # - Rate limiting (flask-limiter)
+│                                    # - MIME type validation
+│                                    # - Optimized CTE queries
 ├── database.py                      # PostgreSQL schema & init
-├── requirements.txt                 # Python dependencies
+├── requirements.txt                 # Python dependencies (updated Dec 2024)
+│                                    # New: bleach==6.1.0, flask-limiter==3.5.0
 └── .env                             # Environment variables
 ```
 
@@ -299,6 +327,7 @@ quiz-app/
     │   │
     │   ├── components/
     │   │   ├── Auth.js       # Login/signup
+    │   │   ├── ErrorBoundary.js  # Crash protection
     │   │   └── Navbar.js     # Navigation (mobile + desktop)
     │   │
     │   ├── hooks/
