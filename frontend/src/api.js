@@ -60,20 +60,40 @@ export const api = {
     formData.append('description', description);
     formData.append('tags', tags);
 
-    const response = await fetch(`${API_URL}/api/upload-tsv`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-      },
-      body: formData,
-    });
+    try {
+      const response = await fetch(`${API_URL}/api/upload-tsv`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: formData,
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Upload failed');
+      if (!response.ok) {
+        // Handle specific HTTP error codes
+        if (response.status === 413) {
+          throw new Error('File is too large. Maximum file size is 16MB.');
+        }
+
+        // Try to parse JSON error, but handle non-JSON responses
+        try {
+          const error = await response.json();
+          throw new Error(error.error || error.message || 'Upload failed');
+        } catch (jsonError) {
+          // If JSON parsing fails, get text response
+          const textError = await response.text();
+          throw new Error(textError || `Upload failed with status ${response.status}`);
+        }
+      }
+
+      return response.json();
+    } catch (error) {
+      // Handle network errors
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error('Network error: Unable to connect to server. The file might be too large, or the server may be unavailable.');
+      }
+      throw error;
     }
-
-    return response.json();
   },
 
   async getQuestionSets() {
