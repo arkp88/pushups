@@ -24,22 +24,25 @@ function PracticeView({
           e.preventDefault();
           practice.handleFlip();
           break;
-        case 'ArrowRight':
-        case '2':
+        case 'ArrowUp':
           e.preventDefault();
           if (practice.isFlipped && !practice.processingNext) {
             handleNextWrapper(true);
           }
           break;
-        case 'ArrowLeft':
-        case '1':
+        case 'ArrowDown':
           e.preventDefault();
           if (practice.isFlipped && !practice.processingNext) {
             handleNextWrapper(false);
           }
           break;
-        case 'ArrowUp':
-        case '0':
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (practice.currentQuestionIndex > 0 && !practice.processingNext) {
+            practice.handlePrevious();
+          }
+          break;
+        case 'ArrowRight':
           e.preventDefault();
           if (!practice.processingNext) {
             handleNextWrapper(null);
@@ -48,12 +51,6 @@ function PracticeView({
         case 'Escape':
           e.preventDefault();
           setView('sets');
-          break;
-        case 'ArrowDown':
-          e.preventDefault();
-          if (practice.currentQuestionIndex > 0) {
-            practice.handlePrevious();
-          }
           break;
         default:
           break;
@@ -158,8 +155,29 @@ function PracticeView({
           <div className="flashcard-progress" style={{color: '#666', fontWeight: '600'}}>
             Question {practice.currentQuestionIndex + 1} / {practice.questions.length}
           </div>
-          <div style={{fontSize: '11px', color: '#999', marginTop: '8px'}}>
-            💡 Space/Enter: flip | ←/1: wrong | →/2: correct | ↑/0: skip | Esc: back
+          
+          {/* Desktop keyboard shortcuts hint */}
+          <div className="desktop-only" style={{
+            fontSize: '13px', 
+            color: '#667eea', 
+            marginTop: '10px',
+            fontWeight: '500',
+            background: 'rgba(102, 126, 234, 0.08)',
+            padding: '8px 12px',
+            borderRadius: '6px',
+            display: 'inline-block'
+          }}>
+            ⌨️ Space: flip | ↑: correct | ↓: wrong | ←: prev | →: skip | Esc: back
+          </div>
+          
+          {/* Mobile swipe instructions */}
+          <div className="mobile-only" style={{
+            fontSize: '12px',
+            color: '#667eea',
+            marginTop: '10px',
+            fontWeight: '500'
+          }}>
+            👆 Swipe right for correct, left for wrong
           </div>
         </div>
       </div>

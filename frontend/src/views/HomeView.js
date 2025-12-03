@@ -16,33 +16,37 @@ const HomeView = memo(function HomeView({
       {/* Streak Banner */}
       {stats.streak > 0 && (
         <div style={{
-          background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-          padding: '20px',
-          borderRadius: '12px',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          padding: '16px 20px',
+          borderRadius: '10px',
           textAlign: 'center',
-          marginBottom: '30px',
-          boxShadow: '0 4px 16px rgba(245, 87, 108, 0.3)',
-          animation: 'pulse 2s ease-in-out infinite'
+          marginBottom: '25px',
+          boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '12px'
         }}>
           <div style={{
-            fontSize: '32px',
-            marginBottom: '5px'
+            fontSize: '28px'
           }}>
             🔥
           </div>
-          <div style={{
-            color: 'white',
-            fontSize: '24px',
-            fontWeight: '700',
-            marginBottom: '5px'
-          }}>
-            {stats.streak} Day Streak!
-          </div>
-          <div style={{
-            color: 'rgba(255, 255, 255, 0.9)',
-            fontSize: '14px'
-          }}>
-            {stats.streak === 1 ? 'Great start! Keep it going.' : `You're on fire! Don't break the chain.`}
+          <div>
+            <div style={{
+              color: 'white',
+              fontSize: '20px',
+              fontWeight: '700',
+              marginBottom: '2px'
+            }}>
+              {stats.streak} Day Streak!
+            </div>
+            <div style={{
+              color: 'rgba(255, 255, 255, 0.9)',
+              fontSize: '13px'
+            }}>
+              {stats.streak === 1 ? 'Great start! Keep it going.' : `You're on fire! Don't break the chain.`}
+            </div>
           </div>
         </div>
       )}

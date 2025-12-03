@@ -743,3 +743,18 @@ body {
   .flashcard-controls .btn:first-child:nth-last-child(4) ~ .btn:nth-child(3) { order: 2; grid-column: 2; }
   .flashcard-controls .btn:first-child:nth-last-child(4) ~ .btn:nth-child(4) { order: 4; grid-column: 2; }
 }
+
+/* Utility classes for responsive visibility */
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .mobile-only {
+    display: block;
+  }
+}
