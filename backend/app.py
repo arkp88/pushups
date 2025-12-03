@@ -41,9 +41,18 @@ CORS(app, origins=allowed_origins)
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
+app.config['MAX_CONTENT_PATH'] = None  # No path-specific limits
 DATABASE_URL = os.getenv('DATABASE_URL')
 SUPABASE_JWT_SECRET = os.getenv('SUPABASE_JWT_SECRET')
 GOOGLE_DRIVE_API_KEY = os.getenv('GOOGLE_DRIVE_API_KEY')
+
+# Error handler for file too large
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    return jsonify({
+        'error': 'File too large',
+        'message': 'The uploaded file exceeds the maximum size limit of 16MB. Please upload a smaller file.'
+    }), 413
 
 # Validate required environment variables
 if not DATABASE_URL:
@@ -182,29 +191,41 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
 
     conn = get_db()
     cur = conn.cursor()
-    
+
     try:
         # 2. Check for DUPLICATES
         # Check if THIS user has already uploaded this EXACT content
         cur.execute('''
-            SELECT id FROM question_sets 
+            SELECT id FROM question_sets
             WHERE content_hash = %s AND uploaded_by = %s AND is_deleted = false
         ''', (content_hash, user_id))
-        
+
         existing = cur.fetchone()
         if existing:
-            # STOP: Return existing ID. 
+            # STOP: Return existing ID.
+            logger.info(f"Duplicate content detected for user {user_id}, returning existing set {existing['id']}")
             return existing['id'], 0
 
         # ... (Standard parsing logic) ...
         content = content.replace('\r\n', '\n').replace('\r', '\n')
+
+        # Remove BOM if present
+        if content.startswith('\ufeff'):
+            content = content[1:]
+
         reader = csv.DictReader(io.StringIO(content), delimiter='\t')
-        
+
         required_headers = ['questionText', 'answerText']
-        if not reader.fieldnames or not all(h in reader.fieldnames for h in required_headers):
+
+        # Filter out empty column names
+        fieldnames = [f for f in (reader.fieldnames or []) if f and f.strip()]
+
+        logger.info(f"TSV Headers detected: {fieldnames}")
+
+        if not fieldnames or not all(h in fieldnames for h in required_headers):
              if ',' in content.split('\n')[0] and '\t' not in content.split('\n')[0]:
-                 raise Exception("File appears to be CSV, not TSV.")
-             raise Exception(f"Missing required columns. Found: {reader.fieldnames}")
+                 raise Exception("File appears to be CSV, not TSV. Please use tab-separated values.")
+             raise Exception(f"Missing required columns: {required_headers}. Found: {fieldnames}")
 
         # 3. Insert New Set (Include content_hash)
         cur.execute(
@@ -217,6 +238,9 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
         set_id = cur.fetchone()['id']
         
         question_count = 0
+        batch_size = 100
+        questions_batch = []
+
         for row in reader:
             round_no = row.get('roundNo', '').strip()
             question_no = row.get('questionNo', '').strip()
@@ -232,17 +256,34 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
             answer_text = convert_markdown_to_html(answer_text)
 
             if question_text and answer_text:
-                cur.execute(
-                    '''INSERT INTO questions
-                       (set_id, round_no, question_no, question_text, image_url, answer_text)
-                       VALUES (%s, %s, %s, %s, %s, %s)''',
-                    (set_id, round_no, question_no, question_text,
-                     image_url if image_url else None, answer_text)
-                )
+                questions_batch.append((
+                    set_id, round_no, question_no, question_text,
+                    image_url if image_url else None, answer_text
+                ))
                 question_count += 1
-        
+
+                # Batch insert for better performance
+                if len(questions_batch) >= batch_size:
+                    cur.executemany(
+                        '''INSERT INTO questions
+                           (set_id, round_no, question_no, question_text, image_url, answer_text)
+                           VALUES (%s, %s, %s, %s, %s, %s)''',
+                        questions_batch
+                    )
+                    questions_batch = []
+
+        # Insert remaining questions
+        if questions_batch:
+            cur.executemany(
+                '''INSERT INTO questions
+                   (set_id, round_no, question_no, question_text, image_url, answer_text)
+                   VALUES (%s, %s, %s, %s, %s, %s)''',
+                questions_batch
+            )
+
         cur.execute('UPDATE question_sets SET total_questions = %s WHERE id = %s', (question_count, set_id))
         conn.commit()
+        logger.info(f"Successfully imported {question_count} questions into set {set_id}")
         return set_id, question_count
 
     except Exception as e:
@@ -361,7 +402,27 @@ def upload_tsv():
         return jsonify({'error': 'File must be a TSV file'}), 400
 
     try:
-        content = file.read().decode('utf-8')
+        # Read the file content with better error handling
+        raw_content = file.read()
+
+        # Try UTF-8 first, then fallback to other encodings
+        try:
+            content = raw_content.decode('utf-8')
+        except UnicodeDecodeError:
+            try:
+                content = raw_content.decode('utf-8-sig')  # UTF-8 with BOM
+            except UnicodeDecodeError:
+                try:
+                    content = raw_content.decode('latin-1')  # Fallback
+                except UnicodeDecodeError:
+                    return jsonify({'error': 'File encoding not supported. Please save as UTF-8.'}), 400
+
+        # Check file size
+        if len(content) > 10 * 1024 * 1024:  # 10MB text limit
+            return jsonify({'error': 'File too large. Maximum 10MB of text content.'}), 400
+
+        logger.info(f"Processing TSV upload: {file.filename}, size: {len(content)} bytes")
+
         set_id, count = parse_and_save_set(
             content=content,
             set_name=set_name,
@@ -372,8 +433,11 @@ def upload_tsv():
 
         return jsonify({'success': True, 'set_id': set_id, 'questions_imported': count, 'set_name': set_name})
 
+    except UnicodeDecodeError as e:
+        logger.error(f"Encoding error in TSV upload: {str(e)}")
+        return jsonify({'error': 'File encoding error. Please save your file as UTF-8.'}), 400
     except Exception as e:
-        logger.error(f"Upload TSV error: {str(e)}")
+        logger.error(f"Upload TSV error: {str(e)}", exc_info=True)
         return jsonify({'error': f'Failed to parse TSV: {str(e)}'}), 500
 
 @app.route('/api/question-sets', methods=['GET'])
