@@ -188,19 +188,29 @@ export function usePractice(setAppNotification = () => {}) {
 
     const utterance = new SpeechSynthesisUtterance(plainText);
 
-    // Get available voices and prefer high-quality ones
-    const voices = window.speechSynthesis.getVoices();
+    // Function to set voice once voices are loaded
+    const setVoice = () => {
+      const voices = window.speechSynthesis.getVoices();
 
-    // Prefer natural-sounding voices (Google, Microsoft, Apple Enhanced)
-    const preferredVoice = voices.find(voice =>
-      voice.name.includes('Google') ||
-      voice.name.includes('Enhanced') ||
-      voice.name.includes('Premium') ||
-      (voice.name.includes('Samantha') && voice.lang === 'en-US')
-    );
+      // Prefer natural-sounding voices (Google, Microsoft, Apple Enhanced)
+      const preferredVoice = voices.find(voice =>
+        voice.name.includes('Google') ||
+        voice.name.includes('Enhanced') ||
+        voice.name.includes('Premium') ||
+        (voice.name.includes('Samantha') && voice.lang === 'en-US')
+      );
 
-    if (preferredVoice) {
-      utterance.voice = preferredVoice;
+      if (preferredVoice) {
+        utterance.voice = preferredVoice;
+      }
+    };
+
+    // Try to set voice immediately
+    setVoice();
+
+    // If voices aren't loaded yet, wait for them
+    if (window.speechSynthesis.getVoices().length === 0) {
+      window.speechSynthesis.addEventListener('voiceschanged', setVoice, { once: true });
     }
 
     // Slower, more natural rate

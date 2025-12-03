@@ -598,10 +598,6 @@ body {
   color: #1f2937;
   margin-bottom: 12px;
   font-size: 17px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding-right: 35px;
 }
 .set-info { display: flex; gap: 25px; color: #6b7280; font-size: 15px; }
 
