@@ -160,49 +160,125 @@ function UploadView({
                   <div style={{display: 'flex', alignItems: 'center', marginBottom: '15px', gap: '10px', flexWrap: 'wrap'}}>
                     <button className="btn btn-secondary" onClick={upload.handleDriveRootClick} disabled={upload.drivePath.length <= 1 || upload.driveLoading}>🏠 Root</button>
                     <button className="btn btn-secondary" onClick={upload.handleDriveBackClick} disabled={upload.drivePath.length <= 1 || upload.driveLoading}>⬅ Back</button>
-                    <div style={{fontSize: '14px', color: '#666'}}>
+                    <div style={{fontSize: '14px', color: '#666', flex: 1}}>
                       {upload.drivePath.map(p => p.name).join(' > ')}
                     </div>
+                    {upload.selectedDriveFiles.length > 0 && (
+                      <button
+                        className="btn btn-primary"
+                        onClick={upload.importSelectedDriveFiles}
+                        style={{fontSize: '14px', padding: '8px 16px'}}
+                      >
+                        📥 Import Selected ({upload.selectedDriveFiles.length})
+                      </button>
+                    )}
+                  </div>
+
+                  <div style={{display: 'flex', gap: '10px', marginBottom: '15px', flexWrap: 'wrap'}}>
+                    <input
+                      type="text"
+                      placeholder="Search current folder..."
+                      value={upload.driveSearchTerm}
+                      onChange={(e) => upload.setDriveSearchTerm(e.target.value)}
+                      style={{flex: 1, minWidth: '200px', padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px'}}
+                    />
+                    {upload.driveFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder').length > 0 && (
+                      <button
+                        className="btn btn-secondary"
+                        onClick={upload.selectAllDriveFiles}
+                        style={{fontSize: '14px', padding: '8px 16px', whiteSpace: 'nowrap'}}
+                      >
+                        ✓ Select All Files
+                      </button>
+                    )}
+                    {upload.selectedDriveFiles.length > 0 && (
+                      <button
+                        className="btn btn-secondary"
+                        onClick={upload.clearDriveSelection}
+                        style={{fontSize: '14px', padding: '8px 16px', whiteSpace: 'nowrap'}}
+                      >
+                        ✕ Clear
+                      </button>
+                    )}
                   </div>
                   
-                  <input
-                    type="text"
-                    placeholder="Search current folder..."
-                    value={upload.driveSearchTerm}
-                    onChange={(e) => upload.setDriveSearchTerm(e.target.value)}
-                    style={{width: '100%', padding: '10px', marginBottom: '15px', border: '1px solid #d1d5db', borderRadius: '6px'}}
-                  />
-                  
-                  <div className="set-list" style={{minHeight: '200px', position: 'relative'}}>
+                  <div style={{minHeight: '200px', maxHeight: '500px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '8px', background: 'white'}}>
                     {upload.driveLoading ? (
                        <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', color: '#667eea', fontWeight: 'bold'}}>Loading folder...</div>
                     ) : (
                       <>
                         {upload.driveFiles
                           .filter(file => file.name.toLowerCase().includes(upload.driveSearchTerm.toLowerCase()))
-                          .map(file => (
-                          <div 
-                            key={file.id} 
-                            className="set-card" 
-                            onClick={() => {
-                                if (file.mimeType === 'application/vnd.google-apps.folder') {
-                                    upload.setDriveSearchTerm('');
-                                    upload.handleDriveFolderClick(file);
-                                } else {
-                                    upload.handleDriveFileClick(file);
-                                }
-                            }}
-                            style={{cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px'}}
-                          >
-                            <div style={{fontSize: '24px'}}>
-                              {file.mimeType === 'application/vnd.google-apps.folder' ? '📁' : '📄'}
-                            </div>
-                            <div>
-                              <h4 style={{margin: 0}}>{file.name}</h4>
-                            </div>
-                          </div>
-                        ))}
-                        {upload.driveFiles.length === 0 && <p style={{color: '#999', textAlign: 'center', marginTop: '20px'}}>No files found.</p>}
+                          .map(file => {
+                            const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+                            const isSelected = upload.selectedDriveFiles.some(f => f.id === file.id);
+
+                            return (
+                              <div
+                                key={file.id}
+                                onClick={() => {
+                                    if (isFolder) {
+                                        upload.setDriveSearchTerm('');
+                                        upload.handleDriveFolderClick(file);
+                                    } else {
+                                        upload.toggleDriveFileSelection(file);
+                                    }
+                                }}
+                                style={{
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '12px',
+                                  padding: '10px 16px',
+                                  borderBottom: '1px solid #f3f4f6',
+                                  transition: 'background 0.15s ease',
+                                  background: isSelected ? '#eff6ff' : 'white',
+                                  ':hover': {background: '#f9fafb'}
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = isSelected ? '#eff6ff' : '#f9fafb'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = isSelected ? '#eff6ff' : 'white'}
+                              >
+                                {!isFolder && (
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onClick={(e) => e.stopPropagation()}
+                                    onChange={(e) => {
+                                      e.stopPropagation();
+                                      upload.toggleDriveFileSelection(file);
+                                    }}
+                                    style={{
+                                      width: '18px',
+                                      height: '18px',
+                                      cursor: 'pointer',
+                                      flexShrink: 0,
+                                      accentColor: '#667eea'
+                                    }}
+                                  />
+                                )}
+                                <div style={{fontSize: '20px', flexShrink: 0, marginLeft: isFolder ? '26px' : '0'}}>
+                                  {isFolder ? '📁' : '📄'}
+                                </div>
+                                <div style={{flex: 1, minWidth: 0}}>
+                                  <div style={{
+                                    margin: 0,
+                                    fontSize: '15px',
+                                    color: '#1f2937',
+                                    fontWeight: isFolder ? '600' : '500',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                  }}>
+                                    {file.name}
+                                  </div>
+                                </div>
+                                {isFolder && (
+                                  <div style={{fontSize: '14px', color: '#9ca3af', flexShrink: 0}}>→</div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        {upload.driveFiles.length === 0 && <p style={{color: '#999', textAlign: 'center', padding: '40px 20px', margin: 0}}>No files found.</p>}
                       </>
                     )}
                   </div>

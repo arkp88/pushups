@@ -17,7 +17,8 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
   const [currentDriveFolder, setCurrentDriveFolder] = useState(ROOT_FOLDER_ID);
   const [driveSearchTerm, setDriveSearchTerm] = useState('');
   const [driveLoading, setDriveLoading] = useState(false);
-  
+  const [selectedDriveFiles, setSelectedDriveFiles] = useState([]);
+
   const driveTopRef = useRef(null);
 
   // Load Drive files when switching to Drive mode
@@ -39,6 +40,7 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
       setDriveLoading(true);
       const data = await api.listDriveFiles(folderId);
       setDriveFiles(data.files);
+      setSelectedDriveFiles([]); // Clear selection when navigating
     } catch (error) {
       console.error('Error loading Drive files:', error);
       // REPLACE alert()
@@ -49,6 +51,12 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
   };
 
   const handleDriveFolderClick = (folder) => {
+    // Prevent adding the same folder twice if already at the end of path
+    const lastFolder = drivePath[drivePath.length - 1];
+    if (lastFolder && lastFolder.id === folder.id) {
+      return; // Already in this folder, don't add again
+    }
+
     setDrivePath([...drivePath, folder]);
     setCurrentDriveFolder(folder.id);
     setCustomName('');
@@ -73,14 +81,41 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
     setUploadSuccess('');
     const cleanFileName = file.name.replace('.tsv', '');
     let autoName = cleanFileName;
-    
+
     if (drivePath.length > 1) {
       const setterName = drivePath[1].name;
       autoName = `${setterName} - ${cleanFileName}`;
     }
-    
+
     setCustomName(autoName);
     setPendingUpload({ type: 'drive', data: file });
+  };
+
+  const toggleDriveFileSelection = (file) => {
+    setSelectedDriveFiles(prev => {
+      const isSelected = prev.some(f => f.id === file.id);
+      if (isSelected) {
+        return prev.filter(f => f.id !== file.id);
+      } else {
+        return [...prev, file];
+      }
+    });
+  };
+
+  const selectAllDriveFiles = () => {
+    const tsvFiles = driveFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder');
+    setSelectedDriveFiles(tsvFiles);
+  };
+
+  const clearDriveSelection = () => {
+    setSelectedDriveFiles([]);
+  };
+
+  const importSelectedDriveFiles = () => {
+    if (selectedDriveFiles.length === 0) return;
+    setUploadSuccess('');
+    setCustomName(''); // Multi-file import doesn't use custom name
+    setPendingUpload({ type: 'drive-multi', data: selectedDriveFiles });
   };
 
   const handleLocalFileSelect = (event) => {
@@ -109,7 +144,7 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
 
       if (pendingUpload.type === 'local') {
         const files = pendingUpload.data;
-        
+
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
           let setName;
@@ -118,13 +153,30 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
           } else {
             setName = file.name.replace('.tsv', '');
           }
-          
+
           await api.uploadTSV(file, setName, '', uploadTags);
         }
       } else if (pendingUpload.type === 'drive') {
         const file = pendingUpload.data;
         const finalName = customName.trim() || file.name.replace('.tsv', '');
         await api.importDriveFile(file.id, file.name, uploadTags, finalName);
+      } else if (pendingUpload.type === 'drive-multi') {
+        const files = pendingUpload.data;
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          let setName = file.name.replace('.tsv', '');
+
+          // Add folder prefix if in subfolder
+          if (drivePath.length > 1) {
+            const setterName = drivePath[1].name;
+            setName = `${setterName} - ${setName}`;
+          }
+
+          await api.importDriveFile(file.id, file.name, uploadTags, setName);
+        }
+
+        setSelectedDriveFiles([]); // Clear selection after upload
       }
 
       setPendingUpload(null);
@@ -151,7 +203,7 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
     uploadError,
     uploadSuccess,
     uploadSubView,
-    
+
     // Drive State
     driveFiles,
     drivePath,
@@ -159,7 +211,8 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
     driveSearchTerm,
     driveLoading,
     driveTopRef,
-    
+    selectedDriveFiles,
+
     // Actions
     setUploadTags,
     setCustomName,
@@ -173,5 +226,9 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
     handleDriveFileClick,
     handleLocalFileSelect,
     executeUpload,
+    toggleDriveFileSelection,
+    selectAllDriveFiles,
+    clearDriveSelection,
+    importSelectedDriveFiles,
   };
 }

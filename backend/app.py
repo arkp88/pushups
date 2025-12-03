@@ -9,12 +9,15 @@ from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import psycopg2
 from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
+import bleach
 
 # Configure logging
 logging.basicConfig(
@@ -37,6 +40,21 @@ if frontend_url:
 
 logger.info(f"CORS allowed origins: {allowed_origins}")
 CORS(app, origins=allowed_origins)
+
+# Rate limiting configuration - use user ID when authenticated, otherwise IP
+def get_rate_limit_key():
+    # Try to get user ID from request context (set by @token_required decorator)
+    if hasattr(request, 'current_user') and request.current_user:
+        return f"user_{request.current_user['id']}"
+    # Fallback to IP address for non-authenticated endpoints
+    return get_remote_address()
+
+limiter = Limiter(
+    app=app,
+    key_func=get_rate_limit_key,
+    default_limits=[],  # No default limits - apply per-endpoint instead
+    storage_uri="memory://"  # Use in-memory storage (simple, no Redis needed)
+)
 
 # Configuration
 app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY')
@@ -167,7 +185,7 @@ def token_required(f):
 
 # --- HELPER: Parse and Save ---
 def convert_markdown_to_html(text):
-    """Convert simple markdown formatting to HTML."""
+    """Convert simple markdown formatting to HTML and sanitize output."""
     if not text:
         return text
 
@@ -180,6 +198,10 @@ def convert_markdown_to_html(text):
 
     # Convert _italic_ to <em>italic</em>
     text = re.sub(r'_(.+?)_', r'<em>\1</em>', text, flags=re.DOTALL)
+
+    # Sanitize HTML to prevent XSS attacks - only allow safe formatting tags
+    allowed_tags = ['strong', 'em', 'br', 'p']
+    text = bleach.clean(text, tags=allowed_tags, strip=True)
 
     return text
 
@@ -337,6 +359,7 @@ def list_drive_files():
 
 @app.route('/api/drive/import', methods=['POST'])
 @token_required
+@limiter.limit("100 per hour")  # Allow batch uploads (20+ files), prevent extreme abuse
 def import_drive_file():
     data = request.json
     file_id = data.get('fileId')
@@ -389,6 +412,7 @@ def health_check():
 
 @app.route('/api/upload-tsv', methods=['POST'])
 @token_required
+@limiter.limit("100 per hour")  # Allow batch uploads (20+ files), prevent extreme abuse
 def upload_tsv():
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
@@ -400,6 +424,20 @@ def upload_tsv():
 
     if not file.filename.endswith('.tsv'):
         return jsonify({'error': 'File must be a TSV file'}), 400
+
+    # Validate MIME type to prevent uploading malicious files with .tsv extension
+    allowed_mime_types = [
+        'text/tab-separated-values',
+        'text/plain',
+        'application/octet-stream',  # Some browsers use this for .tsv files
+        'text/tsv'
+    ]
+    if file.content_type and file.content_type not in allowed_mime_types:
+        logger.warning(f"Rejected file upload with invalid MIME type: {file.content_type}")
+        return jsonify({
+            'error': 'Invalid file type',
+            'message': f'File must be a TSV file (detected type: {file.content_type})'
+        }), 400
 
     try:
         # Read the file content with better error handling
@@ -445,9 +483,15 @@ def upload_tsv():
 def get_question_sets():
     conn = None
     try:
+        # Optional pagination parameters (backward compatible - no limit by default)
+        limit = request.args.get('limit', type=int)
+        offset = request.args.get('offset', default=0, type=int)
+
         conn = get_db()
         cur = conn.cursor()
-        cur.execute('''
+
+        # Build query with optional LIMIT and OFFSET
+        query = '''
             SELECT qs.*, u.username as uploaded_by_username,
                    COUNT(up.id) FILTER (WHERE up.user_id = %s AND up.attempted = true) as questions_attempted,
                    so.id IS NOT NULL as directly_opened,
@@ -460,7 +504,15 @@ def get_question_sets():
             WHERE qs.is_deleted = false
             GROUP BY qs.id, u.username, so.id, so.opened_at
             ORDER BY qs.created_at DESC
-        ''', (request.current_user['id'], request.current_user['id']))
+        '''
+        params = [request.current_user['id'], request.current_user['id']]
+
+        # Add pagination if limit is specified
+        if limit is not None:
+            query += ' LIMIT %s OFFSET %s'
+            params.extend([limit, offset])
+
+        cur.execute(query, params)
         sets = cur.fetchall()
         cur.close()
         return jsonify({'sets': sets})
@@ -696,42 +748,33 @@ def get_stats():
     try:
         conn = get_db()
         cur = conn.cursor()
-        
-        cur.execute('SELECT COUNT(q.id) as total FROM questions q JOIN question_sets qs ON q.set_id = qs.id WHERE qs.is_deleted = false')
-        total_questions = cur.fetchone()['total']
-        
+
+        # Optimized: Single query with CTE to get all stats at once
         cur.execute('''
-            SELECT COUNT(up.id) as attempted FROM user_progress up
-            JOIN questions q ON up.question_id = q.id
-            JOIN question_sets qs ON q.set_id = qs.id
-            WHERE up.user_id = %s AND up.attempted = true AND qs.is_deleted = false
-        ''', (request.current_user['id'],))
-        attempted = cur.fetchone()['attempted']
-        
-        cur.execute('''
-            SELECT COUNT(up.id) as correct FROM user_progress up
-            JOIN questions q ON up.question_id = q.id
-            JOIN question_sets qs ON q.set_id = qs.id
-            WHERE up.user_id = %s AND up.correct = true AND qs.is_deleted = false
-        ''', (request.current_user['id'],))
-        correct = cur.fetchone()['correct']
-        
-        cur.execute('''
-            SELECT COUNT(mq.id) as missed FROM missed_questions mq
-            JOIN questions q ON mq.question_id = q.id
-            JOIN question_sets qs ON q.set_id = qs.id
-            WHERE mq.user_id = %s AND qs.is_deleted = false
-        ''', (request.current_user['id'],))
-        missed = cur.fetchone()['missed']
-        
-        cur.execute('''
-            SELECT COUNT(b.id) as bookmarks 
-            FROM bookmarks b
-            JOIN questions q ON b.question_id = q.id
-            JOIN question_sets qs ON q.set_id = qs.id
-            WHERE b.user_id = %s AND qs.is_deleted = false
-        ''', (request.current_user['id'],))
-        bookmarks = cur.fetchone()['bookmarks']
+            WITH active_questions AS (
+                SELECT q.id
+                FROM questions q
+                JOIN question_sets qs ON q.set_id = qs.id
+                WHERE qs.is_deleted = false
+            )
+            SELECT
+                COUNT(DISTINCT aq.id) as total_questions,
+                COUNT(DISTINCT up.id) FILTER (WHERE up.attempted = true) as attempted,
+                COUNT(DISTINCT up.id) FILTER (WHERE up.correct = true) as correct,
+                COUNT(DISTINCT mq.id) as missed,
+                COUNT(DISTINCT b.id) as bookmarks
+            FROM active_questions aq
+            LEFT JOIN user_progress up ON aq.id = up.question_id AND up.user_id = %s
+            LEFT JOIN missed_questions mq ON aq.id = mq.question_id AND mq.user_id = %s
+            LEFT JOIN bookmarks b ON aq.id = b.question_id AND b.user_id = %s
+        ''', (request.current_user['id'], request.current_user['id'], request.current_user['id']))
+
+        stats = cur.fetchone()
+        total_questions = stats['total_questions']
+        attempted = stats['attempted']
+        correct = stats['correct']
+        missed = stats['missed']
+        bookmarks = stats['bookmarks']
         
         # Calculate daily streak
         cur.execute('''
@@ -823,13 +866,17 @@ def toggle_bookmark(question_id):
 def get_mixed_questions():
     try:
         filter_type = request.args.get('filter', 'all')
+        # Optional pagination parameters (backward compatible - no limit by default)
+        limit = request.args.get('limit', type=int)
+        offset = request.args.get('offset', default=0, type=int)
+
         conn = get_db()
         cur = conn.cursor()
-        
+
         # Base query now includes is_bookmarked
         base_query = '''
             SELECT q.*, up.attempted, up.correct, up.attempt_count, up.last_attempted,
-                   mq.id IS NOT NULL as is_missed, 
+                   mq.id IS NOT NULL as is_missed,
                    b.id IS NOT NULL as is_bookmarked, -- <--- ADD THIS
                    qs.name as set_name
             FROM questions q
@@ -839,7 +886,7 @@ def get_mixed_questions():
             LEFT JOIN bookmarks b ON b.question_id = q.id AND b.user_id = %s -- <--- JOIN THIS
             WHERE qs.is_deleted = false
         '''
-        
+
         params = [request.current_user['id'], request.current_user['id'], request.current_user['id']]
 
         if filter_type == 'unattempted':
@@ -850,7 +897,12 @@ def get_mixed_questions():
             query = base_query + ' AND b.id IS NOT NULL ORDER BY RANDOM()'
         else:
             query = base_query + ' ORDER BY RANDOM()'
-            
+
+        # Add pagination if limit is specified
+        if limit is not None:
+            query += ' LIMIT %s OFFSET %s'
+            params.extend([limit, offset])
+
         cur.execute(query, params)
         questions = cur.fetchall()
         cur.close()

@@ -3,6 +3,7 @@ import { supabase } from './supabaseClient';
 import { api, setBackendWakingCallback } from './api';
 import Auth from './components/Auth';
 import Navbar from './components/Navbar';
+import ErrorBoundary from './components/ErrorBoundary';
 import { useStats } from './hooks/useStats';
 import { useQuestionSets } from './hooks/useQuestionSets';
 import { usePractice } from './hooks/usePractice';
@@ -185,7 +186,8 @@ function App() {
     <div className="App">
       <Navbar view={view} setView={setView} showNavbar={showNavbar} session={session} />
 
-      <Suspense fallback={LoadingFallback}>
+      <ErrorBoundary>
+        <Suspense fallback={LoadingFallback}>
         {/* Backend Wake-Up Notification */}
         {backendWaking && (
           <div className="notification-banner wake-notification">
@@ -309,6 +311,7 @@ function App() {
         </div>
       )}
       </Suspense>
+      </ErrorBoundary>
 
     </div>
   );
