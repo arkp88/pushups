@@ -159,7 +159,7 @@ function PracticeView({
             Question {practice.currentQuestionIndex + 1} / {practice.questions.length}
           </div>
           <div style={{fontSize: '11px', color: '#999', marginTop: '8px'}}>
-            💡 Space/Enter: flip | ←/1: wrong | →/2: right | ↑/0: skip | Esc: back
+            💡 Space/Enter: flip | ←/1: wrong | →/2: correct | ↑/0: skip | Esc: back
           </div>
         </div>
       </div>
@@ -296,20 +296,20 @@ function PracticeView({
               ← Prev
             </button>
             <button 
-              className="btn btn-success" 
-              onClick={() => handleNextWrapper(true)}
-              disabled={practice.processingNext}
-              style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
-            >
-              {practice.processingNext ? '...' : '✓ Right'}
-            </button>
-            <button 
               className="btn btn-warning" 
               onClick={() => handleNextWrapper(false)}
               disabled={practice.processingNext}
               style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
             >
               {practice.processingNext ? '...' : '✗ Wrong'}
+            </button>
+            <button 
+              className="btn btn-success" 
+              onClick={() => handleNextWrapper(true)}
+              disabled={practice.processingNext}
+              style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
+            >
+              {practice.processingNext ? '...' : '✓ Right'}
             </button>
             <button 
               className="btn btn-secondary" 

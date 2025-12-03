@@ -13,6 +13,40 @@ const HomeView = memo(function HomeView({
 }) {
   return (
     <div className="home-container">
+      {/* Streak Banner */}
+      {stats.streak > 0 && (
+        <div style={{
+          background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+          padding: '20px',
+          borderRadius: '12px',
+          textAlign: 'center',
+          marginBottom: '30px',
+          boxShadow: '0 4px 16px rgba(245, 87, 108, 0.3)',
+          animation: 'pulse 2s ease-in-out infinite'
+        }}>
+          <div style={{
+            fontSize: '32px',
+            marginBottom: '5px'
+          }}>
+            🔥
+          </div>
+          <div style={{
+            color: 'white',
+            fontSize: '24px',
+            fontWeight: '700',
+            marginBottom: '5px'
+          }}>
+            {stats.streak} Day Streak!
+          </div>
+          <div style={{
+            color: 'rgba(255, 255, 255, 0.9)',
+            fontSize: '14px'
+          }}>
+            {stats.streak === 1 ? 'Great start! Keep it going.' : `You're on fire! Don't break the chain.`}
+          </div>
+        </div>
+      )}
+      
       <h2 style={{marginBottom: '30px', textAlign: 'center'}}>Ready to Play?</h2>
 
       <div className="practice-modes">
@@ -151,14 +185,6 @@ const HomeView = memo(function HomeView({
         <div className="quick-stat-card">
           <div className="quick-stat-value">{stats.accuracy}%</div>
           <div className="quick-stat-label">Accuracy</div>
-        </div>
-        <div className="quick-stat-card" style={{background: stats.streak > 0 ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' : 'white'}}>
-          <div className="quick-stat-value" style={{color: stats.streak > 0 ? 'white' : 'inherit'}}>
-            {stats.streak > 0 ? '🔥' : '💤'} {stats.streak || 0}
-          </div>
-          <div className="quick-stat-label" style={{color: stats.streak > 0 ? 'rgba(255,255,255,0.9)' : 'inherit'}}>
-            Day Streak
-          </div>
         </div>
       </div>
     </div>
