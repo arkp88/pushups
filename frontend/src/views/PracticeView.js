@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 function PracticeView({ 
   practice, 
@@ -8,6 +8,107 @@ function PracticeView({
   handleBookmarkWrapper,
   setView 
 }) {
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const isSwiping = useRef(false);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      // Ignore if typing in an input
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      switch(e.key) {
+        case ' ':
+        case 'Enter':
+          e.preventDefault();
+          practice.handleFlip();
+          break;
+        case 'ArrowRight':
+        case '2':
+          e.preventDefault();
+          if (practice.isFlipped && !practice.processingNext) {
+            handleNextWrapper(true);
+          }
+          break;
+        case 'ArrowLeft':
+        case '1':
+          e.preventDefault();
+          if (practice.isFlipped && !practice.processingNext) {
+            handleNextWrapper(false);
+          }
+          break;
+        case 'ArrowUp':
+        case '0':
+          e.preventDefault();
+          if (!practice.processingNext) {
+            handleNextWrapper(null);
+          }
+          break;
+        case 'Escape':
+          e.preventDefault();
+          setView('sets');
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          if (practice.currentQuestionIndex > 0) {
+            practice.handlePrevious();
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [practice, handleNextWrapper, setView]);
+
+  // Swipe gesture handlers
+  const handleTouchStart = (e) => {
+    if (!practice.isFlipped) return; // Only allow swipes when card is flipped
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    isSwiping.current = false;
+  };
+
+  const handleTouchMove = (e) => {
+    if (!practice.isFlipped) return;
+    const deltaX = Math.abs(e.touches[0].clientX - touchStartX.current);
+    const deltaY = Math.abs(e.touches[0].clientY - touchStartY.current);
+    
+    // If horizontal movement is greater than vertical, it's a swipe
+    if (deltaX > 10 && deltaX > deltaY) {
+      isSwiping.current = true;
+    }
+  };
+
+  const handleTouchEnd = (e) => {
+    if (!practice.isFlipped || !isSwiping.current) {
+      isSwiping.current = false;
+      return;
+    }
+
+    const touchEndX = e.changedTouches[0].clientX;
+    const deltaX = touchEndX - touchStartX.current;
+    const threshold = 100; // Minimum swipe distance
+
+    if (Math.abs(deltaX) > threshold && !practice.processingNext) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      if (deltaX > 0) {
+        // Swipe right = correct
+        handleNextWrapper(true);
+      } else {
+        // Swipe left = wrong
+        handleNextWrapper(false);
+      }
+    }
+    
+    isSwiping.current = false;
+  };
+
   if (practice.questions.length === 0) return null;
 
   return (
@@ -57,10 +158,24 @@ function PracticeView({
           <div className="flashcard-progress" style={{color: '#666', fontWeight: '600'}}>
             Question {practice.currentQuestionIndex + 1} / {practice.questions.length}
           </div>
+          <div style={{fontSize: '11px', color: '#999', marginTop: '8px'}}>
+            💡 Space/Enter: flip | ←/1: wrong | →/2: right | ↑/0: skip | Esc: back
+          </div>
         </div>
       </div>
 
-      <div className={`flashcard ${practice.isFlipped ? 'flipped' : ''}`} onClick={practice.handleFlip}>
+      <div 
+        className={`flashcard ${practice.isFlipped ? 'flipped' : ''}`} 
+        onClick={(e) => {
+          // Only flip if not swiping
+          if (!isSwiping.current) {
+            practice.handleFlip();
+          }
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         
         {/* Bookmark Icon */}
         <div

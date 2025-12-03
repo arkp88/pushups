@@ -152,6 +152,14 @@ const HomeView = memo(function HomeView({
           <div className="quick-stat-value">{stats.accuracy}%</div>
           <div className="quick-stat-label">Accuracy</div>
         </div>
+        <div className="quick-stat-card" style={{background: stats.streak > 0 ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' : 'white'}}>
+          <div className="quick-stat-value" style={{color: stats.streak > 0 ? 'white' : 'inherit'}}>
+            {stats.streak > 0 ? '🔥' : '💤'} {stats.streak || 0}
+          </div>
+          <div className="quick-stat-label" style={{color: stats.streak > 0 ? 'rgba(255,255,255,0.9)' : 'inherit'}}>
+            Day Streak
+          </div>
+        </div>
       </div>
     </div>
   );

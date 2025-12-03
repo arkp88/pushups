@@ -542,6 +542,15 @@ def update_progress(question_id):
             RETURNING *
         ''', (request.current_user['id'], question_id, attempted, correct))
         progress = cur.fetchone()
+        
+        # Record daily activity for streak tracking
+        cur.execute('''
+            INSERT INTO daily_activity (user_id, activity_date, questions_practiced)
+            VALUES (%s, CURRENT_DATE, 1)
+            ON CONFLICT (user_id, activity_date)
+            DO UPDATE SET questions_practiced = daily_activity.questions_practiced + 1
+        ''', (request.current_user['id'],))
+        
         conn.commit()
         cur.close()
         return jsonify({'success': True, 'progress': progress})
@@ -723,6 +732,30 @@ def get_stats():
             WHERE b.user_id = %s AND qs.is_deleted = false
         ''', (request.current_user['id'],))
         bookmarks = cur.fetchone()['bookmarks']
+        
+        # Calculate daily streak
+        cur.execute('''
+            SELECT activity_date 
+            FROM daily_activity 
+            WHERE user_id = %s 
+            ORDER BY activity_date DESC
+        ''', (request.current_user['id'],))
+        activity_dates = [row['activity_date'] for row in cur.fetchall()]
+        
+        streak = 0
+        if activity_dates:
+            current_date = datetime.now().date()
+            # Check if user practiced today or yesterday (to keep streak alive)
+            if activity_dates[0] == current_date or activity_dates[0] == current_date - timedelta(days=1):
+                streak = 1
+                expected_date = activity_dates[0] - timedelta(days=1)
+                
+                for i in range(1, len(activity_dates)):
+                    if activity_dates[i] == expected_date:
+                        streak += 1
+                        expected_date -= timedelta(days=1)
+                    else:
+                        break
 
         if cur:
             cur.close()
@@ -733,7 +766,8 @@ def get_stats():
             'correct': correct,
             'missed': missed,
             'bookmarks': bookmarks,
-            'accuracy': round((correct / attempted * 100) if attempted > 0 else 0, 1)
+            'accuracy': round((correct / attempted * 100) if attempted > 0 else 0, 1),
+            'streak': streak
         })
     except Exception as e:
         logger.error(f"Error fetching stats: {str(e)}")
