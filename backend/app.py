@@ -235,7 +235,10 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
         if content.startswith('\ufeff'):
             content = content[1:]
 
-        reader = csv.DictReader(io.StringIO(content), delimiter='\t')
+        try:
+            reader = csv.DictReader(io.StringIO(content), delimiter='\t')
+        except csv.Error as e:
+            raise Exception(f"CSV parsing error: {str(e)}. Ensure your file is properly formatted with tab separators.")
 
         required_headers = ['questionText', 'answerText']
 
@@ -262,37 +265,52 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
         question_count = 0
         batch_size = 100
         questions_batch = []
+        line_number = 2  # Start at 2 (1 is header)
 
-        for row in reader:
-            round_no = row.get('roundNo', '').strip()
-            question_no = row.get('questionNo', '').strip()
-            question_text = row.get('questionText', '').strip()
-            image_url = row.get('imageUrl', '').strip()
-            answer_text = row.get('answerText', '').strip()
+        try:
+            for row in reader:
+                try:
+                    round_no = row.get('roundNo', '').strip()
+                    question_no = row.get('questionNo', '').strip()
+                    question_text = row.get('questionText', '').strip()
+                    image_url = row.get('imageUrl', '').strip()
+                    answer_text = row.get('answerText', '').strip()
 
-            if image_url.startswith('__') and image_url.endswith('__'):
-                image_url = image_url.strip('_')
+                    if image_url.startswith('__') and image_url.endswith('__'):
+                        image_url = image_url.strip('_')
 
-            # Convert markdown formatting to HTML
-            question_text = convert_markdown_to_html(question_text)
-            answer_text = convert_markdown_to_html(answer_text)
+                    # Convert markdown formatting to HTML
+                    question_text = convert_markdown_to_html(question_text)
+                    answer_text = convert_markdown_to_html(answer_text)
 
-            if question_text and answer_text:
-                questions_batch.append((
-                    set_id, round_no, question_no, question_text,
-                    image_url if image_url else None, answer_text
-                ))
-                question_count += 1
+                    if question_text and answer_text:
+                        questions_batch.append((
+                            set_id, round_no, question_no, question_text,
+                            image_url if image_url else None, answer_text
+                        ))
+                        question_count += 1
 
-                # Batch insert for better performance
-                if len(questions_batch) >= batch_size:
-                    cur.executemany(
-                        '''INSERT INTO questions
-                           (set_id, round_no, question_no, question_text, image_url, answer_text)
-                           VALUES (%s, %s, %s, %s, %s, %s)''',
-                        questions_batch
-                    )
-                    questions_batch = []
+                        # Batch insert for better performance
+                        if len(questions_batch) >= batch_size:
+                            cur.executemany(
+                                '''INSERT INTO questions
+                                   (set_id, round_no, question_no, question_text, image_url, answer_text)
+                                   VALUES (%s, %s, %s, %s, %s, %s)''',
+                                questions_batch
+                            )
+                            questions_batch = []
+
+                    line_number += 1
+
+                except csv.Error as e:
+                    raise Exception(f"CSV parsing error at line {line_number}: {str(e)}")
+                except Exception as e:
+                    # If it's not a CSV error, still provide line context
+                    if 'line' not in str(e).lower():
+                        raise Exception(f"Error processing line {line_number}: {str(e)}")
+                    raise
+        except csv.Error as e:
+            raise Exception(f"CSV parsing error at line {line_number}: {str(e)}")
 
         # Insert remaining questions
         if questions_batch:

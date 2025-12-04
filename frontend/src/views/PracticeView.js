@@ -1,12 +1,13 @@
 import React, { useEffect, useRef } from 'react';
+import { getSafeImageUrl } from '../utils';
 
-function PracticeView({ 
-  practice, 
-  questionSets, 
-  startPracticeWrapper, 
-  handleNextWrapper, 
+function PracticeView({
+  practice,
+  questionSets,
+  startPracticeWrapper,
+  handleNextWrapper,
   handleBookmarkWrapper,
-  setView 
+  setView
 }) {
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
@@ -227,17 +228,37 @@ function PracticeView({
             <div className="question-text" dangerouslySetInnerHTML={{ __html: practice.questions[practice.currentQuestionIndex].question_text }} />
             
             {/* Image with click-to-expand */}
-            {practice.questions[practice.currentQuestionIndex].image_url && (
-              <img 
-                src={practice.questions[practice.currentQuestionIndex].image_url} 
-                alt="Q" 
-                className="question-image"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  practice.setEnlargedImage(practice.questions[practice.currentQuestionIndex].image_url);
-                }}
-              />
-            )}
+            {practice.questions[practice.currentQuestionIndex].image_url && (() => {
+              const originalUrl = practice.questions[practice.currentQuestionIndex].image_url;
+              const safeUrl = getSafeImageUrl(originalUrl);
+
+              return safeUrl ? (
+                <img
+                  src={safeUrl}
+                  alt="Q"
+                  className="question-image"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    practice.setEnlargedImage(safeUrl);
+                  }}
+                  onError={(e) => {
+                    // If HTTPS upgrade failed, show a fallback
+                    e.target.style.display = 'none';
+                    const fallback = document.createElement('div');
+                    fallback.className = 'image-load-error';
+                    fallback.innerHTML = `
+                      <div style="padding: 16px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; margin: 16px 0;">
+                        ⚠️ Image unavailable in secure mode
+                        <div style="font-size: 12px; margin-top: 8px;">
+                          <a href="${originalUrl}" target="_blank" rel="noopener noreferrer" style="color: #667eea;">View image in new tab</a>
+                        </div>
+                      </div>
+                    `;
+                    e.target.parentNode.insertBefore(fallback, e.target);
+                  }}
+                />
+              ) : null;
+            })()}
 
             <div className="flip-hint">Click to reveal answer</div>
           </>
