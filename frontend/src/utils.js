@@ -61,3 +61,28 @@ export function getSafeImageUrl(url) {
   // but that's better than getting blocked by mixed content policy
   return httpsUrl;
 }
+
+/**
+ * Converts simple markdown formatting to HTML
+ * Handles **bold**, *italic*, and _italic_ syntax
+ *
+ * @param {string} text - The markdown text to convert
+ * @returns {string} - HTML string with formatting
+ */
+export function convertMarkdownToHTML(text) {
+  if (!text || typeof text !== 'string') {
+    return text;
+  }
+
+  // Convert **bold** to <strong>bold</strong>
+  text = text.replace(/\*\*(.+?)\*\*/gs, '<strong>$1</strong>');
+
+  // Convert *italic* to <em>italic</em> (but not if part of **)
+  // This regex avoids matching ** by using negative lookahead/lookbehind
+  text = text.replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/gs, '<em>$1</em>');
+
+  // Convert _italic_ to <em>italic</em>
+  text = text.replace(/_(.+?)_/gs, '<em>$1</em>');
+
+  return text;
+}

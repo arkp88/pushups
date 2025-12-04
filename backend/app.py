@@ -279,9 +279,9 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
                     if image_url.startswith('__') and image_url.endswith('__'):
                         image_url = image_url.strip('_')
 
-                    # Convert markdown formatting to HTML
-                    question_text = convert_markdown_to_html(question_text)
-                    answer_text = convert_markdown_to_html(answer_text)
+                    # Store raw markdown - conversion will happen on frontend
+                    # question_text = convert_markdown_to_html(question_text)
+                    # answer_text = convert_markdown_to_html(answer_text)
 
                     if question_text and answer_text:
                         questions_batch.append((

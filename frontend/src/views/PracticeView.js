@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { getSafeImageUrl } from '../utils';
+import React, { useEffect, useRef, useMemo } from 'react';
+import { getSafeImageUrl, convertMarkdownToHTML } from '../utils';
 
 function PracticeView({
   practice,
@@ -106,6 +106,18 @@ function PracticeView({
     
     isSwiping.current = false;
   };
+
+  // Convert markdown to HTML for current question (cached with useMemo)
+  // Must be before early return to follow React hooks rules
+  const currentQuestion = practice.questions[practice.currentQuestionIndex];
+  const convertedQuestionText = useMemo(
+    () => convertMarkdownToHTML(currentQuestion?.question_text),
+    [currentQuestion?.question_text]
+  );
+  const convertedAnswerText = useMemo(
+    () => convertMarkdownToHTML(currentQuestion?.answer_text),
+    [currentQuestion?.answer_text]
+  );
 
   if (practice.questions.length === 0) return null;
 
@@ -225,7 +237,7 @@ function PracticeView({
         
         {!practice.isFlipped ? (
           <>
-            <div className="question-text" dangerouslySetInnerHTML={{ __html: practice.questions[practice.currentQuestionIndex].question_text }} />
+            <div className="question-text" dangerouslySetInnerHTML={{ __html: convertedQuestionText }} />
             
             {/* Image with click-to-expand */}
             {practice.questions[practice.currentQuestionIndex].image_url && (() => {
@@ -264,7 +276,7 @@ function PracticeView({
           </>
         ) : (
           <>
-            <div className="answer-text" dangerouslySetInnerHTML={{ __html: practice.questions[practice.currentQuestionIndex].answer_text }} />
+            <div className="answer-text" dangerouslySetInnerHTML={{ __html: convertedAnswerText }} />
             <div className="flip-hint">Click to see question</div>
           </>
         )}
