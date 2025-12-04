@@ -206,10 +206,14 @@ def convert_markdown_to_html(text):
     return text
 
 def parse_and_save_set(content, set_name, description, user_id, tags='', google_id=None):
-    """Parses TSV content and saves to DB. Returns (set_id, question_count)."""
+    """Parses TSV content and saves to DB. Returns (set_id, question_count, expected_count, is_partial)."""
 
     # 1. Generate Content Hash (SHA-256)
     content_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
+
+    # Count expected questions before processing
+    lines = content.strip().split('\n')
+    expected_count = len(lines) - 1  # Subtract header line
 
     conn = get_db()
     cur = conn.cursor()
@@ -218,7 +222,7 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
         # 2. Check for DUPLICATES
         # Check if THIS user has already uploaded this EXACT content
         cur.execute('''
-            SELECT id FROM question_sets
+            SELECT id, total_questions FROM question_sets
             WHERE content_hash = %s AND uploaded_by = %s AND is_deleted = false
         ''', (content_hash, user_id))
 
@@ -226,7 +230,7 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
         if existing:
             # STOP: Return existing ID.
             logger.info(f"Duplicate content detected for user {user_id}, returning existing set {existing['id']}")
-            return existing['id'], 0
+            return existing['id'], existing['total_questions'], expected_count, False
 
         # ... (Standard parsing logic) ...
         content = content.replace('\r\n', '\n').replace('\r', '\n')
@@ -323,8 +327,14 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
 
         cur.execute('UPDATE question_sets SET total_questions = %s WHERE id = %s', (question_count, set_id))
         conn.commit()
-        logger.info(f"Successfully imported {question_count} questions into set {set_id}")
-        return set_id, question_count
+
+        is_partial = question_count < expected_count
+        if is_partial:
+            logger.warning(f"Partial upload: {question_count}/{expected_count} questions imported for set {set_id}")
+        else:
+            logger.info(f"Successfully imported {question_count} questions into set {set_id}")
+
+        return set_id, question_count, expected_count, is_partial
 
     except Exception as e:
         conn.rollback()
@@ -405,7 +415,7 @@ def import_drive_file():
             
         content = fh.getvalue().decode('utf-8')
         
-        set_id, count = parse_and_save_set(
+        set_id, count, expected, is_partial = parse_and_save_set(
             content=content,
             set_name=set_name,
             description="Imported from Google Drive",
@@ -413,8 +423,19 @@ def import_drive_file():
             tags=tags,
             google_id=file_id
         )
-        
-        return jsonify({'success': True, 'set_id': set_id, 'questions_imported': count})
+
+        response = {
+            'success': True,
+            'set_id': set_id,
+            'questions_imported': count,
+            'expected_questions': expected,
+            'is_partial': is_partial
+        }
+
+        if is_partial:
+            response['warning'] = f'Only {count} of {expected} questions were imported. File may be too large for free tier (30s timeout). Consider splitting into smaller files.'
+
+        return jsonify(response)
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -479,7 +500,7 @@ def upload_tsv():
 
         logger.info(f"Processing TSV upload: {file.filename}, size: {len(content)} bytes")
 
-        set_id, count = parse_and_save_set(
+        set_id, count, expected, is_partial = parse_and_save_set(
             content=content,
             set_name=set_name,
             description=set_description,
@@ -487,7 +508,19 @@ def upload_tsv():
             tags=tags
         )
 
-        return jsonify({'success': True, 'set_id': set_id, 'questions_imported': count, 'set_name': set_name})
+        response = {
+            'success': True,
+            'set_id': set_id,
+            'questions_imported': count,
+            'expected_questions': expected,
+            'is_partial': is_partial,
+            'set_name': set_name
+        }
+
+        if is_partial:
+            response['warning'] = f'Only {count} of {expected} questions were imported. File may be too large for free tier (30s timeout). Consider splitting into smaller files.'
+
+        return jsonify(response)
 
     except UnicodeDecodeError as e:
         logger.error(f"Encoding error in TSV upload: {str(e)}")

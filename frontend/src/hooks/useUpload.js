@@ -142,6 +142,8 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
       setUploading(true);
       setUploadError('');
 
+      let partialUploads = [];
+
       if (pendingUpload.type === 'local') {
         const files = pendingUpload.data;
 
@@ -154,12 +156,28 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
             setName = file.name.replace('.tsv', '');
           }
 
-          await api.uploadTSV(file, setName, '', uploadTags);
+          const response = await api.uploadTSV(file, setName, '', uploadTags);
+          if (response.is_partial) {
+            partialUploads.push({
+              name: setName,
+              imported: response.questions_imported,
+              expected: response.expected_questions,
+              warning: response.warning
+            });
+          }
         }
       } else if (pendingUpload.type === 'drive') {
         const file = pendingUpload.data;
         const finalName = customName.trim() || file.name.replace('.tsv', '');
-        await api.importDriveFile(file.id, file.name, uploadTags, finalName);
+        const response = await api.importDriveFile(file.id, file.name, uploadTags, finalName);
+        if (response.is_partial) {
+          partialUploads.push({
+            name: finalName,
+            imported: response.questions_imported,
+            expected: response.expected_questions,
+            warning: response.warning
+          });
+        }
       } else if (pendingUpload.type === 'drive-multi') {
         const files = pendingUpload.data;
 
@@ -173,17 +191,35 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
             setName = `${setterName} - ${setName}`;
           }
 
-          await api.importDriveFile(file.id, file.name, uploadTags, setName);
+          const response = await api.importDriveFile(file.id, file.name, uploadTags, setName);
+          if (response.is_partial) {
+            partialUploads.push({
+              name: setName,
+              imported: response.questions_imported,
+              expected: response.expected_questions,
+              warning: response.warning
+            });
+          }
         }
 
         setSelectedDriveFiles([]); // Clear selection after upload
       }
 
       setPendingUpload(null);
-      setUploadSuccess('✅ Import successful! Check the "Your Library" tab.');
+
+      // Show appropriate success message
+      if (partialUploads.length > 0) {
+        const warnings = partialUploads.map(p =>
+          `⚠️ ${p.name}: ${p.imported}/${p.expected} questions imported`
+        ).join('\n');
+        setUploadSuccess(`Import completed with warnings:\n${warnings}\n\nFiles may be too large for free tier (30s timeout). Consider splitting into smaller files.`);
+      } else {
+        setUploadSuccess('✅ Import successful! Check the "Your Library" tab.');
+      }
+
       setCustomName('');
       setUploadTags('');
-      
+
       if (onSuccess) onSuccess();
 
     } catch (error) {
