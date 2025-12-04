@@ -66,11 +66,14 @@ function PracticeView({
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [practice, handleNextWrapper, setView]);
 
-  // Clean up image error messages when question changes
+  // Clean up image error messages and reset swipe offset when question changes
   useEffect(() => {
     // Remove any leftover image error divs from previous questions
     const errorDivs = document.querySelectorAll('.image-load-error');
     errorDivs.forEach(div => div.remove());
+
+    // Reset swipe offset for new question
+    setSwipeOffset(0);
   }, [practice.currentQuestionIndex]);
 
   // Tutorial effect - show on first flip to answer
@@ -155,8 +158,7 @@ function PracticeView({
           // Swipe left = wrong
           handleNextWrapper(false);
         }
-        // Reset after question changes
-        setSwipeOffset(0);
+        // Don't reset here - the next question will render with offset 0 naturally
       }, 300); // Match CSS transition duration
     } else {
       // Didn't meet threshold, snap back
