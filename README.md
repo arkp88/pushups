@@ -8,19 +8,41 @@ A modern, production-ready flashcard quiz application with multi-user support, m
 
 ## ✨ Features
 
+### Core Features
 - 🔐 Multi-user authentication via Supabase
 - 📥 Import from TSV or Google Drive (with multi-file selection)
 - 🃏 Flashcard interface with smooth animations
 - ⭐ Bookmark important questions
-- 📊 Personal progress tracking & statistics
-- 🎲 Multiple practice modes (Random, Missed, Bookmarks, etc.)
+- 📊 Personal progress tracking & session statistics
+- 🎲 Multiple practice modes (Random, Missed, Bookmarks, Random Unplayed Set)
 - 📱 Mobile-first responsive design with bottom navigation
-- ⌨️ Keyboard shortcuts & swipe gestures for power users
 - 🔥 Daily streak tracker to encourage consistent practice
 - ✨ Premium UI with gradients and glassmorphism
 - 🏷️ Tagging and search functionality
+
+### Mobile Experience
+- 📲 **Advanced Swipe Gestures** - Swipe right for correct, left for wrong
+  - Real-time card movement following your finger
+  - Smooth fly-off animation on successful swipe
+  - Visual direction indicators (✅/❌) that move opposite to card
+  - First-time tutorial overlay (auto-dismisses after 4s)
+- 🔊 **Text-to-Speech** - Listen to questions and answers
+- ⌨️ **Keyboard Shortcuts** - Power-user navigation (Space, Arrow keys, Esc)
+
+### Session Features
+- 📈 **Session Summary Modal** - Post-session stats showing:
+  - Correct/Wrong/Passed counts with color-coded cards
+  - Accuracy percentage calculation
+  - Quick actions: Practice Again, Review Misses, Back to Home
+- 🎯 **Smart Progress Tracking** - Distinguishes between wrong answers and passed questions
+- 📝 **Markdown Support** - **Bold**, *italic* formatting in questions/answers
+- 🖼️ **HTML Tag Support** - `<br>`, `<hr>`, `<p>` tags preserved in content
+- 🔒 **HTTPS Image Upgrade** - Auto-upgrades HTTP images to prevent mixed content issues
+
+### Technical Excellence
 - 🛡️ Security hardened (XSS protection, rate limiting, MIME validation)
 - ⚡ Optimized queries & error boundaries
+- 🎨 Frontend markdown conversion (reduced upload time by 15-18 seconds)
 - ☁️ 100% free hosting (Supabase + Vercel + Render)
 
 ## 🚀 Quick Start
@@ -157,10 +179,26 @@ Round 1	Question 2	What is 2+2?		4
 Round 2	Question 1	Who painted the Mona Lisa?	https://example.com/image.jpg	Leonardo da Vinci
 ```
 
+**Advanced Formatting:**
+```tsv
+questionText	answerText
+**Bold text** in question	Answer with *italic* text
+Question with line break<br>Second line	Answer with horizontal rule<hr>Below the line
+Multiple **bold** and *italic*	Combined **bold** and *italic* _text_
+```
+
 **Notes:**
 - Use TAB character (not spaces) to separate columns
 - `imageUrl` can be empty or contain a URL
 - Image URLs can be wrapped in `__url__` format (will be cleaned)
+- **Markdown formatting supported:**
+  - `**text**` for **bold**
+  - `*text*` or `_text_` for *italic*
+- **HTML tags preserved:**
+  - `<br>` for line breaks
+  - `<hr>` for horizontal rules
+  - `<p>` for paragraphs
+- HTTP image URLs automatically upgraded to HTTPS
 
 ## Deployment
 
@@ -206,27 +244,39 @@ Round 2	Question 1	Who painted the Mona Lisa?	https://example.com/image.jpg	Leon
 ### For Admin (You)
 
 1. **Upload Questions:**
-   - Click "Choose TSV File"
-   - Select your file
+   - Click "Choose TSV File" or "Import from Google Drive"
+   - Select your file(s)
    - Enter a descriptive name
-   - Questions are imported instantly
+   - Questions are imported and formatted automatically
+   - Supports markdown (**bold**, *italic*) and HTML tags (`<br>`, `<hr>`)
 
 2. **Practice:**
-   - Click any question set to start
-   - Click card to flip between question and answer
-   - Mark as "Got it right" or "Missed it"
-   - Progress saves automatically
+   - Choose from multiple modes:
+     - **Continue Last Set** - Resume where you left off
+     - **Browse Question Sets** - Select any specific set
+     - **Random Unplayed Set** - Jump into an untouched set
+     - **Random Mode** - Shuffle all questions
+     - **Retry Missed** - Review wrong answers
+     - **Review Bookmarks** - Practice saved questions
 
-3. **Review Missed Questions:**
-   - View stats to see missed count
-   - (Future: Export to Anki)
+3. **During Practice:**
+   - **Desktop:** Click card to flip, use keyboard shortcuts (Space, Arrows, Esc)
+   - **Mobile:** Tap to flip, swipe right for correct, left for wrong
+   - **Features:** Bookmark (⭐), Text-to-Speech (🔊), Previous/Next navigation
+   - Progress auto-saves after each question
+
+4. **After Session:**
+   - View session summary with stats (Correct/Wrong/Passed)
+   - See accuracy percentage
+   - Choose to practice again, review misses, or go home
 
 ### For Friends
 
 1. Share your deployed URL (e.g., `https://quiz-app.vercel.app`)
 2. They sign up with email/password
 3. They can see all question sets you upload
-4. Each person has their own progress tracking
+4. Each person has their own progress tracking and streaks
+5. Full mobile support with swipe gestures
 
 ## Cost Breakdown
 
