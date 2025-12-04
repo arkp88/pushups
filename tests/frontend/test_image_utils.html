@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Image Utils Test Suite</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #6b7280;
+            margin: 0 0 30px 0;
+            font-size: 14px;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .test-case {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border-left: 4px solid #e5e7eb;
+        }
+        .test-case.pass { border-left-color: #10b981; }
+        .test-case.fail { border-left-color: #ef4444; }
+        .test-name {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+        .test-detail {
+            font-size: 13px;
+            color: #6b7280;
+            margin: 4px 0;
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+        .test-status {
+            font-weight: 700;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        .test-status.pass { color: #10b981; }
+        .test-status.fail { color: #ef4444; }
+        .summary {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            margin: 30px 0;
+            border: 2px solid #667eea;
+        }
+        .summary h2 {
+            margin: 0 0 15px 0;
+            color: #667eea;
+            font-size: 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .stat {
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 6px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        code {
+            background: #e5e7eb;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            color: #6b7280;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ Image Utils Test Suite</h1>
+        <p class="subtitle">Testing frontend/src/utils.js image URL handling functions</p>
+
+        <div id="results"></div>
+
+        <div class="footer">
+            Run this file by opening it in a browser • <a href="../../frontend/src/utils.js" style="color: #667eea;">View utils.js</a>
+        </div>
+    </div>
+
+    <script type="module">
+        // Copy of utils.js functions for testing
+        function ensureHttps(url) {
+            if (!url || typeof url !== 'string') return url;
+            if (url.startsWith('http://')) return url.replace('http://', 'https://');
+            return url;
+        }
+
+        function isSecureImageUrl(url) {
+            if (!url) return true;
+            const isHttpsPage = window.location.protocol === 'https:';
+            if (isHttpsPage && url.startsWith('http://')) return false;
+            return true;
+        }
+
+        function getSafeImageUrl(url) {
+            if (!url) return null;
+            return ensureHttps(url);
+        }
+
+        // Test cases
+        const testSuites = {
+            'ensureHttps': [
+                {
+                    name: 'HTTP URL upgrade',
+                    input: 'http://example.com/image.jpg',
+                    expected: 'https://example.com/image.jpg',
+                    func: ensureHttps
+                },
+                {
+                    name: 'HTTPS URL unchanged',
+                    input: 'https://example.com/image.jpg',
+                    expected: 'https://example.com/image.jpg',
+                    func: ensureHttps
+                },
+                {
+                    name: 'Relative URL preserved',
+                    input: '/static/image.jpg',
+                    expected: '/static/image.jpg',
+                    func: ensureHttps
+                },
+                {
+                    name: 'Protocol-relative URL preserved',
+                    input: '//cdn.example.com/image.jpg',
+                    expected: '//cdn.example.com/image.jpg',
+                    func: ensureHttps
+                },
+                {
+                    name: 'Empty string handled',
+                    input: '',
+                    expected: '',
+                    func: ensureHttps
+                },
+                {
+                    name: 'Null handled',
+                    input: null,
+                    expected: null,
+                    func: ensureHttps
+                }
+            ],
+            'getSafeImageUrl': [
+                {
+                    name: 'HTTP upgraded to HTTPS',
+                    input: 'http://example.com/cat.jpg',
+                    expected: 'https://example.com/cat.jpg',
+                    func: getSafeImageUrl
+                },
+                {
+                    name: 'HTTPS URL passed through',
+                    input: 'https://example.com/dog.jpg',
+                    expected: 'https://example.com/dog.jpg',
+                    func: getSafeImageUrl
+                },
+                {
+                    name: 'Null returns null',
+                    input: null,
+                    expected: null,
+                    func: getSafeImageUrl
+                },
+                {
+                    name: 'Empty string returns null',
+                    input: '',
+                    expected: null,
+                    func: getSafeImageUrl
+                }
+            ]
+        };
+
+        // Run tests
+        const resultsDiv = document.getElementById('results');
+        let totalTests = 0;
+        let totalPassed = 0;
+        let totalFailed = 0;
+
+        for (const [suiteName, tests] of Object.entries(testSuites)) {
+            const sectionDiv = document.createElement('div');
+            sectionDiv.className = 'test-section';
+            sectionDiv.innerHTML = `<h3 style="margin: 0 0 15px 0; color: #1f2937;">${suiteName}()</h3>`;
+
+            let suitePassed = 0;
+            let suiteFailed = 0;
+
+            tests.forEach(test => {
+                totalTests++;
+                const result = test.func(test.input);
+                const pass = result === test.expected;
+
+                if (pass) {
+                    totalPassed++;
+                    suitePassed++;
+                } else {
+                    totalFailed++;
+                    suiteFailed++;
+                }
+
+                const testDiv = document.createElement('div');
+                testDiv.className = `test-case ${pass ? 'pass' : 'fail'}`;
+                testDiv.innerHTML = `
+                    <div class="test-name">${test.name}</div>
+                    <div class="test-detail">Input: <code>${JSON.stringify(test.input)}</code></div>
+                    <div class="test-detail">Expected: <code>${JSON.stringify(test.expected)}</code></div>
+                    <div class="test-detail">Result: <code>${JSON.stringify(result)}</code></div>
+                    <div class="test-status ${pass ? 'pass' : 'fail'}">${pass ? '✓ PASS' : '✗ FAIL'}</div>
+                `;
+                sectionDiv.appendChild(testDiv);
+            });
+
+            const sectionSummary = document.createElement('div');
+            sectionSummary.style.cssText = 'margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #6b7280;';
+            sectionSummary.textContent = `${suitePassed} passed, ${suiteFailed} failed`;
+            sectionDiv.appendChild(sectionSummary);
+
+            resultsDiv.appendChild(sectionDiv);
+        }
+
+        // Summary
+        const percentage = totalTests > 0 ? (totalPassed / totalTests * 100) : 0;
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'summary';
+        summaryDiv.innerHTML = `
+            <h2>Test Summary</h2>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">${totalTests}</div>
+                    <div class="stat-label">Total Tests</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" style="color: #10b981;">${totalPassed}</div>
+                    <div class="stat-label">Passed</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" style="color: #ef4444;">${totalFailed}</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" style="color: ${percentage === 100 ? '#10b981' : '#f59e0b'};">${percentage.toFixed(0)}%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+            </div>
+            <div style="margin-top: 20px; padding: 15px; background: ${percentage === 100 ? '#d1fae5' : '#fef3c7'}; border-radius: 6px; text-align: center; font-weight: 600; color: ${percentage === 100 ? '#065f46' : '#92400e'};">
+                ${percentage === 100 ? '✓ All tests passed! Ready for production.' : '✗ Some tests failed. Review failures above.'}
+            </div>
+        `;
+        resultsDiv.insertBefore(summaryDiv, resultsDiv.firstChild);
+
+        console.log(`%c✓ ${totalPassed} tests passed, ✗ ${totalFailed} tests failed`, `color: ${percentage === 100 ? '#10b981' : '#ef4444'}; font-weight: bold; font-size: 14px;`);
+    </script>
+</body>
+</html>

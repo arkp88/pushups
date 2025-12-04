@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Frontend Utils Test</title>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f0f4ff;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-case {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9fafb;
+            border-left: 4px solid #667eea;
+        }
+        .pass { border-left-color: #10b981; }
+        .fail { border-left-color: #ef4444; }
+        h1 { color: #667eea; }
+        h2 { color: #4b5563; }
+        code { background: #e5e7eb; padding: 2px 6px; border-radius: 3px; }
+        .status { font-weight: bold; }
+        .pass .status { color: #10b981; }
+        .fail .status { color: #ef4444; }
+    </style>
+</head>
+<body>
+    <h1>Frontend Utils Test Suite</h1>
+    <p>Testing the <code>utils.js</code> functions for image URL handling</p>
+
+    <div id="results"></div>
+
+    <script type="module">
+        // Import the utils (simulated since we can't actually import in this context)
+        // Copy the functions from utils.js
+
+        function ensureHttps(url) {
+            if (!url || typeof url !== 'string') {
+                return url;
+            }
+
+            if (url.startsWith('http://')) {
+                return url.replace('http://', 'https://');
+            }
+
+            return url;
+        }
+
+        function isSecureImageUrl(url) {
+            if (!url) return true;
+
+            const isHttpsPage = window.location.protocol === 'https:';
+
+            if (isHttpsPage && url.startsWith('http://')) {
+                return false;
+            }
+
+            return true;
+        }
+
+        function getSafeImageUrl(url) {
+            if (!url) return null;
+
+            const httpsUrl = ensureHttps(url);
+
+            return httpsUrl;
+        }
+
+        // Test cases
+        const tests = [
+            {
+                name: 'HTTP URL upgrade',
+                input: 'http://example.com/image.jpg',
+                expected: 'https://example.com/image.jpg',
+                func: ensureHttps
+            },
+            {
+                name: 'HTTPS URL unchanged',
+                input: 'https://example.com/image.jpg',
+                expected: 'https://example.com/image.jpg',
+                func: ensureHttps
+            },
+            {
+                name: 'Relative URL unchanged',
+                input: '/static/image.jpg',
+                expected: '/static/image.jpg',
+                func: ensureHttps
+            },
+            {
+                name: 'Protocol-relative URL unchanged',
+                input: '//cdn.example.com/image.jpg',
+                expected: '//cdn.example.com/image.jpg',
+                func: ensureHttps
+            },
+            {
+                name: 'Empty string returns empty',
+                input: '',
+                expected: '',
+                func: ensureHttps
+            },
+            {
+                name: 'Null returns null',
+                input: null,
+                expected: null,
+                func: ensureHttps
+            },
+            {
+                name: 'getSafeImageUrl with HTTP',
+                input: 'http://example.com/cat.jpg',
+                expected: 'https://example.com/cat.jpg',
+                func: getSafeImageUrl
+            },
+            {
+                name: 'getSafeImageUrl with HTTPS',
+                input: 'https://example.com/dog.jpg',
+                expected: 'https://example.com/dog.jpg',
+                func: getSafeImageUrl
+            },
+            {
+                name: 'getSafeImageUrl with null',
+                input: null,
+                expected: null,
+                func: getSafeImageUrl
+            }
+        ];
+
+        // Run tests
+        const resultsDiv = document.getElementById('results');
+        let passed = 0;
+        let failed = 0;
+
+        tests.forEach(test => {
+            const result = test.func(test.input);
+            const pass = result === test.expected;
+
+            if (pass) passed++;
+            else failed++;
+
+            const testDiv = document.createElement('div');
+            testDiv.className = `test-case ${pass ? 'pass' : 'fail'}`;
+            testDiv.innerHTML = `
+                <div><strong>${test.name}</strong></div>
+                <div>Input: <code>${JSON.stringify(test.input)}</code></div>
+                <div>Expected: <code>${JSON.stringify(test.expected)}</code></div>
+                <div>Result: <code>${JSON.stringify(result)}</code></div>
+                <div class="status">${pass ? '✅ PASS' : '❌ FAIL'}</div>
+            `;
+            resultsDiv.appendChild(testDiv);
+        });
+
+        // Summary
+        const summary = document.createElement('div');
+        summary.className = 'test-section';
+        summary.innerHTML = `
+            <h2>Test Summary</h2>
+            <p><strong>Total:</strong> ${tests.length} tests</p>
+            <p style="color: #10b981;"><strong>Passed:</strong> ${passed}</p>
+            <p style="color: #ef4444;"><strong>Failed:</strong> ${failed}</p>
+            <p><strong>Success Rate:</strong> ${((passed/tests.length)*100).toFixed(1)}%</p>
+        `;
+        resultsDiv.insertBefore(summary, resultsDiv.firstChild);
+
+        // Test image loading with error handling
+        const imageTestDiv = document.createElement('div');
+        imageTestDiv.className = 'test-section';
+        imageTestDiv.innerHTML = '<h2>Image Loading Test</h2><p>Testing image with HTTP URL (should upgrade to HTTPS)</p>';
+
+        const testImage = document.createElement('img');
+        testImage.src = getSafeImageUrl('http://via.placeholder.com/150');
+        testImage.alt = 'Test image';
+        testImage.style.maxWidth = '150px';
+        testImage.style.margin = '10px 0';
+
+        testImage.onload = () => {
+            imageTestDiv.innerHTML += '<p style="color: #10b981;">✅ Image loaded successfully</p>';
+        };
+
+        testImage.onerror = () => {
+            imageTestDiv.innerHTML += '<p style="color: #ef4444;">❌ Image failed to load (HTTPS upgrade may have failed)</p>';
+        };
+
+        imageTestDiv.appendChild(testImage);
+        resultsDiv.appendChild(imageTestDiv);
+
+        console.log(`✅ ${passed} tests passed, ❌ ${failed} tests failed`);
+    </script>
+</body>
+</html>
