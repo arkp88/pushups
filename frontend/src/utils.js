@@ -65,6 +65,7 @@ export function getSafeImageUrl(url) {
 /**
  * Converts simple markdown formatting to HTML
  * Handles **bold**, *italic*, and _italic_ syntax
+ * Also preserves safe HTML tags like <br>, <hr>, <p>
  *
  * @param {string} text - The markdown text to convert
  * @returns {string} - HTML string with formatting
@@ -83,6 +84,9 @@ export function convertMarkdownToHTML(text) {
 
   // Convert _italic_ to <em>italic</em>
   text = text.replace(/_(.+?)_/gs, '<em>$1</em>');
+
+  // Note: <br>, <hr>, <p> tags already in the text will be preserved
+  // since we use dangerouslySetInnerHTML which renders raw HTML
 
   return text;
 }

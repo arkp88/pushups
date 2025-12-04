@@ -18,28 +18,36 @@ export function usePractice(setAppNotification = () => {}) {
   // Text-to-speech state
   const [isSpeaking, setIsSpeaking] = useState(false);
 
+  // Session stats tracking
+  const [sessionStats, setSessionStats] = useState({ correct: 0, wrong: 0, skipped: 0 });
+  const [showSessionSummary, setShowSessionSummary] = useState(false);
+
   const startPractice = async (set, isRandomSession = false) => {
     try {
       setStartingPractice(true);
       await api.markSetOpened(set.id);
       localStorage.setItem('pushups-last-set-id', set.id);
-      
+
       // Track this set in the current random session
       if (isRandomSession) {
         setSetsOpenedThisSession(prev => [...prev, set.id]);
       }
-      
+
       const data = await api.getQuestions(set.id);
       setQuestions(data.questions);
       setCurrentSet(set);
-      
+
       const savedPosition = localStorage.getItem(`pushups-quiz-position-${set.id}`);
       const startIndex = savedPosition ? parseInt(savedPosition) : 0;
-      
+
       setCurrentQuestionIndex(startIndex);
       setIsFlipped(false);
       setPracticeMode('single');
-      
+
+      // Reset session stats when starting new practice
+      setSessionStats({ correct: 0, wrong: 0, skipped: 0 });
+      setShowSessionSummary(false);
+
       if (savedPosition) {
         setPracticeNotification(`Resuming from question ${startIndex + 1}`);
         setTimeout(() => setPracticeNotification(''), 3000);
@@ -58,25 +66,29 @@ export function usePractice(setAppNotification = () => {}) {
   const startMixedPractice = async (filter) => {
     try {
       setStartingPractice(true);
-      
+
       // Clear random session tracking when entering mixed mode
       setSetsOpenedThisSession([]);
-      
+
       const data = await api.getMixedQuestions(filter);
-      
+
       if (data.questions.length === 0) {
         // REPLACE alert()
         setPracticeNotification(`ℹ️ No ${filter} questions found!`);
         setTimeout(() => setPracticeNotification(''), 4000);
         return false;
       }
-      
+
       setQuestions(data.questions);
       setCurrentSet({ name: `Random Mode (${filter})`, id: 'mixed' });
       setCurrentQuestionIndex(0);
       setIsFlipped(false);
       setPracticeMode('mixed');
-      
+
+      // Reset session stats when starting new practice
+      setSessionStats({ correct: 0, wrong: 0, skipped: 0 });
+      setShowSessionSummary(false);
+
       return true;
     } catch (error) {
       // REPLACE alert()
@@ -94,12 +106,21 @@ export function usePractice(setAppNotification = () => {}) {
 
   const handleNext = async (markAsCorrect = null, onComplete) => {
     if (processingNext) return;
-    
+
     try {
       setProcessingNext(true);
-      
+
       const currentQuestion = questions[currentQuestionIndex];
-      
+
+      // Track session stats
+      if (markAsCorrect === true) {
+        setSessionStats(prev => ({ ...prev, correct: prev.correct + 1 }));
+      } else if (markAsCorrect === false) {
+        setSessionStats(prev => ({ ...prev, wrong: prev.wrong + 1 }));
+      } else {
+        setSessionStats(prev => ({ ...prev, skipped: prev.skipped + 1 }));
+      }
+
       await api.updateProgress(currentQuestion.id, true, markAsCorrect);
       if (markAsCorrect === false) await api.markMissed(currentQuestion.id);
       if (markAsCorrect === true && currentQuestion.is_missed) await api.unmarkMissed(currentQuestion.id);
@@ -113,16 +134,14 @@ export function usePractice(setAppNotification = () => {}) {
 
         setProcessingNext(false);
       } else {
-        // REPLACE alert()
-        setPracticeNotification('🎉 Session complete!');
-        setTimeout(() => setPracticeNotification(''), 4000);
-        
+        // Session complete - show summary modal
         if (currentSet.id !== 'mixed') {
           localStorage.removeItem(`pushups-quiz-position-${currentSet.id}`);
           localStorage.removeItem('pushups-last-set-id');
         }
-        
+
         setProcessingNext(false);
+        setShowSessionSummary(true);
         if (onComplete) onComplete();
       }
     } catch (error) {
@@ -253,6 +272,11 @@ export function usePractice(setAppNotification = () => {}) {
     clearSessionTracking: () => setSetsOpenedThisSession([]),
     setPracticeNotification,
 
+    // Session stats
+    sessionStats,
+    showSessionSummary,
+    setShowSessionSummary,
+
     // Actions
     startPractice,
     startMixedPractice,
@@ -260,7 +284,6 @@ export function usePractice(setAppNotification = () => {}) {
     handleNext,
     handlePrevious,
     handleBookmark,
-    setPracticeNotification,
     setEnlargedImage,
     speakText,
     stopSpeaking,

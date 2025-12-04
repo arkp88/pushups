@@ -112,7 +112,8 @@ function App() {
 
   const handleNextWrapper = useCallback(async (markAsCorrect = null) => {
     await practice.handleNext(markAsCorrect, () => {
-      setView('home');
+      // Don't auto-navigate to home - let the session summary modal handle navigation
+      // Just refresh the data in case user wants to see updated stats
       loadQuestionSets();
       loadStats();
     });
@@ -255,10 +256,11 @@ function App() {
 
       {/* PRACTICE VIEW */}
       {view === 'practice' && practice.questions.length > 0 && (
-        <PracticeView 
+        <PracticeView
           practice={practice}
           questionSets={questionSets}
           startPracticeWrapper={startPracticeWrapper}
+          startMixedPracticeWrapper={startMixedPracticeWrapper}
           handleNextWrapper={handleNextWrapper}
           handleBookmarkWrapper={handleBookmarkWrapper}
           setView={setView}
