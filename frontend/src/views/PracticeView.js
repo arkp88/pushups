@@ -369,6 +369,7 @@ function PracticeView({
 
               return safeUrl ? (
                 <img
+                  key={`q-${practice.currentQuestionIndex}-${safeUrl}`}
                   src={safeUrl}
                   alt="Q"
                   className="question-image"
@@ -504,7 +505,12 @@ function PracticeView({
       {/* Image Modal/Lightbox */}
       {practice.enlargedImage && (
         <div className="image-modal" onClick={() => practice.setEnlargedImage(null)}>
-          <img src={practice.enlargedImage} alt="Enlarged view" onClick={(e) => e.stopPropagation()} />
+          <img 
+            key={`enlarged-${practice.currentQuestionIndex}-${practice.enlargedImage}`}
+            src={practice.enlargedImage} 
+            alt="Enlarged view" 
+            onClick={(e) => e.stopPropagation()} 
+          />
           <button
             style={{
               position: 'absolute', top: '20px', right: '20px',
