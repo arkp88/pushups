@@ -283,6 +283,7 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
     setCustomName,
     setPendingUpload,
     setUploadSuccess,
+    setUploadError,
     setUploadSubView,
     setDriveSearchTerm,
     handleDriveFolderClick,

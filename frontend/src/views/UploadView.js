@@ -119,6 +119,28 @@ function UploadView({
             </div>
           ) : (
             <>
+              {upload.uploadError && (
+                <div style={{
+                  marginBottom: '20px', 
+                  padding: '12px 15px', 
+                  background: '#fee2e2', 
+                  border: '1px solid #fca5a5', 
+                  color: '#dc2626', 
+                  borderRadius: '8px', 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center'
+                }}>
+                  <span style={{ whiteSpace: 'pre-line' }}>⚠️ {upload.uploadError}</span>
+                  <button 
+                    onClick={() => upload.setUploadError('')} 
+                    style={{background:'none', border:'none', color:'#dc2626', cursor:'pointer', fontSize:'18px', padding:'0 5px', flexShrink: 0}}
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+              
               {upload.uploadSuccess && (
                 <div style={{
                   marginBottom: '20px', 
@@ -131,10 +153,10 @@ function UploadView({
                   justifyContent: 'space-between', 
                   alignItems: 'center'
                 }}>
-                  <span>{upload.uploadSuccess}</span>
+                  <span style={{ whiteSpace: 'pre-line' }}>{upload.uploadSuccess}</span>
                   <button 
                     onClick={() => upload.setUploadSuccess('')} 
-                    style={{background:'none', border:'none', color:'#065f46', cursor:'pointer', fontSize:'18px', padding:'0 5px'}}
+                    style={{background:'none', border:'none', color:'#065f46', cursor:'pointer', fontSize:'18px', padding:'0 5px', flexShrink: 0}}
                   >
                     ✕
                   </button>
