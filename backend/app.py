@@ -966,6 +966,31 @@ def get_mixed_questions():
         if conn:
             return_db(conn)
     
+def cleanup_connection_pool():
+    """FIX #7: Close connection pool on shutdown to prevent connection leaks"""
+    global connection_pool
+    if connection_pool:
+        try:
+            connection_pool.closeall()
+            logger.info("Database connection pool closed successfully")
+        except Exception as e:
+            logger.error(f"Error closing connection pool: {str(e)}")
+
+# FIX #7: Register cleanup handler for graceful shutdown
+import atexit
+import signal
+
+atexit.register(cleanup_connection_pool)
+
+# Also handle SIGTERM (common in containerized environments)
+def signal_handler(signum, frame):
+    logger.info(f"Received signal {signum}, shutting down gracefully...")
+    cleanup_connection_pool()
+    exit(0)
+
+signal.signal(signal.SIGTERM, signal_handler)
+signal.signal(signal.SIGINT, signal_handler)
+
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)

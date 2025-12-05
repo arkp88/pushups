@@ -66,7 +66,8 @@ function PracticeView({
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [practice, handleNextWrapper, setView]);
 
-  // Clean up image error messages and reset swipe offset when question changes
+  // FIX #4: Clean up image error messages and reset swipe offset when question changes
+  // Also cleanup on component unmount to prevent corrupted card position
   useEffect(() => {
     // Remove any leftover image error divs from previous questions
     const errorDivs = document.querySelectorAll('.image-load-error');
@@ -74,6 +75,11 @@ function PracticeView({
 
     // Reset swipe offset for new question
     setSwipeOffset(0);
+
+    // FIX #4: Cleanup on unmount to reset swipe state
+    return () => {
+      setSwipeOffset(0);
+    };
   }, [practice.currentQuestionIndex]);
 
   // Tutorial effect - show on first flip to answer
@@ -103,7 +109,8 @@ function PracticeView({
   const handleTouchStart = (e) => {
     if (!practice.isFlipped) return; // Only allow swipes when card is flipped
 
-    // Dismiss tutorial on first touch
+    // FIX #5: Dismiss tutorial on first touch AND set localStorage immediately
+    // Previously only set on auto-dismiss timeout, causing tutorial to show every session
     if (showTutorial) {
       setShowTutorial(false);
       localStorage.setItem('hasSeenSwipeTutorial', 'true');
@@ -343,19 +350,25 @@ function PracticeView({
                     practice.setEnlargedImage(safeUrl);
                   }}
                   onError={(e) => {
-                    // If HTTPS upgrade failed, show a fallback
+                    // FIX #6: Check if error div already exists before creating new one
+                    // This prevents DOM pollution if image fails repeatedly (e.g., offline)
                     e.target.style.display = 'none';
-                    const fallback = document.createElement('div');
-                    fallback.className = 'image-load-error';
-                    fallback.innerHTML = `
-                      <div style="padding: 16px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; margin: 16px 0;">
-                        ⚠️ Image unavailable in secure mode
-                        <div style="font-size: 12px; margin-top: 8px;">
-                          <a href="${originalUrl}" target="_blank" rel="noopener noreferrer" style="color: #667eea;">View image in new tab</a>
+                    
+                    // Only create error message if one doesn't already exist
+                    const existingError = e.target.parentNode.querySelector('.image-load-error');
+                    if (!existingError) {
+                      const fallback = document.createElement('div');
+                      fallback.className = 'image-load-error';
+                      fallback.innerHTML = `
+                        <div style="padding: 16px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; margin: 16px 0;">
+                          ⚠️ Image unavailable in secure mode
+                          <div style="font-size: 12px; margin-top: 8px;">
+                            <a href="${originalUrl}" target="_blank" rel="noopener noreferrer" style="color: #667eea;">View image in new tab</a>
+                          </div>
                         </div>
-                      </div>
-                    `;
-                    e.target.parentNode.insertBefore(fallback, e.target);
+                      `;
+                      e.target.parentNode.insertBefore(fallback, e.target);
+                    }
                   }}
                 />
               ) : null;
@@ -495,20 +508,29 @@ function PracticeView({
 
       {/* Swipe Tutorial Overlay - First time only */}
       {showTutorial && practice.isFlipped && (
-        <div className="mobile-only" style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0, 0, 0, 0.85)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          padding: '20px'
-        }}>
+        <div 
+          className="mobile-only" 
+          onClick={() => {
+            // FIX #5: Set localStorage when user taps to dismiss tutorial
+            // Previously only set on auto-dismiss timeout, not on manual dismiss
+            setShowTutorial(false);
+            localStorage.setItem('hasSeenSwipeTutorial', 'true');
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.85)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px',
+            cursor: 'pointer'
+          }}>
           <div style={{
             color: 'white',
             fontSize: '24px',
