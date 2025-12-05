@@ -274,11 +274,12 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
         try:
             for row in reader:
                 try:
-                    round_no = row.get('roundNo', '').strip()
-                    question_no = row.get('questionNo', '').strip()
-                    question_text = row.get('questionText', '').strip()
-                    image_url = row.get('imageUrl', '').strip()
-                    answer_text = row.get('answerText', '').strip()
+                    # Use 'or' to handle None values from empty TSV cells
+                    round_no = (row.get('roundNo', '') or '').strip()
+                    question_no = (row.get('questionNo', '') or '').strip()
+                    question_text = (row.get('questionText', '') or '').strip()
+                    image_url = (row.get('imageUrl', '') or '').strip()
+                    answer_text = (row.get('answerText', '') or '').strip()
 
                     if image_url.startswith('__') and image_url.endswith('__'):
                         image_url = image_url.strip('_')
