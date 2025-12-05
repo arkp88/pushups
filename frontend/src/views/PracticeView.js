@@ -18,6 +18,8 @@ function PracticeView({
   const tutorialTimeoutRef = useRef(null);
   // FIX #29: Minimal bookmark animation state
   const [bookmarkPulse, setBookmarkPulse] = useState(false);
+  // Track image load errors per question
+  const [imageError, setImageError] = useState(false);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -77,12 +79,11 @@ function PracticeView({
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [practice, handleNextWrapper, setView]);
 
-  // FIX #4: Clean up image error messages and reset swipe offset when question changes
+  // FIX #4: Clean up image error state and reset swipe offset when question changes
   // Also cleanup on component unmount to prevent corrupted card position
   useEffect(() => {
-    // Remove any leftover image error divs from previous questions
-    const errorDivs = document.querySelectorAll('.image-load-error');
-    errorDivs.forEach(div => div.remove());
+    // Reset image error state for new question
+    setImageError(false);
 
     // Reset swipe offset for new question
     setSwipeOffset(0);
@@ -368,37 +369,43 @@ function PracticeView({
               const safeUrl = getSafeImageUrl(originalUrl);
 
               return safeUrl ? (
-                <img
-                  key={`q-${practice.currentQuestionIndex}-${safeUrl}`}
-                  src={safeUrl}
-                  alt="Q"
-                  className="question-image"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    practice.setEnlargedImage(safeUrl);
-                  }}
-                  onError={(e) => {
-                    // FIX #6: Check if error div already exists before creating new one
-                    // This prevents DOM pollution if image fails repeatedly (e.g., offline)
-                    e.target.style.display = 'none';
-                    
-                    // Only create error message if one doesn't already exist
-                    const existingError = e.target.parentNode.querySelector('.image-load-error');
-                    if (!existingError) {
-                      const fallback = document.createElement('div');
-                      fallback.className = 'image-load-error';
-                      fallback.innerHTML = `
-                        <div style="padding: 16px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; margin: 16px 0;">
-                          ⚠️ Image unavailable in secure mode
-                          <div style="font-size: 12px; margin-top: 8px;">
-                            <a href="${originalUrl}" target="_blank" rel="noopener noreferrer" style="color: #667eea;">View image in new tab</a>
-                          </div>
-                        </div>
-                      `;
-                      e.target.parentNode.insertBefore(fallback, e.target);
-                    }
-                  }}
-                />
+                <>
+                  {imageError ? (
+                    <div style={{
+                      padding: '16px',
+                      background: '#fff3cd',
+                      border: '1px solid #ffc107',
+                      borderRadius: '8px',
+                      margin: '16px 0'
+                    }}>
+                      ⚠️ Image unavailable in secure mode
+                      <div style={{fontSize: '12px', marginTop: '8px'}}>
+                        <a
+                          href={originalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{color: '#667eea'}}
+                        >
+                          View image in new tab
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      key={`q-${practice.currentQuestionIndex}-${safeUrl}`}
+                      src={safeUrl}
+                      alt="Q"
+                      className="question-image"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        practice.setEnlargedImage(safeUrl);
+                      }}
+                      onError={() => {
+                        setImageError(true);
+                      }}
+                    />
+                  )}
+                </>
               ) : null;
             })()}
 
