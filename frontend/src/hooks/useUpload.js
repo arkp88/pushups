@@ -143,6 +143,9 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
       setUploadError('');
 
       let partialUploads = [];
+      // FIX #3: Track successes and failures separately for multi-file uploads
+      let successCount = 0;
+      let failedFiles = [];
 
       if (pendingUpload.type === 'local') {
         const files = pendingUpload.data;
@@ -156,20 +159,27 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
             setName = file.name.replace('.tsv', '');
           }
 
-          const response = await api.uploadTSV(file, setName, '', uploadTags);
-          if (response.is_partial) {
-            partialUploads.push({
-              name: setName,
-              imported: response.questions_imported,
-              expected: response.expected_questions,
-              warning: response.warning
-            });
+          // FIX #3: Wrap individual upload in try-catch to handle partial failures
+          try {
+            const response = await api.uploadTSV(file, setName, '', uploadTags);
+            successCount++;
+            if (response.is_partial) {
+              partialUploads.push({
+                name: setName,
+                imported: response.questions_imported,
+                expected: response.expected_questions,
+                warning: response.warning
+              });
+            }
+          } catch (error) {
+            failedFiles.push({ name: setName, error: error.message });
           }
         }
       } else if (pendingUpload.type === 'drive') {
         const file = pendingUpload.data;
         const finalName = customName.trim() || file.name.replace('.tsv', '');
         const response = await api.importDriveFile(file.id, file.name, uploadTags, finalName);
+        successCount++;
         if (response.is_partial) {
           partialUploads.push({
             name: finalName,
@@ -191,14 +201,20 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
             setName = `${setterName} - ${setName}`;
           }
 
-          const response = await api.importDriveFile(file.id, file.name, uploadTags, setName);
-          if (response.is_partial) {
-            partialUploads.push({
-              name: setName,
-              imported: response.questions_imported,
-              expected: response.expected_questions,
-              warning: response.warning
-            });
+          // FIX #3: Wrap individual import in try-catch to handle partial failures
+          try {
+            const response = await api.importDriveFile(file.id, file.name, uploadTags, setName);
+            successCount++;
+            if (response.is_partial) {
+              partialUploads.push({
+                name: setName,
+                imported: response.questions_imported,
+                expected: response.expected_questions,
+                warning: response.warning
+              });
+            }
+          } catch (error) {
+            failedFiles.push({ name: setName, error: error.message });
           }
         }
 
@@ -207,13 +223,26 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
 
       setPendingUpload(null);
 
-      // Show appropriate success message
-      if (partialUploads.length > 0) {
+      // FIX #3: Show appropriate success/error message based on results
+      if (failedFiles.length > 0 && successCount === 0) {
+        // All failed
+        const errorMsg = failedFiles.map(f => `❌ ${f.name}: ${f.error}`).join('\n');
+        setUploadError(`All uploads failed:\n${errorMsg}`);
+      } else if (failedFiles.length > 0) {
+        // Partial success
+        const errorMsg = failedFiles.map(f => `❌ ${f.name}: ${f.error}`).join('\n');
+        const warningMsg = partialUploads.length > 0 
+          ? '\n\n' + partialUploads.map(p => `⚠️ ${p.name}: ${p.imported}/${p.expected} questions imported`).join('\n')
+          : '';
+        setUploadSuccess(`✅ ${successCount} of ${successCount + failedFiles.length} files imported successfully.\n\n${errorMsg}${warningMsg}`);
+      } else if (partialUploads.length > 0) {
+        // All succeeded but some partial
         const warnings = partialUploads.map(p =>
           `⚠️ ${p.name}: ${p.imported}/${p.expected} questions imported`
         ).join('\n');
         setUploadSuccess(`Import completed with warnings:\n${warnings}\n\nFiles may be too large for free tier (30s timeout). Consider splitting into smaller files.`);
       } else {
+        // All succeeded fully
         setUploadSuccess('✅ Import successful! Check the "Your Library" tab.');
       }
 

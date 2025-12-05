@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { api } from '../api';
 
 export function usePractice(setAppNotification = () => {}) {
@@ -17,6 +17,9 @@ export function usePractice(setAppNotification = () => {}) {
 
   // Text-to-speech state
   const [isSpeaking, setIsSpeaking] = useState(false);
+  
+  // FIX #1: Track if we've added voiceschanged listener to prevent memory leak
+  const voicesListenerAddedRef = useRef(false);
 
   // Session stats tracking
   const [sessionStats, setSessionStats] = useState({ correct: 0, wrong: 0, skipped: 0 });
@@ -140,8 +143,10 @@ export function usePractice(setAppNotification = () => {}) {
           localStorage.removeItem('pushups-last-set-id');
         }
 
-        setProcessingNext(false);
+        // FIX #2: Set showSessionSummary FIRST, then clear processing state
+        // This prevents race condition where rapid clicks could trigger multiple summaries
         setShowSessionSummary(true);
+        setProcessingNext(false);
         if (onComplete) onComplete();
       }
     } catch (error) {
@@ -227,9 +232,14 @@ export function usePractice(setAppNotification = () => {}) {
     // Try to set voice immediately
     setVoice();
 
-    // If voices aren't loaded yet, wait for them
-    if (window.speechSynthesis.getVoices().length === 0) {
-      window.speechSynthesis.addEventListener('voiceschanged', setVoice, { once: true });
+    // FIX #1: Only add voiceschanged listener once to prevent memory leak
+    // If voices aren't loaded yet, wait for them (but only add listener once)
+    if (window.speechSynthesis.getVoices().length === 0 && !voicesListenerAddedRef.current) {
+      voicesListenerAddedRef.current = true;
+      window.speechSynthesis.addEventListener('voiceschanged', () => {
+        setVoice();
+        voicesListenerAddedRef.current = false; // Reset so future calls can add if needed
+      }, { once: true });
     }
 
     // Slower, more natural rate
