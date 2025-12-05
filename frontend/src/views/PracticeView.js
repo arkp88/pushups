@@ -688,7 +688,7 @@ function PracticeView({
             {/* Stats Grid */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
+              gridTemplateColumns: '1fr 1fr 1fr',
               gap: '15px',
               marginBottom: '25px'
             }}>
@@ -739,6 +739,31 @@ function PracticeView({
                   fontWeight: '600'
                 }}>
                   Missed it
+                </div>
+              </div>
+
+              {/* Skipped */}
+              <div style={{
+                textAlign: 'center',
+                padding: '15px',
+                background: '#f5f5f5',
+                borderRadius: '10px',
+                border: '2px solid #d4d4d4'
+              }}>
+                <div style={{
+                  fontSize: '28px',
+                  fontWeight: 'bold',
+                  color: '#737373',
+                  marginBottom: '5px'
+                }}>
+                  {practice.questions.length - practice.sessionStats.correct - practice.sessionStats.wrong}
+                </div>
+                <div style={{
+                  fontSize: '12px',
+                  color: '#737373',
+                  fontWeight: '600'
+                }}>
+                  Skipped
                 </div>
               </div>
             </div>

@@ -306,9 +306,12 @@ export function usePractice(setAppNotification = () => {}) {
   };
 
   const reviewSessionMisses = () => {
-    // Filter current questions to only show ones that were missed or skipped in this session
-    const missedQuestionIds = Array.from(sessionMissedQuestionsRef.current);
-    const missedQuestions = questions.filter(q => missedQuestionIds.includes(q.id));
+    // Include ALL questions that were NOT answered correctly in this session
+    // This includes: questions marked wrong, questions skipped, and questions not seen
+    const missedQuestions = questions.filter(q => {
+      const answer = sessionAnswersRef.current.get(q.id);
+      return answer !== 'correct'; // Include if not answered correctly (wrong, skipped, or not seen)
+    });
     
     if (missedQuestions.length === 0) {
       setPracticeNotification('🎉 No misses to review - you got everything!');
@@ -351,7 +354,7 @@ export function usePractice(setAppNotification = () => {}) {
 
     // Session stats
     sessionStats,
-    sessionMissedCount: sessionMissedQuestionsRef.current.size,
+    sessionMissedCount: questions.filter(q => sessionAnswersRef.current.get(q.id) !== 'correct').length,
     showSessionSummary,
     setShowSessionSummary,
 
