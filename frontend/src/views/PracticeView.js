@@ -471,13 +471,6 @@ function PracticeView({
             >
               ← Prev
             </button>
-            <button 
-              className="btn btn-primary" 
-              onClick={practice.handleFlip}
-              disabled={practice.processingNext}
-            >
-              Show Answer
-            </button>
             <button
               className="btn btn-secondary"
               onClick={() => handleNextWrapper(null)}
