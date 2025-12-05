@@ -24,6 +24,9 @@ export function usePractice(setAppNotification = () => {}) {
   // Session stats tracking
   const [sessionStats, setSessionStats] = useState({ correct: 0, wrong: 0, skipped: 0 });
   const [showSessionSummary, setShowSessionSummary] = useState(false);
+  // FIX #35: Track which questions have been answered in this session to prevent double-counting
+  // when user clicks Previous and answers same question again
+  const sessionAnswersRef = useRef(new Map()); // Map<questionId, 'correct'|'wrong'|'skipped'>
 
   const startPractice = async (set, isRandomSession = false) => {
     try {
@@ -50,6 +53,8 @@ export function usePractice(setAppNotification = () => {}) {
       // Reset session stats when starting new practice
       setSessionStats({ correct: 0, wrong: 0, skipped: 0 });
       setShowSessionSummary(false);
+      // FIX #35: Clear session answers tracking
+      sessionAnswersRef.current.clear();
 
       if (savedPosition) {
         setPracticeNotification(`Resuming from question ${startIndex + 1}`);
@@ -91,6 +96,8 @@ export function usePractice(setAppNotification = () => {}) {
       // Reset session stats when starting new practice
       setSessionStats({ correct: 0, wrong: 0, skipped: 0 });
       setShowSessionSummary(false);
+      // FIX #35: Clear session answers tracking
+      sessionAnswersRef.current.clear();
 
       return true;
     } catch (error) {
@@ -115,14 +122,28 @@ export function usePractice(setAppNotification = () => {}) {
 
       const currentQuestion = questions[currentQuestionIndex];
 
-      // Track session stats
-      if (markAsCorrect === true) {
-        setSessionStats(prev => ({ ...prev, correct: prev.correct + 1 }));
-      } else if (markAsCorrect === false) {
-        setSessionStats(prev => ({ ...prev, wrong: prev.wrong + 1 }));
-      } else {
-        setSessionStats(prev => ({ ...prev, skipped: prev.skipped + 1 }));
+      // FIX #35: Track session stats per question ID to prevent double-counting
+      // when user clicks Previous and re-answers the same question
+      const questionId = currentQuestion.id;
+      const previousAnswer = sessionAnswersRef.current.get(questionId);
+      const newAnswer = markAsCorrect === true ? 'correct' : markAsCorrect === false ? 'wrong' : 'skipped';
+
+      // If this question was already answered, subtract the old answer first
+      if (previousAnswer) {
+        setSessionStats(prev => ({
+          ...prev,
+          [previousAnswer]: prev[previousAnswer] - 1
+        }));
       }
+
+      // Add the new answer
+      setSessionStats(prev => ({
+        ...prev,
+        [newAnswer]: prev[newAnswer] + 1
+      }));
+
+      // Store this answer in our tracking map
+      sessionAnswersRef.current.set(questionId, newAnswer);
 
       await api.updateProgress(currentQuestion.id, true, markAsCorrect);
       if (markAsCorrect === false) await api.markMissed(currentQuestion.id);

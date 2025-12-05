@@ -152,7 +152,9 @@ function PracticeView({
 
     const touchEndX = e.changedTouches[0].clientX;
     const deltaX = touchEndX - touchStartX.current;
-    const threshold = 100; // Minimum swipe distance
+    // FIX #13: Responsive threshold - 25% of screen width instead of fixed 100px
+    // Makes swipes easier on small phones (e.g., 320px width = 80px threshold vs old 100px)
+    const threshold = window.innerWidth * 0.25;
 
     if (Math.abs(deltaX) > threshold && !practice.processingNext) {
       e.preventDefault();
@@ -423,7 +425,7 @@ function PracticeView({
           className="speaker-button"
           style={{
             position: 'absolute',
-            bottom: '20px',
+            bottom: '35px', // FIX #15: Increased from 20px to avoid swipe gesture conflicts
             left: '20px',
             fontSize: '28px',
             cursor: 'pointer',
