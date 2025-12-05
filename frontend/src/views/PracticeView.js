@@ -38,26 +38,30 @@ function PracticeView({
           break;
         case 'ArrowUp':
           e.preventDefault();
+          // On answer view: "Got it" (same as arrow right)
           if (practice.isFlipped && !practice.processingNext) {
             handleNextWrapper(true);
           }
           break;
         case 'ArrowDown':
           e.preventDefault();
+          // On answer view: "Missed it"
           if (practice.isFlipped && !practice.processingNext) {
             handleNextWrapper(false);
           }
           break;
         case 'ArrowLeft':
           e.preventDefault();
-          if (practice.currentQuestionIndex > 0 && !practice.processingNext) {
+          // On question view only: "Previous"
+          if (!practice.isFlipped && practice.currentQuestionIndex > 0 && !practice.processingNext) {
             practice.handlePrevious();
           }
           break;
         case 'ArrowRight':
           e.preventDefault();
           if (!practice.processingNext) {
-            handleNextWrapper(null);
+            // On answer view: "Got it", On question view: "Next"
+            handleNextWrapper(practice.isFlipped ? true : null);
           }
           break;
         case 'Escape':
@@ -265,7 +269,7 @@ function PracticeView({
             borderRadius: '6px',
             display: 'inline-block'
           }}>
-            ⌨️ Space: Flip | ↑: Correct | ↓: Wrong | ←: Prev | →: Pass | Esc: Back
+            ⌨️ Space: Flip | ↑/→: Got it | ↓: Missed it | ←: Prev (Q) | →: Next (Q) | Esc: Back
           </div>
         </div>
       </div>
@@ -413,7 +417,7 @@ function PracticeView({
                 fontWeight: '500',
                 textAlign: 'center'
               }}>
-                Swipe Right For Correct ✅ · Left For Wrong ❌
+                Swipe Right = Got it ✅ · Left = Missed it ❌
               </div>
             )}
           </>
@@ -472,25 +476,18 @@ function PracticeView({
               disabled={practice.processingNext}
               style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
             >
-              {practice.processingNext ? '...' : 'Pass →'}
+              {practice.processingNext ? '...' : 'Next →'}
             </button>
           </>
         ) : (
           <>
-            <button
-              className="btn btn-secondary"
-              onClick={practice.handlePrevious}
-              disabled={practice.currentQuestionIndex === 0 || practice.processingNext}
-            >
-              ← Prev
-            </button>
             <button
               className="btn btn-warning"
               onClick={() => handleNextWrapper(false)}
               disabled={practice.processingNext}
               style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
             >
-              {practice.processingNext ? '...' : '✗ Wrong'}
+              {practice.processingNext ? '...' : '✗ Missed it'}
             </button>
             <button
               className="btn btn-success"
@@ -498,15 +495,7 @@ function PracticeView({
               disabled={practice.processingNext}
               style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
             >
-              {practice.processingNext ? '...' : '✓ Right'}
-            </button>
-            <button
-              className="btn btn-secondary"
-              onClick={() => handleNextWrapper(null)}
-              disabled={practice.processingNext}
-              style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
-            >
-              {practice.processingNext ? '...' : 'Pass →'}
+              {practice.processingNext ? '...' : '✓ Got it'}
             </button>
           </>
         )}
@@ -582,7 +571,7 @@ function PracticeView({
             }}>
               <div style={{ fontSize: '48px', marginBottom: '10px' }}>👈</div>
               <div style={{ fontSize: '18px', fontWeight: '600' }}>Swipe Left</div>
-              <div style={{ fontSize: '32px', marginTop: '5px' }}>❌ Wrong</div>
+              <div style={{ fontSize: '32px', marginTop: '5px' }}>❌ Missed it</div>
             </div>
             <div style={{
               textAlign: 'center',
@@ -590,7 +579,7 @@ function PracticeView({
             }}>
               <div style={{ fontSize: '48px', marginBottom: '10px' }}>👉</div>
               <div style={{ fontSize: '18px', fontWeight: '600' }}>Swipe Right</div>
-              <div style={{ fontSize: '32px', marginTop: '5px' }}>✅ Correct</div>
+              <div style={{ fontSize: '32px', marginTop: '5px' }}>✅ Got it</div>
             </div>
           </div>
 
@@ -686,11 +675,11 @@ function PracticeView({
             {/* Stats Grid */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: '1fr 1fr 1fr',
+              gridTemplateColumns: '1fr 1fr',
               gap: '15px',
               marginBottom: '25px'
             }}>
-              {/* Correct */}
+              {/* Got it */}
               <div style={{
                 textAlign: 'center',
                 padding: '15px',
@@ -711,11 +700,11 @@ function PracticeView({
                   color: '#16a34a',
                   fontWeight: '600'
                 }}>
-                  Correct
+                  Got it
                 </div>
               </div>
 
-              {/* Wrong */}
+              {/* Missed it */}
               <div style={{
                 textAlign: 'center',
                 padding: '15px',
@@ -736,32 +725,7 @@ function PracticeView({
                   color: '#dc2626',
                   fontWeight: '600'
                 }}>
-                  Wrong
-                </div>
-              </div>
-
-              {/* Passed */}
-              <div style={{
-                textAlign: 'center',
-                padding: '15px',
-                background: '#f5f5f5',
-                borderRadius: '10px',
-                border: '2px solid #d4d4d4'
-              }}>
-                <div style={{
-                  fontSize: '28px',
-                  fontWeight: 'bold',
-                  color: '#737373',
-                  marginBottom: '5px'
-                }}>
-                  {practice.sessionStats.skipped}
-                </div>
-                <div style={{
-                  fontSize: '12px',
-                  color: '#737373',
-                  fontWeight: '600'
-                }}>
-                  Passed
+                  Missed it
                 </div>
               </div>
             </div>

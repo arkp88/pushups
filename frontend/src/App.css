@@ -772,7 +772,7 @@ body {
 
 /* Utility classes for responsive visibility */
 .mobile-only {
-  display: none;
+  display: none !important; /* !important to override inline styles */
 }
 
 @media (max-width: 768px) {
@@ -781,6 +781,6 @@ body {
   }
   
   .mobile-only {
-    display: block;
+    display: flex !important; /* Use flex for tutorial overlay, block for other mobile elements */
   }
 }

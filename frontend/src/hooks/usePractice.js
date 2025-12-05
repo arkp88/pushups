@@ -22,11 +22,11 @@ export function usePractice(setAppNotification = () => {}) {
   const voicesListenerAddedRef = useRef(false);
 
   // Session stats tracking
-  const [sessionStats, setSessionStats] = useState({ correct: 0, wrong: 0, skipped: 0 });
+  const [sessionStats, setSessionStats] = useState({ correct: 0, wrong: 0 });
   const [showSessionSummary, setShowSessionSummary] = useState(false);
   // FIX #35: Track which questions have been answered in this session to prevent double-counting
   // when user clicks Previous and answers same question again
-  const sessionAnswersRef = useRef(new Map()); // Map<questionId, 'correct'|'wrong'|'skipped'>
+  const sessionAnswersRef = useRef(new Map()); // Map<questionId, 'correct'|'wrong'>
 
   const startPractice = async (set, isRandomSession = false) => {
     try {
@@ -51,7 +51,7 @@ export function usePractice(setAppNotification = () => {}) {
       setPracticeMode('single');
 
       // Reset session stats when starting new practice
-      setSessionStats({ correct: 0, wrong: 0, skipped: 0 });
+      setSessionStats({ correct: 0, wrong: 0 });
       setShowSessionSummary(false);
       // FIX #35: Clear session answers tracking
       sessionAnswersRef.current.clear();
@@ -94,7 +94,7 @@ export function usePractice(setAppNotification = () => {}) {
       setPracticeMode('mixed');
 
       // Reset session stats when starting new practice
-      setSessionStats({ correct: 0, wrong: 0, skipped: 0 });
+      setSessionStats({ correct: 0, wrong: 0 });
       setShowSessionSummary(false);
       // FIX #35: Clear session answers tracking
       sessionAnswersRef.current.clear();
@@ -124,26 +124,31 @@ export function usePractice(setAppNotification = () => {}) {
 
       // FIX #35: Track session stats per question ID to prevent double-counting
       // when user clicks Previous and re-answers the same question
+      // Note: markAsCorrect can be true (got it), false (missed it), or null (next/skip without answer)
       const questionId = currentQuestion.id;
-      const previousAnswer = sessionAnswersRef.current.get(questionId);
-      const newAnswer = markAsCorrect === true ? 'correct' : markAsCorrect === false ? 'wrong' : 'skipped';
+      
+      // Only track stats if user actually answered (not just clicked Next on question view)
+      if (markAsCorrect !== null) {
+        const previousAnswer = sessionAnswersRef.current.get(questionId);
+        const newAnswer = markAsCorrect === true ? 'correct' : 'wrong';
 
-      // If this question was already answered, subtract the old answer first
-      if (previousAnswer) {
+        // If this question was already answered, subtract the old answer first
+        if (previousAnswer) {
+          setSessionStats(prev => ({
+            ...prev,
+            [previousAnswer]: prev[previousAnswer] - 1
+          }));
+        }
+
+        // Add the new answer
         setSessionStats(prev => ({
           ...prev,
-          [previousAnswer]: prev[previousAnswer] - 1
+          [newAnswer]: prev[newAnswer] + 1
         }));
+
+        // Store this answer in our tracking map
+        sessionAnswersRef.current.set(questionId, newAnswer);
       }
-
-      // Add the new answer
-      setSessionStats(prev => ({
-        ...prev,
-        [newAnswer]: prev[newAnswer] + 1
-      }));
-
-      // Store this answer in our tracking map
-      sessionAnswersRef.current.set(questionId, newAnswer);
 
       await api.updateProgress(currentQuestion.id, true, markAsCorrect);
       if (markAsCorrect === false) await api.markMissed(currentQuestion.id);
