@@ -27,6 +27,8 @@ export function usePractice(setAppNotification = () => {}) {
   // FIX #35: Track which questions have been answered in this session to prevent double-counting
   // when user clicks Previous and answers same question again
   const sessionAnswersRef = useRef(new Map()); // Map<questionId, 'correct'|'wrong'>
+  // Track questions that were missed or skipped in this session for "Review Misses" feature
+  const sessionMissedQuestionsRef = useRef(new Set()); // Set of question IDs
 
   const startPractice = async (set, isRandomSession = false) => {
     try {
@@ -55,6 +57,8 @@ export function usePractice(setAppNotification = () => {}) {
       setShowSessionSummary(false);
       // FIX #35: Clear session answers tracking
       sessionAnswersRef.current.clear();
+      // Clear session missed questions tracking
+      sessionMissedQuestionsRef.current.clear();
 
       if (savedPosition) {
         setPracticeNotification(`Resuming from question ${startIndex + 1}`);
@@ -98,6 +102,8 @@ export function usePractice(setAppNotification = () => {}) {
       setShowSessionSummary(false);
       // FIX #35: Clear session answers tracking
       sessionAnswersRef.current.clear();
+      // Clear session missed questions tracking
+      sessionMissedQuestionsRef.current.clear();
 
       return true;
     } catch (error) {
@@ -126,6 +132,15 @@ export function usePractice(setAppNotification = () => {}) {
       // when user clicks Previous and re-answers the same question
       // Note: markAsCorrect can be true (got it), false (missed it), or null (next/skip without answer)
       const questionId = currentQuestion.id;
+      
+      // Track missed/skipped questions for "Review Misses" feature
+      if (markAsCorrect === true) {
+        // Got it right - remove from missed list (if it was there from previous attempt)
+        sessionMissedQuestionsRef.current.delete(questionId);
+      } else {
+        // Either missed (false) or skipped (null) - add to missed list
+        sessionMissedQuestionsRef.current.add(questionId);
+      }
       
       // Only track stats if user actually answered (not just clicked Next on question view)
       if (markAsCorrect !== null) {
@@ -290,6 +305,32 @@ export function usePractice(setAppNotification = () => {}) {
     }
   };
 
+  const reviewSessionMisses = () => {
+    // Filter current questions to only show ones that were missed or skipped in this session
+    const missedQuestionIds = Array.from(sessionMissedQuestionsRef.current);
+    const missedQuestions = questions.filter(q => missedQuestionIds.includes(q.id));
+    
+    if (missedQuestions.length === 0) {
+      setPracticeNotification('🎉 No misses to review - you got everything!');
+      setTimeout(() => setPracticeNotification(''), 4000);
+      return;
+    }
+    
+    // Start practice with just the missed questions from this session
+    setQuestions(missedQuestions);
+    setCurrentQuestionIndex(0);
+    setIsFlipped(false);
+    setShowSessionSummary(false);
+    
+    // Reset session stats for the review session
+    setSessionStats({ correct: 0, wrong: 0 });
+    sessionAnswersRef.current.clear();
+    sessionMissedQuestionsRef.current.clear();
+    
+    setPracticeNotification(`Reviewing ${missedQuestions.length} missed question${missedQuestions.length > 1 ? 's' : ''} from this session`);
+    setTimeout(() => setPracticeNotification(''), 4000);
+  };
+
   return {
     // State
     questions,
@@ -310,6 +351,7 @@ export function usePractice(setAppNotification = () => {}) {
 
     // Session stats
     sessionStats,
+    sessionMissedCount: sessionMissedQuestionsRef.current.size,
     showSessionSummary,
     setShowSessionSummary,
 
@@ -323,5 +365,6 @@ export function usePractice(setAppNotification = () => {}) {
     setEnlargedImage,
     speakText,
     stopSpeaking,
+    reviewSessionMisses,
   };
 }

@@ -730,7 +730,7 @@ function PracticeView({
               </div>
             </div>
 
-            {/* Accuracy */}
+            {/* Score */}
             <div style={{
               textAlign: 'center',
               padding: '15px',
@@ -743,16 +743,17 @@ function PracticeView({
                 color: '#666',
                 marginBottom: '5px'
               }}>
-                Accuracy
+                Score
               </div>
               <div style={{
                 fontSize: '32px',
                 fontWeight: 'bold',
-                color: '#667eea'
+                color: (() => {
+                  const percentage = (practice.sessionStats.correct / practice.questions.length) * 100;
+                  return percentage > 75 ? '#16a34a' : percentage >= 25 ? '#f59e0b' : '#dc2626';
+                })()
               }}>
-                {practice.sessionStats.correct + practice.sessionStats.wrong > 0
-                  ? Math.round((practice.sessionStats.correct / (practice.sessionStats.correct + practice.sessionStats.wrong)) * 100)
-                  : 0}%
+                {practice.sessionStats.correct}/{practice.questions.length}
               </div>
             </div>
 
@@ -786,11 +787,10 @@ function PracticeView({
                 Practice Again
               </button>
 
-              {practice.sessionStats.wrong > 0 && (
+              {practice.sessionMissedCount > 0 && (
                 <button
                   onClick={() => {
-                    practice.setShowSessionSummary(false);
-                    startMixedPracticeWrapper('missed');
+                    practice.reviewSessionMisses();
                   }}
                   style={{
                     padding: '14px',
@@ -803,7 +803,7 @@ function PracticeView({
                     cursor: 'pointer'
                   }}
                 >
-                  Review Misses
+                  Review Misses ({practice.sessionMissedCount})
                 </button>
               )}
 
