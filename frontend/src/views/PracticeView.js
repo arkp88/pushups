@@ -16,6 +16,8 @@ function PracticeView({
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [showTutorial, setShowTutorial] = useState(false);
   const tutorialTimeoutRef = useRef(null);
+  // FIX #29: Minimal bookmark animation state
+  const [bookmarkPulse, setBookmarkPulse] = useState(false);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -26,7 +28,12 @@ function PracticeView({
       switch(e.key) {
         case ' ':
         case 'Enter':
-          e.preventDefault();
+          // FIX #11: Only prevent default if content is not scrollable
+          // Allow spacebar scrolling for long answer text
+          const isScrollable = document.documentElement.scrollHeight > window.innerHeight;
+          if (!isScrollable) {
+            e.preventDefault();
+          }
           practice.handleFlip();
           break;
         case 'ArrowUp':
@@ -230,7 +237,15 @@ function PracticeView({
         </div>
 
         <div style={{textAlign: 'center', width: '100%'}}>
-          <div style={{fontWeight: 'bold', color: '#333', fontSize: '18px', marginBottom: '5px', wordBreak: 'break-word', paddingLeft: '40px', paddingRight: '40px'}}>
+          {/* FIX #9: Responsive set name - ellipsis on mobile, normal on desktop */}
+          <div style={{
+            fontWeight: 'bold', 
+            color: '#333', 
+            fontSize: '18px', 
+            marginBottom: '5px', 
+            paddingLeft: '40px', 
+            paddingRight: '40px'
+          }} className="set-name-header">
             {practice.currentSet.name}
           </div>
           <div className="flashcard-progress" style={{color: '#666', fontWeight: '600'}}>
@@ -306,7 +321,13 @@ function PracticeView({
 
         {/* Bookmark Icon */}
         <div
-          onClick={handleBookmarkWrapper}
+          onClick={(e) => {
+            handleBookmarkWrapper(e);
+            // FIX #29: Minimal visual feedback - brief scale pulse
+            setBookmarkPulse(true);
+            setTimeout(() => setBookmarkPulse(false), 200);
+          }}
+          className={bookmarkPulse ? 'bookmark-pulse' : ''}
           style={{
             position: 'absolute',
             top: '12px',
@@ -603,8 +624,36 @@ function PracticeView({
             padding: '30px',
             maxWidth: '400px',
             width: '100%',
-            boxShadow: '0 10px 40px rgba(0,0,0,0.3)'
+            boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+            position: 'relative'
           }}>
+            {/* FIX #12: Close button to allow reviewing last card */}
+            <button
+              onClick={() => practice.setShowSessionSummary(false)}
+              style={{
+                position: 'absolute',
+                top: '15px',
+                right: '15px',
+                background: '#f3f4f6',
+                border: 'none',
+                borderRadius: '50%',
+                width: '32px',
+                height: '32px',
+                fontSize: '18px',
+                cursor: 'pointer',
+                color: '#6b7280',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => e.target.style.background = '#e5e7eb'}
+              onMouseLeave={(e) => e.target.style.background = '#f3f4f6'}
+              title="Close and review last card"
+            >
+              ✕
+            </button>
+
             {/* Header */}
             <div style={{
               textAlign: 'center',
