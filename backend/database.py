@@ -122,7 +122,18 @@ def init_db():
             UNIQUE(user_id, activity_date)
         )
     ''')
-    
+
+    # Set instructions table
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS set_instructions (
+            id SERIAL PRIMARY KEY,
+            set_id INTEGER REFERENCES question_sets(id) ON DELETE CASCADE,
+            instruction_text TEXT NOT NULL,
+            display_order INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
     # Indexes
     cur.execute('CREATE INDEX IF NOT EXISTS idx_questions_set_id ON questions(set_id)')
     cur.execute('CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON user_progress(user_id)')
@@ -130,6 +141,7 @@ def init_db():
     cur.execute('CREATE INDEX IF NOT EXISTS idx_missed_questions_user_id ON missed_questions(user_id)')
     cur.execute('CREATE INDEX IF NOT EXISTS idx_bookmarks_user_id ON bookmarks(user_id)')
     cur.execute('CREATE INDEX IF NOT EXISTS idx_daily_activity_user_date ON daily_activity(user_id, activity_date)')
+    cur.execute('CREATE INDEX IF NOT EXISTS idx_set_instructions_set_id ON set_instructions(set_id)')
 
     # Migration: Add content_hash for duplicate detection
     try:

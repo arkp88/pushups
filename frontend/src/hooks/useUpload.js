@@ -236,11 +236,19 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
           : '';
         setUploadSuccess(`✅ ${successCount} of ${successCount + failedFiles.length} files imported successfully.\n\n${errorMsg}${warningMsg}`);
       } else if (partialUploads.length > 0) {
-        // All succeeded but some partial
-        const warnings = partialUploads.map(p =>
-          `⚠️ ${p.name}: ${p.imported}/${p.expected} questions imported`
-        ).join('\n');
-        setUploadSuccess(`Import completed with warnings:\n${warnings}\n\nFiles may be too large for free tier (30s timeout). Consider splitting into smaller files.`);
+        // All succeeded but some partial - distinguish timeout vs. data issues
+        const warnings = partialUploads.map(p => {
+          const isTimeout = p.warning && p.warning.includes('timeout');
+          const icon = isTimeout ? '⏱️' : '⚠️';
+          return `${icon} ${p.name}: ${p.imported}/${p.expected} questions imported`;
+        }).join('\n');
+
+        const hasTimeouts = partialUploads.some(p => p.warning?.includes('timeout'));
+        const timeoutWarning = hasTimeouts
+          ? '\n\nFiles may be too large for free tier (30s timeout). Consider splitting into smaller files.'
+          : '\n\nSome rows may be missing required fields (questionText AND answerText).';
+
+        setUploadSuccess(`Import completed with warnings:\n${warnings}${timeoutWarning}`);
       } else {
         // All succeeded fully
         setUploadSuccess('✅ Import successful! Check the "Your Library" tab.');

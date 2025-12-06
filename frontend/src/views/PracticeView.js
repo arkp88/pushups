@@ -214,31 +214,23 @@ function PracticeView({
       )}
 
       <div className="flashcard-header" style={{display: 'flex', flexDirection: 'column', gap: '15px'}}>
-        <div style={{display: 'flex', justifyContent: 'space-between', width: '100%'}}>
+        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%'}}>
           <button className="btn btn-secondary" onClick={() => setView('sets')}>← Back</button>
-          
-          {practice.practiceMode === 'single' && (
-            <button 
-              className="btn btn-primary" 
-              disabled={practice.startingPractice}
-              onClick={() => {
-                // Unplayed = zero questions answered AND not opened in this session
-                const unplayed = questionSets.filter(s => 
-                  s.id !== practice.currentSet.id && 
-                  (!s.questions_attempted || s.questions_attempted === 0) &&
-                  !practice.setsOpenedThisSession.includes(s.id)
-                );
-                if (unplayed.length === 0) {
-                  practice.setPracticeNotification('🎉 You\'ve tried all unplayed sets in this session!');
-                  setTimeout(() => practice.setPracticeNotification(''), 4000);
-                  return;
-                }
-                const randomSet = unplayed[Math.floor(Math.random() * unplayed.length)];
-                // Mark as random session so it gets tracked
-                practice.startPractice(randomSet, true);
+
+          {/* Instructions button - only show if instructions exist and NOT in mixed mode */}
+          {practice.setInstructions.length > 0 && practice.practiceMode === 'single' && (
+            <button
+              className="btn btn-primary"
+              onClick={() => practice.toggleInstructions()}
+              style={{
+                background: '#fff3cd',
+                border: '2px solid #ffc107',
+                color: '#856404',
+                fontWeight: '600'
               }}
+              title="View instructions for this set"
             >
-              {practice.startingPractice ? 'Loading...' : '🎲 Another Random Set'}
+              ℹ️ Set Instructions
             </button>
           )}
         </div>
@@ -274,6 +266,84 @@ function PracticeView({
           </div>
         </div>
       </div>
+
+      {/* Instruction Modal - accessible throughout practice */}
+      {practice.setInstructions.length > 0 && practice.showInstructions && (
+        <div
+          onClick={() => practice.toggleInstructions()}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff3cd',
+              border: '2px solid #ffc107',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '600px',
+              width: '100%',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+              position: 'relative'
+            }}
+          >
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <h3 style={{ margin: 0, color: '#856404', fontSize: '20px' }}>
+                📋 Instructions
+              </h3>
+              <button
+                onClick={() => practice.toggleInstructions()}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#856404',
+                  padding: '0 8px'
+                }}
+                aria-label="Close instructions"
+              >
+                ✕
+              </button>
+            </div>
+            <ul style={{
+              margin: 0,
+              paddingLeft: '24px',
+              color: '#856404',
+              lineHeight: '1.8',
+              fontSize: '16px'
+            }}>
+              {practice.setInstructions.map((instruction, idx) => (
+                <li key={idx} style={{ marginBottom: '10px' }}>
+                  <span dangerouslySetInnerHTML={{
+                    __html: instruction
+                      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                      .replace(/__(.+?)__/g, '<em>$1</em>')
+                  }} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
 
       <div
         className={`flashcard ${practice.isFlipped ? 'flipped' : ''}`}

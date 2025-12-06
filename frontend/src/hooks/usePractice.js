@@ -12,6 +12,10 @@ export function usePractice(setAppNotification = () => {}) {
   const [practiceNotification, setPracticeNotification] = useState('');
   const [enlargedImage, setEnlargedImage] = useState(null);
 
+  // Instructions state
+  const [setInstructions, setSetInstructions] = useState([]);
+  const [showInstructions, setShowInstructions] = useState(false);
+
   // Track sets opened in current random session (to prevent cycling)
   const [setsOpenedThisSession, setSetsOpenedThisSession] = useState([]);
 
@@ -43,6 +47,8 @@ export function usePractice(setAppNotification = () => {}) {
 
       const data = await api.getQuestions(set.id);
       setQuestions(data.questions);
+      setSetInstructions(data.instructions || []);
+      setShowInstructions(false); // Reset when starting new practice
       setCurrentSet(set);
 
       const savedPosition = localStorage.getItem(`pushups-quiz-position-${set.id}`);
@@ -92,6 +98,8 @@ export function usePractice(setAppNotification = () => {}) {
       }
 
       setQuestions(data.questions);
+      setSetInstructions([]); // Clear instructions for mixed mode
+      setShowInstructions(false);
       setCurrentSet({ name: `Random Mode (${filter})`, id: 'mixed' });
       setCurrentQuestionIndex(0);
       setIsFlipped(false);
@@ -334,6 +342,10 @@ export function usePractice(setAppNotification = () => {}) {
     setTimeout(() => setPracticeNotification(''), 4000);
   };
 
+  const toggleInstructions = () => {
+    setShowInstructions(!showInstructions);
+  };
+
   return {
     // State
     questions,
@@ -346,6 +358,11 @@ export function usePractice(setAppNotification = () => {}) {
     practiceNotification,
     enlargedImage,
     isSpeaking,
+
+    // Instructions
+    setInstructions,
+    showInstructions,
+    toggleInstructions,
 
     // Session tracking
     setsOpenedThisSession,

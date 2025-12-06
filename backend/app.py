@@ -5,6 +5,7 @@ import re
 import jwt
 import hashlib
 import logging
+import time
 from datetime import datetime, timedelta
 from functools import wraps
 from flask import Flask, request, jsonify
@@ -205,15 +206,49 @@ def convert_markdown_to_html(text):
 
     return text
 
+def count_valid_questions(content):
+    """Count ONLY valid question rows (with both questionText AND answerText).
+    Excludes: empty lines, header, instruction rows."""
+    try:
+        # Normalize line endings
+        content = content.replace('\r\n', '\n').replace('\r', '\n')
+
+        # Remove BOM if present
+        if content.startswith('\ufeff'):
+            content = content[1:]
+
+        reader = csv.DictReader(io.StringIO(content), delimiter='\t')
+        count = 0
+
+        for row in reader:
+            round_no = (row.get('roundNo', '') or '').strip()
+            question_text = (row.get('questionText', '') or '').strip()
+            answer_text = (row.get('answerText', '') or '').strip()
+
+            # Skip instruction rows
+            if round_no.lower() == 'instructions':
+                continue
+
+            # Count only rows with both question AND answer
+            if question_text and answer_text:
+                count += 1
+
+        return count
+    except Exception:
+        # If counting fails, return 0 to avoid breaking the upload
+        return 0
+
 def parse_and_save_set(content, set_name, description, user_id, tags='', google_id=None):
-    """Parses TSV content and saves to DB. Returns (set_id, question_count, expected_count, is_partial)."""
+    """Parses TSV content and saves to DB. Returns (set_id, question_count, expected_count, is_partial, processing_time)."""
+
+    # Start timing
+    start_time = time.time()
 
     # 1. Generate Content Hash (SHA-256)
     content_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
 
-    # Count expected questions before processing
-    lines = content.strip().split('\n')
-    expected_count = len(lines) - 1  # Subtract header line
+    # Count expected questions before processing (only valid questions)
+    expected_count = count_valid_questions(content)
 
     conn = get_db()
     cur = conn.cursor()
@@ -229,8 +264,9 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
         existing = cur.fetchone()
         if existing:
             # STOP: Return existing ID.
+            processing_time = time.time() - start_time
             logger.info(f"Duplicate content detected for user {user_id}, returning existing set {existing['id']}")
-            return existing['id'], existing['total_questions'], expected_count, False
+            return existing['id'], existing['total_questions'], expected_count, False, processing_time
 
         # ... (Standard parsing logic) ...
         content = content.replace('\r\n', '\n').replace('\r', '\n')
@@ -265,7 +301,38 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
             (set_name, description, user_id, tags, False, google_id, content_hash)
         )
         set_id = cur.fetchone()['id']
-        
+
+        # Extract and save instructions BEFORE processing questions
+        instructions = []
+        content_for_instructions = content.replace('\r\n', '\n').replace('\r', '\n')
+        if content_for_instructions.startswith('\ufeff'):
+            content_for_instructions = content_for_instructions[1:]
+
+        temp_reader = csv.DictReader(io.StringIO(content_for_instructions), delimiter='\t')
+        for row in temp_reader:
+            round_no = (row.get('roundNo', '') or '').strip()
+
+            # Instruction text can be in questionNo OR questionText column
+            # (depends on how many tabs are in the row)
+            instruction_text = (row.get('questionNo', '') or '').strip()
+            if not instruction_text:
+                instruction_text = (row.get('questionText', '') or '').strip()
+
+            if round_no.lower() == 'instructions' and instruction_text:
+                instructions.append(instruction_text)
+                logger.info(f"Found instruction: {instruction_text[:60]}")
+
+        # Save instructions to database
+        logger.info(f"Saving {len(instructions)} instructions for set {set_id}")
+        if instructions:
+            for idx, instruction in enumerate(instructions):
+                cur.execute(
+                    '''INSERT INTO set_instructions (set_id, instruction_text, display_order)
+                       VALUES (%s, %s, %s)''',
+                    (set_id, instruction, idx)
+                )
+            logger.info(f"Successfully saved {len(instructions)} instructions")
+
         question_count = 0
         batch_size = 100
         questions_batch = []
@@ -276,6 +343,12 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
                 try:
                     # Use 'or' to handle None values from empty TSV cells
                     round_no = (row.get('roundNo', '') or '').strip()
+
+                    # Skip instruction rows - they're handled separately
+                    if round_no.lower() == 'instructions':
+                        line_number += 1
+                        continue
+
                     question_no = (row.get('questionNo', '') or '').strip()
                     question_text = (row.get('questionText', '') or '').strip()
                     image_url = (row.get('imageUrl', '') or '').strip()
@@ -326,16 +399,39 @@ def parse_and_save_set(content, set_name, description, user_id, tags='', google_
                 questions_batch
             )
 
+        # Validate: Reject files with only instructions and no questions
+        if question_count == 0:
+            if instructions:
+                raise Exception("File contains only instructions, no questions found. Please add questions with both questionText and answerText.")
+            else:
+                raise Exception("No valid questions found. Each question must have both questionText and answerText.")
+
         cur.execute('UPDATE question_sets SET total_questions = %s WHERE id = %s', (question_count, set_id))
         conn.commit()
 
-        is_partial = question_count < expected_count
-        if is_partial:
-            logger.warning(f"Partial upload: {question_count}/{expected_count} questions imported for set {set_id}")
-        else:
-            logger.info(f"Successfully imported {question_count} questions into set {set_id}")
+        # Calculate processing time
+        processing_time = time.time() - start_time
 
-        return set_id, question_count, expected_count, is_partial
+        # Smart partial detection - only flag as partial if:
+        # 1. Processing took longer than threshold (indicating possible timeout), OR
+        # 2. We imported significantly fewer questions than expected (>20% missing)
+        TIMEOUT_THRESHOLD = 20  # seconds
+        is_partial = False
+        timeout_detected = processing_time > TIMEOUT_THRESHOLD
+
+        if timeout_detected:
+            is_partial = True
+        elif question_count > 0 and expected_count > 0:
+            missing_percentage = (expected_count - question_count) / expected_count
+            if missing_percentage > 0.2:  # More than 20% missing
+                is_partial = True
+
+        if is_partial:
+            logger.warning(f"Partial upload: {question_count}/{expected_count} questions imported for set {set_id} (took {processing_time:.2f}s)")
+        else:
+            logger.info(f"Successfully imported {question_count} questions into set {set_id} (took {processing_time:.2f}s)")
+
+        return set_id, question_count, expected_count, is_partial, processing_time
 
     except Exception as e:
         conn.rollback()
@@ -415,8 +511,8 @@ def import_drive_file():
             status, done = downloader.next_chunk()
             
         content = fh.getvalue().decode('utf-8')
-        
-        set_id, count, expected, is_partial = parse_and_save_set(
+
+        set_id, count, expected, is_partial, processing_time = parse_and_save_set(
             content=content,
             set_name=set_name,
             description="Imported from Google Drive",
@@ -430,11 +526,16 @@ def import_drive_file():
             'set_id': set_id,
             'questions_imported': count,
             'expected_questions': expected,
-            'is_partial': is_partial
+            'is_partial': is_partial,
+            'processing_time': round(processing_time, 2)
         }
 
         if is_partial:
-            response['warning'] = f'Only {count} of {expected} questions were imported. File may be too large for free tier (30s timeout). Consider splitting into smaller files.'
+            # Provide better warning messages based on whether it was a timeout or data issue
+            if processing_time > 20:
+                response['warning'] = f'Upload took {round(processing_time)}s. Only {count} of {expected} questions were imported. File may be too large for free tier (30s timeout). Consider splitting into smaller files.'
+            else:
+                response['warning'] = f'Only {count} of {expected} questions were imported. Some rows may be missing required fields (questionText AND answerText).'
 
         return jsonify(response)
         
@@ -501,7 +602,7 @@ def upload_tsv():
 
         logger.info(f"Processing TSV upload: {file.filename}, size: {len(content)} bytes")
 
-        set_id, count, expected, is_partial = parse_and_save_set(
+        set_id, count, expected, is_partial, processing_time = parse_and_save_set(
             content=content,
             set_name=set_name,
             description=set_description,
@@ -515,11 +616,16 @@ def upload_tsv():
             'questions_imported': count,
             'expected_questions': expected,
             'is_partial': is_partial,
+            'processing_time': round(processing_time, 2),
             'set_name': set_name
         }
 
         if is_partial:
-            response['warning'] = f'Only {count} of {expected} questions were imported. File may be too large for free tier (30s timeout). Consider splitting into smaller files.'
+            # Provide better warning messages based on whether it was a timeout or data issue
+            if processing_time > 20:
+                response['warning'] = f'Upload took {round(processing_time)}s. Only {count} of {expected} questions were imported. File may be too large for free tier (30s timeout). Consider splitting into smaller files.'
+            else:
+                response['warning'] = f'Only {count} of {expected} questions were imported. Some rows may be missing required fields (questionText AND answerText).'
 
         return jsonify(response)
 
@@ -582,6 +688,23 @@ def get_questions(set_id):
     try:
         conn = get_db()
         cur = conn.cursor()
+
+        # Fetch instructions for this set (gracefully handle if table doesn't exist)
+        instructions = []
+        try:
+            cur.execute('''
+                SELECT instruction_text
+                FROM set_instructions
+                WHERE set_id = %s
+                ORDER BY display_order
+            ''', (set_id,))
+            instructions = [row['instruction_text'] for row in cur.fetchall()]
+        except Exception as inst_error:
+            # Table might not exist yet (migration not run) - continue without instructions
+            logger.warning(f"Could not fetch instructions for set {set_id}: {str(inst_error)}")
+            instructions = []
+
+        # Fetch questions
         cur.execute('''
             SELECT q.*,
                    up.attempted, up.correct, up.attempt_count, up.last_attempted,
@@ -596,7 +719,7 @@ def get_questions(set_id):
         ''', (request.current_user['id'], request.current_user['id'], request.current_user['id'], set_id))
         questions = cur.fetchall()
         cur.close()
-        return jsonify({'questions': questions})
+        return jsonify({'questions': questions, 'instructions': instructions})
     except Exception as e:
         logger.error(f"Error fetching questions for set {set_id}: {str(e)}")
         return jsonify({'error': str(e)}), 500
