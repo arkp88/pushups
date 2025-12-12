@@ -1,5 +1,5 @@
-import React, { memo } from 'react';
-import { supabase } from '../supabaseClient';
+import { memo } from 'react';
+import { supabase } from '../../lib/supabase';
 
 const Navbar = memo(function Navbar({ view, setView, showNavbar, session }) {
   return (

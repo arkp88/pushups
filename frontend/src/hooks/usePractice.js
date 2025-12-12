@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { api } from '../api';
+import { api } from '../lib';
 
 export function usePractice(setAppNotification = () => {}) {
   const [questions, setQuestions] = useState([]);

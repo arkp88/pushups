@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
-import { api } from '../api';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { api } from '../lib';
 
 export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotification = () => {}) {
   // Upload State
@@ -18,24 +18,12 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
   const [driveSearchTerm, setDriveSearchTerm] = useState('');
   const [driveLoading, setDriveLoading] = useState(false);
   const [selectedDriveFiles, setSelectedDriveFiles] = useState([]);
+  const [recursiveLoading, setRecursiveLoading] = useState(null); // Track which folder ID is loading
+  const [recursiveFiles, setRecursiveFiles] = useState([]);
 
   const driveTopRef = useRef(null);
 
-  // Load Drive files when switching to Drive mode
-  useEffect(() => {
-    if (view === 'upload' && uploadMode === 'drive' && session) {
-      loadDriveFiles(currentDriveFolder);
-    }
-  }, [view, uploadMode, currentDriveFolder, session]);
-
-  // Auto-scroll to top when Drive content changes
-  useEffect(() => {
-    if (uploadMode === 'drive' && driveTopRef.current && !driveLoading) {
-      driveTopRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
-    }
-  }, [driveLoading, uploadMode]);
-
-  const loadDriveFiles = async (folderId) => {
+  const loadDriveFiles = useCallback(async (folderId) => {
     try {
       setDriveLoading(true);
       const data = await api.listDriveFiles(folderId);
@@ -48,7 +36,21 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
     } finally {
       setDriveLoading(false);
     }
-  };
+  }, [setAppNotification]);
+
+  // Load Drive files when switching to Drive mode
+  useEffect(() => {
+    if (view === 'upload' && uploadMode === 'drive' && session) {
+      loadDriveFiles(currentDriveFolder);
+    }
+  }, [view, uploadMode, currentDriveFolder, session, loadDriveFiles]);
+
+  // Auto-scroll to top when Drive content changes
+  useEffect(() => {
+    if (uploadMode === 'drive' && driveTopRef.current && !driveLoading) {
+      driveTopRef.current.scrollIntoView({ behavior: 'auto', block: 'start' });
+    }
+  }, [driveLoading, uploadMode]);
 
   const handleDriveFolderClick = (folder) => {
     // Prevent adding the same folder twice if already at the end of path
@@ -117,6 +119,41 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
     setCustomName(''); // Multi-file import doesn't use custom name
     setPendingUpload({ type: 'drive-multi', data: selectedDriveFiles });
   };
+
+  const loadFolderRecursive = async (folderId) => {
+    try {
+      setRecursiveLoading(folderId);
+      const data = await api.listDriveFilesRecursive(folderId);
+
+      if (data.count === 0) {
+        setAppNotification('No TSV files found in this folder or its subfolders.', false);
+        return;
+      }
+
+      // Hard limit: 50 files (to stay well under rate limit and avoid timeout issues)
+      if (data.count > 50) {
+        setAppNotification(
+          `Found ${data.count} TSV files - this exceeds our scan limit of 50 files.\n\n` +
+          `This limit ensures reliable imports given our server constraints (30s timeout, rate limits).\n\n` +
+          `Please select a smaller folder to scan, or use manual file selection for larger imports.`,
+          true
+        );
+        return;
+      }
+
+      setRecursiveFiles(data.files);
+
+      // Go directly to the import modal for all file counts
+      setPendingUpload({ type: 'drive-multi', data: data.files });
+      setUploadSuccess('');
+    } catch (error) {
+      console.error('Error loading recursive files:', error);
+      setAppNotification('Failed to scan subfolders: ' + error.message, true);
+    } finally {
+      setRecursiveLoading(null);
+    }
+  };
+
 
   const handleLocalFileSelect = (event) => {
     setUploadSuccess('');
@@ -267,6 +304,28 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
     }
   };
 
+  const togglePendingFileSelection = (fileId) => {
+    if (!pendingUpload || pendingUpload.type !== 'drive-multi') return;
+
+    setPendingUpload(prev => {
+      const newData = prev.data.some(f => f.id === fileId)
+        ? prev.data.filter(f => f.id !== fileId) // Remove if selected
+        : [...prev.data, recursiveFiles.find(f => f.id === fileId)]; // Add if not selected
+
+      return { ...prev, data: newData };
+    });
+  };
+
+  const selectAllPendingFiles = () => {
+    if (!pendingUpload || pendingUpload.type !== 'drive-multi') return;
+    setPendingUpload(prev => ({ ...prev, data: [...recursiveFiles] }));
+  };
+
+  const deselectAllPendingFiles = () => {
+    if (!pendingUpload || pendingUpload.type !== 'drive-multi') return;
+    setPendingUpload(prev => ({ ...prev, data: [] }));
+  };
+
   return {
     // Upload State
     uploadTags,
@@ -285,6 +344,8 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
     driveLoading,
     driveTopRef,
     selectedDriveFiles,
+    recursiveLoading,
+    recursiveFiles,
 
     // Actions
     setUploadTags,
@@ -304,5 +365,9 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
     selectAllDriveFiles,
     clearDriveSelection,
     importSelectedDriveFiles,
+    loadFolderRecursive,
+    togglePendingFileSelection,
+    selectAllPendingFiles,
+    deselectAllPendingFiles,
   };
 }

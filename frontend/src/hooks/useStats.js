@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../api';
+import { api } from '../lib';
 
 export function useStats(session) {
   const [stats, setStats] = useState(null);

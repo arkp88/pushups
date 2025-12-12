@@ -21,8 +21,11 @@ A modern, production-ready flashcard quiz application with multi-user support, p
 
 ### Core Functionality
 - 🔐 **Multi-user authentication** via Supabase Auth
-- 📥 **Multiple import methods**: TSV upload or Google Drive integration
-- ☑️ **Multi-file selection** from Google Drive with checkboxes and batch import
+- 📥 **Smart Import Options**:
+  - Upload TSV files from your device (single or multiple)
+  - Import from Google Drive (single file or multi-select)
+  - **Recursive folder import** - Import all TSV files from a folder and all its subfolders with one click (up to 50 files)
+  - File selection/deselection before import
 - 🃏 **Flashcard interface** with flip animations
 - 📊 **Personal progress tracking** per user per question
 - ⭐ **Bookmarking system** for important questions
@@ -49,6 +52,7 @@ A modern, production-ready flashcard quiz application with multi-user support, p
 - 🗑️ **Delete question sets** with two-step confirmation
 - 📂 **Google Drive folder navigation** with compact list view
 - ☑️ **Multi-file selection** from Drive (select all, batch import)
+- 📥 **Recursive folder import** - Import entire folder structures with one click
 - 🔄 **Session persistence** (continue where you left off)
 
 ### Security & Performance

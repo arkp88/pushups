@@ -1,13 +1,7 @@
-import React, { useState, useEffect, useRef, lazy, Suspense, useCallback, useMemo } from 'react';
-import { supabase } from './supabaseClient';
-import { api, setBackendWakingCallback } from './api';
-import Auth from './components/Auth';
-import Navbar from './components/Navbar';
-import ErrorBoundary from './components/ErrorBoundary';
-import { useStats } from './hooks/useStats';
-import { useQuestionSets } from './hooks/useQuestionSets';
-import { usePractice } from './hooks/usePractice';
-import { useUpload } from './hooks/useUpload';
+import { useState, useEffect, useRef, lazy, Suspense, useCallback, useMemo } from 'react';
+import { supabase, api, setBackendWakingCallback } from './lib';
+import { Auth, Navbar, ErrorBoundary } from './components/common';
+import { useStats, useQuestionSets, usePractice, useUpload } from './hooks';
 import './App.css';
 
 // Lazy load view components for code splitting
@@ -34,18 +28,22 @@ function App() {
 
   // Global notification state for general errors/info outside of practice
   const [globalNotification, setGlobalNotification] = useState(null);
+  const notificationRef = useRef(null);
 
   // Backend wake-up notification state
-  const [backendWaking, setBackendWaking] = useState(false); 
-  
+  const [backendWaking, setBackendWaking] = useState(false);
+
   // Drive folder ID from environment
   const ROOT_FOLDER_ID = process.env.REACT_APP_GOOGLE_DRIVE_FOLDER_ID || '1WucWdJWvvRdqwY7y8r-B1VFBo0Bh8L9_';
 
   // Generic notification setter with auto-clear
   const setGlobalNotificationWrapper = useCallback((message, isError = false) => {
     const type = isError ? '❌ Error: ' : 'ℹ️ ';
-    setGlobalNotification(type + message);
-    setTimeout(() => setGlobalNotification(null), 4000);
+    setGlobalNotification({ text: type + message, isError });
+
+    // Notification is now fixed at top, so no need to scroll
+    // Auto-dismiss after 5 seconds (longer for errors to ensure they're seen)
+    setTimeout(() => setGlobalNotification(null), isError ? 6000 : 4000);
   }, []);
 
   // Custom hooks - pass new wrapper
@@ -198,8 +196,11 @@ function App() {
 
         {/* Global Notification Banner for non-practice views */}
         {globalNotification && (
-          <div className="notification-banner">
-            {globalNotification}
+          <div
+            ref={notificationRef}
+            className={`notification-banner ${globalNotification.isError ? 'error-notification' : ''}`}
+          >
+            {globalNotification.text}
           </div>
         )}
 

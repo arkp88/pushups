@@ -54,21 +54,243 @@ function UploadView({
       {upload.uploadSubView === 'import' && (
         <>
           {upload.pendingUpload ? (
-            <div style={{background: '#f9fafb', padding: '25px', borderRadius: '12px', border: '1px solid #e5e7eb', maxWidth: '600px', margin: '0 auto'}}>
-              <h3 style={{marginTop: 0, color: '#333'}}>📝 Review & Import</h3>
-              
-              {upload.uploadError && (
-                <div style={{padding: '10px', background: '#fee2e2', color: '#dc2626', borderRadius: '6px', marginBottom: '15px', fontSize: '14px'}}>
-                  ⚠️ {upload.uploadError}
+            upload.pendingUpload.type === 'drive-multi' ? (
+              // Multi-file import modal with full file list
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 1000
+              }}>
+                <div style={{
+                  background: 'white',
+                  padding: '30px',
+                  borderRadius: '12px',
+                  maxWidth: '600px',
+                  width: '90%',
+                  maxHeight: '90vh',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+                }}>
+                  <h3 style={{marginTop: 0, color: '#333', marginBottom: '15px'}}>
+                    📝 Review Multi-File Import
+                  </h3>
+
+                  {upload.uploadError && (
+                    <div style={{padding: '10px', background: '#fee2e2', color: '#dc2626', borderRadius: '6px', marginBottom: '15px', fontSize: '14px'}}>
+                      ⚠️ {upload.uploadError}
+                    </div>
+                  )}
+
+                  <div style={{
+                    padding: '12px',
+                    background: '#f0f9ff',
+                    borderRadius: '6px',
+                    marginBottom: '15px',
+                    border: '1px solid #bfdbfe'
+                  }}>
+                    <p style={{margin: 0, color: '#1e40af', fontSize: '14px'}}>
+                      Ready to import <strong>{upload.pendingUpload.data.length} files</strong> from Google Drive
+                    </p>
+                  </div>
+
+                  {upload.pendingUpload.data.length > 10 && (
+                    <div style={{
+                      padding: '10px 12px',
+                      background: '#fef3c7',
+                      borderRadius: '6px',
+                      marginBottom: '15px',
+                      border: '1px solid #fcd34d'
+                    }}>
+                      <p style={{margin: 0, color: '#92400e', fontSize: '13px', lineHeight: '1.5'}}>
+                        ⚠️ <strong>Large import:</strong> This will import {upload.pendingUpload.data.length} files sequentially.
+                        Estimated time: ~{Math.ceil(upload.pendingUpload.data.length * 2 / 60)} minute{Math.ceil(upload.pendingUpload.data.length * 2 / 60) > 1 ? 's' : ''}.
+                        Please keep this tab open and don't refresh.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Scrollable file list section */}
+                  <div style={{flex: '1 1 auto', overflow: 'auto', marginBottom: '20px', minHeight: 0}}>
+                    <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
+                      <p style={{fontWeight: '600', margin: 0, color: '#555'}}>
+                        Files to import ({upload.pendingUpload.data.length} selected):
+                      </p>
+                      {upload.recursiveFiles.length > 0 && (
+                        <div style={{display: 'flex', gap: '8px'}}>
+                          <button
+                            onClick={upload.selectAllPendingFiles}
+                            disabled={upload.uploading}
+                            style={{
+                              padding: '4px 10px',
+                              fontSize: '12px',
+                              background: '#667eea',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: upload.uploading ? 'not-allowed' : 'pointer',
+                              fontWeight: '500'
+                            }}
+                          >
+                            ✓ Select All
+                          </button>
+                          <button
+                            onClick={upload.deselectAllPendingFiles}
+                            disabled={upload.uploading}
+                            style={{
+                              padding: '4px 10px',
+                              fontSize: '12px',
+                              background: '#6b7280',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: upload.uploading ? 'not-allowed' : 'pointer',
+                              fontWeight: '500'
+                            }}
+                          >
+                            ✕ Deselect All
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div style={{
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '6px',
+                      padding: '10px',
+                      background: '#f9fafb'
+                    }}>
+                      {/* Show selectable list if from recursive scan, otherwise just show selected files */}
+                      {upload.recursiveFiles.length > 0 ? (
+                        upload.recursiveFiles.map((file, idx) => {
+                          const isSelected = upload.pendingUpload.data.some(f => f.id === file.id);
+                          return (
+                            <div
+                              key={idx}
+                              onClick={() => !upload.uploading && upload.togglePendingFileSelection(file.id)}
+                              style={{
+                                padding: '6px 0',
+                                borderBottom: idx < upload.recursiveFiles.length - 1 ? '1px solid #e5e7eb' : 'none',
+                                fontSize: '13px',
+                                cursor: upload.uploading ? 'not-allowed' : 'pointer',
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '10px',
+                                opacity: isSelected ? 1 : 0.5,
+                                transition: 'opacity 0.15s ease'
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {}}
+                                disabled={upload.uploading}
+                                style={{
+                                  marginTop: '2px',
+                                  width: '16px',
+                                  height: '16px',
+                                  flexShrink: 0,
+                                  cursor: upload.uploading ? 'not-allowed' : 'pointer',
+                                  accentColor: '#667eea'
+                                }}
+                              />
+                              <div style={{flex: 1}}>
+                                <div style={{fontWeight: '500', color: '#1f2937'}}>📄 {file.name}</div>
+                                {file.path && (
+                                  <div style={{color: '#6b7280', fontSize: '12px', marginLeft: '20px'}}>
+                                    📁 {file.path}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      ) : (
+                        // Non-recursive: just show the selected files without checkboxes
+                        upload.pendingUpload.data.map((file, idx) => (
+                          <div key={idx} style={{
+                            padding: '6px 0',
+                            borderBottom: idx < upload.pendingUpload.data.length - 1 ? '1px solid #e5e7eb' : 'none',
+                            fontSize: '13px'
+                          }}>
+                            <div style={{fontWeight: '500', color: '#1f2937'}}>📄 {file.name}</div>
+                            {file.path && (
+                              <div style={{color: '#6b7280', fontSize: '12px', marginLeft: '20px'}}>
+                                📁 {file.path}
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Fixed tags input and buttons section */}
+                  <div style={{flex: '0 0 auto'}}>
+                  <div style={{marginBottom: '20px'}}>
+                    <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>Tags (optional)</label>
+                    <input
+                      type="text"
+                      value={upload.uploadTags}
+                      onChange={(e) => upload.setUploadTags(e.target.value)}
+                      placeholder="e.g. History, Science"
+                      disabled={upload.uploading}
+                      style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc'}}
+                    />
+                  </div>
+
+                  <div style={{display: 'flex', gap: '10px', justifyContent: 'flex-end'}}>
+                    <button
+                      className="btn btn-secondary"
+                      disabled={upload.uploading}
+                      onClick={() => {
+                        upload.setPendingUpload(null);
+                        upload.setUploadTags('');
+                      }}
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      className="btn btn-primary"
+                      onClick={() => upload.executeUpload(loadQuestionSets)}
+                      disabled={upload.uploading || upload.pendingUpload.data.length === 0}
+                      style={{minWidth: '120px'}}
+                    >
+                      {upload.uploading
+                        ? 'Processing...'
+                        : upload.pendingUpload.data.length === 0
+                          ? 'Select at least 1 file'
+                          : `Import ${upload.pendingUpload.data.length} File${upload.pendingUpload.data.length > 1 ? 's' : ''}`
+                      }
+                    </button>
+                  </div>
+                  </div>
                 </div>
-              )}
-              
-              <div style={{marginBottom: '20px', padding: '10px', background: '#fff', borderRadius: '6px', border: '1px solid #e5e7eb'}}>
-                <span style={{fontWeight: 'bold', color: '#555'}}>Selected: </span>
-                {upload.pendingUpload.type === 'local' 
-                  ? `${upload.pendingUpload.data.length} file(s) from Device` 
-                  : `📄 ${upload.pendingUpload.data.name} (from Drive)`}
               </div>
+            ) : (
+              // Single file import (local or single drive file)
+              <div style={{background: '#f9fafb', padding: '25px', borderRadius: '12px', border: '1px solid #e5e7eb', maxWidth: '600px', margin: '0 auto'}}>
+                <h3 style={{marginTop: 0, color: '#333'}}>📝 Review & Import</h3>
+
+                {upload.uploadError && (
+                  <div style={{padding: '10px', background: '#fee2e2', color: '#dc2626', borderRadius: '6px', marginBottom: '15px', fontSize: '14px'}}>
+                    ⚠️ {upload.uploadError}
+                  </div>
+                )}
+
+                <div style={{marginBottom: '20px', padding: '10px', background: '#fff', borderRadius: '6px', border: '1px solid #e5e7eb'}}>
+                  <span style={{fontWeight: 'bold', color: '#555'}}>Selected: </span>
+                  {upload.pendingUpload.type === 'local'
+                    ? `${upload.pendingUpload.data.length} file(s) from Device`
+                    : `📄 ${upload.pendingUpload.data.name} (from Drive)`}
+                </div>
 
               <div style={{marginBottom: '15px'}}>
                 <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>Set Name</label>
@@ -117,6 +339,7 @@ function UploadView({
                 </button>
               </div>
             </div>
+            )
           ) : (
             <>
               {upload.uploadError && (
@@ -295,7 +518,41 @@ function UploadView({
                                   </div>
                                 </div>
                                 {isFolder && (
-                                  <div style={{fontSize: '14px', color: '#9ca3af', flexShrink: 0}}>→</div>
+                                  <>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        upload.loadFolderRecursive(file.id);
+                                      }}
+                                      disabled={upload.recursiveLoading === file.id}
+                                      style={{
+                                        padding: '6px 12px',
+                                        fontSize: '12px',
+                                        background: '#10b981',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '6px',
+                                        cursor: upload.recursiveLoading === file.id ? 'wait' : 'pointer',
+                                        fontWeight: '600',
+                                        marginRight: '8px',
+                                        flexShrink: 0,
+                                        opacity: upload.recursiveLoading === file.id ? 0.6 : 1,
+                                        transition: 'all 0.15s ease'
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        if (upload.recursiveLoading !== file.id) {
+                                          e.target.style.background = '#059669';
+                                        }
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.target.style.background = '#10b981';
+                                      }}
+                                      title="Import all TSV files in this folder and subfolders recursively"
+                                    >
+                                      {upload.recursiveLoading === file.id ? '⏳ Scanning...' : '📥 Import All'}
+                                    </button>
+                                    <div style={{fontSize: '14px', color: '#9ca3af', flexShrink: 0}}>→</div>
+                                  </>
                                 )}
                               </div>
                             );

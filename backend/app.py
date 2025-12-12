@@ -482,6 +482,79 @@ def list_drive_files():
         return jsonify({'error': str(e)}), 500
     # The erroneous 'finally' block is now removed.
 
+@app.route('/api/drive/files/recursive', methods=['GET'])
+@token_required
+def list_drive_files_recursive():
+    """Recursively list all TSV files in folder and all subfolders"""
+    try:
+        service = get_drive_service()
+        root_folder_id = request.args.get('folderId')
+        if not root_folder_id:
+            return jsonify({'error': 'Folder ID required'}), 400
+
+        # Track API calls to prevent hanging on massive folder structures
+        api_call_count = {'count': 0}
+        MAX_API_CALLS = 100  # Limit to prevent infinite recursion/timeout
+
+        # Recursive function to get all TSV files
+        def get_tsv_files_recursive(folder_id, path=""):
+            all_tsv_files = []
+
+            # Check if we've hit the API call limit
+            api_call_count['count'] += 1
+            if api_call_count['count'] > MAX_API_CALLS:
+                raise Exception(f'Folder structure too large (scanned {MAX_API_CALLS} folders). Please select a smaller folder.')
+
+            # Get all items in current folder
+            query = f"'{folder_id}' in parents and trashed = false"
+            results = service.files().list(
+                q=query,
+                fields="files(id, name, mimeType)",
+                pageSize=1000
+            ).execute()
+
+            items = results.get('files', [])
+
+            for item in items:
+                if item['mimeType'] == 'application/vnd.google-apps.folder':
+                    # Recursively get files from subfolder
+                    subfolder_path = f"{path}/{item['name']}" if path else item['name']
+                    all_tsv_files.extend(
+                        get_tsv_files_recursive(item['id'], subfolder_path)
+                    )
+                elif item['name'].endswith('.tsv'):
+                    # Add TSV file with full path
+                    all_tsv_files.append({
+                        'id': item['id'],
+                        'name': item['name'],
+                        'mimeType': item['mimeType'],
+                        'path': path,
+                        'fullPath': f"{path}/{item['name']}" if path else item['name']
+                    })
+
+            return all_tsv_files
+
+        files = get_tsv_files_recursive(root_folder_id)
+
+        # Hard limit to prevent abuse and ensure reliability
+        # 50 files = ~100 seconds processing time (2s per file avg)
+        # This stays well under rate limits and timeout constraints
+        MAX_FILES = 50
+        if len(files) > MAX_FILES:
+            return jsonify({
+                'error': f'Found {len(files)} files, but recursive import is limited to {MAX_FILES} files per batch to ensure reliable imports.',
+                'count': len(files),
+                'limit': MAX_FILES
+            }), 400
+
+        return jsonify({
+            'files': files,
+            'count': len(files)
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/drive/import', methods=['POST'])
 @token_required
 @limiter.limit("100 per hour")  # Allow batch uploads (20+ files), prevent extreme abuse

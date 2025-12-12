@@ -621,17 +621,32 @@ body {
 
 /* --- MODALS & NOTIFICATIONS --- */
 .notification-banner {
+  position: fixed;
+  top: 90px; /* Below navbar on desktop */
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 40px);
+  max-width: 800px;
   background: #eff6ff;
   border: 1px solid #bfdbfe;
   color: #1e40af;
   padding: 15px 20px;
   border-radius: 10px;
-  margin-bottom: 20px;
   text-align: center;
   font-size: 15px;
   font-weight: 500;
-  animation: fadeIn 0.3s;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  animation: slideDown 0.3s ease-out;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 1001; /* Above navbar (z-index: 1000) */
+}
+
+.notification-banner.error-notification {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border: 2px solid #ef4444;
+  color: #991b1b;
+  font-weight: 600;
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
+  animation: slideDown 0.3s ease-out, errorPulse 0.5s ease-out;
 }
 
 .notification-banner.wake-notification {
@@ -639,17 +654,41 @@ body {
   border: 1px solid #fbbf24;
   color: #92400e;
   font-weight: 600;
-  animation: fadeIn 0.3s, pulse 2s ease-in-out infinite;
+  animation: slideDown 0.3s ease-out, pulse 2s ease-in-out infinite;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Mobile positioning */
+@media (max-width: 768px) {
+  .notification-banner {
+    top: 60px; /* Below mobile header */
+    width: calc(100% - 20px);
+    font-size: 14px;
+    padding: 12px 16px;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.85; }
+}
+
+@keyframes errorPulse {
+  0% { transform: translateX(-50%) scale(1); }
+  25% { transform: translateX(-50%) scale(1.02); }
+  50% { transform: translateX(-50%) scale(1); }
+  75% { transform: translateX(-50%) scale(1.02); }
+  100% { transform: translateX(-50%) scale(1); }
 }
 
 /* Speaker button animation when speaking */

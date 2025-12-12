@@ -10,7 +10,11 @@ A modern, production-ready flashcard quiz application with multi-user support, m
 
 ### Core Features
 - 🔐 Multi-user authentication via Supabase
-- 📥 Import from TSV or Google Drive (with multi-file selection)
+- 📥 **Smart Import Options:**
+  - Upload TSV files from your device (single or multiple)
+  - Import from Google Drive (single file or multi-select)
+  - **Recursive folder import** - Import all TSV files from a folder and all its subfolders with one click
+  - File selection/deselection before import
 - 🃏 Flashcard interface with smooth animations
 - ⭐ Bookmark important questions
 - 📊 Personal progress tracking & session statistics
@@ -244,9 +248,13 @@ Multiple **bold** and *italic*	Combined **bold** and *italic* _text_
 ### For Admin (You)
 
 1. **Upload Questions:**
-   - Click "Choose TSV File" or "Import from Google Drive"
-   - Select your file(s)
-   - Enter a descriptive name
+   - **Local Upload:** Click "Choose TSV File" to upload from your device (single or multiple files)
+   - **Google Drive:**
+     - Browse folders and select individual files
+     - Select multiple files at once
+     - **Recursive Import:** Click "📥 Import All" on any folder to import ALL TSV files from that folder and all its subfolders with one click (up to 50 files)
+   - Review and deselect files before importing
+   - Enter a descriptive name (optional)
    - Questions are imported and formatted automatically
    - Supports markdown (**bold**, *italic*) and HTML tags (`<br>`, `<hr>`)
 
@@ -314,21 +322,19 @@ quiz-app/
 └── README.md               # This file
 ```
 
-## 🎯 Performance & Security
+## 🎯 Security & Performance
 
-**Code Quality:**
-- **79% code reduction** - App.js: 1261 → 317 lines (refactored to custom hooks)
-- **Code splitting** - 6 lazy-loaded view chunks
-- **Connection pooling** - Handles 100+ concurrent users
-- **Memoization** - 10-15% fewer re-renders
-- **Mobile-optimized** - Swipe gestures, keyboard shortcuts, bottom nav
+**Security Features:**
+- XSS Protection - All user input is sanitized
+- Rate Limiting - Upload limits to prevent abuse
+- File Validation - Only valid TSV files are accepted
+- Secure Authentication - Powered by Supabase Auth
 
-**Security Hardening:**
-- **XSS Protection** - HTML sanitization with bleach library
-- **Rate Limiting** - 100 uploads/hour per user to prevent abuse
-- **MIME Validation** - Blocks malicious files with fake extensions
-- **Optimized Queries** - Stats query reduced from 6 queries to 1 CTE
-- **Error Boundaries** - React crash protection with friendly error UI
+**Performance:**
+- Fast loading with code splitting
+- Optimized database queries
+- Mobile-optimized interface
+- Efficient connection handling
 
 ## 🔮 Future Enhancements
 
