@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { getSafeImageUrl, convertMarkdownToHTML } from '../../lib/utils';
+import { Star, Volume2, VolumeX, X as XIcon, Check } from 'lucide-react';
 
 function Flashcard({
   practice,
@@ -52,26 +53,24 @@ function Flashcard({
             left: '20px',
             top: '50%',
             transform: `translate3d(${swipeOffset < 0 ? Math.abs(swipeOffset) * 0.3 : 0}px, -50%, 0)`,
-            fontSize: '48px',
             opacity: swipeOffset < 0 ? Math.min(Math.abs(swipeOffset) / 100, 0.7) : 0,
             transition: isSwiping ? 'opacity 0.1s' : 'all 0.3s ease',
             pointerEvents: 'none',
             zIndex: 5
           }}>
-            ❌
+            <XIcon size={48} color="#ef4444" strokeWidth={3} />
           </div>
           <div style={{
             position: 'absolute',
             right: '20px',
             top: '50%',
             transform: `translate3d(${swipeOffset > 0 ? -(swipeOffset * 0.3) : 0}px, -50%, 0)`,
-            fontSize: '48px',
             opacity: swipeOffset > 0 ? Math.min(swipeOffset / 100, 0.7) : 0,
             transition: isSwiping ? 'opacity 0.1s' : 'all 0.3s ease',
             pointerEvents: 'none',
             zIndex: 5
           }}>
-            ✅
+            <Check size={48} color="#22c55e" strokeWidth={3} />
           </div>
         </>
       )}
@@ -88,18 +87,19 @@ function Flashcard({
           position: 'absolute',
           top: '12px',
           right: '12px',
-          fontSize: '32px',
           cursor: 'pointer',
           zIndex: 10,
-          color: currentQuestion.is_bookmarked
-            ? '#fbbf24'
-            : (practice.isFlipped ? 'rgba(255,255,255,0.9)' : '#6b7280'),
           filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.2))',
           transition: 'all 0.2s ease'
         }}
         title="Toggle Bookmark"
       >
-        {currentQuestion.is_bookmarked ? '★' : '☆'}
+        <Star
+          size={28}
+          fill={currentQuestion.is_bookmarked ? '#fbbf24' : 'none'}
+          color={currentQuestion.is_bookmarked ? '#fbbf24' : (practice.isFlipped ? 'rgba(255,255,255,0.9)' : '#6b7280')}
+          strokeWidth={2}
+        />
       </div>
 
       <div className="round-info">
@@ -172,9 +172,17 @@ function Flashcard({
               color: 'rgba(255,255,255,0.9)',
               marginTop: '20px',
               fontWeight: '500',
-              textAlign: 'center'
+              textAlign: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px'
             }}>
-              Swipe Right = Got it ✅ · Left = Missed it ❌
+              <span>Swipe Right = Got it</span>
+              <Check size={16} />
+              <span>·</span>
+              <span>Left = Missed it</span>
+              <XIcon size={16} />
             </div>
           )}
         </>
@@ -188,12 +196,8 @@ function Flashcard({
           position: 'absolute',
           bottom: '35px',
           left: '20px',
-          fontSize: '28px',
           cursor: 'pointer',
           zIndex: 10,
-          color: practice.isSpeaking
-            ? (practice.isFlipped ? '#fff' : '#667eea')
-            : (practice.isFlipped ? 'rgba(255, 255, 255, 0.9)' : '#6b7280'),
           filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.2))',
           transition: 'all 0.2s ease',
           background: practice.isFlipped ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.9)',
@@ -206,7 +210,17 @@ function Flashcard({
         }}
         title={practice.isSpeaking ? "Stop speaking" : "Read aloud"}
       >
-        {practice.isSpeaking ? '🔊' : '🔈'}
+        {practice.isSpeaking ? (
+          <Volume2
+            size={24}
+            color={practice.isFlipped ? '#fff' : '#667eea'}
+          />
+        ) : (
+          <VolumeX
+            size={24}
+            color={practice.isFlipped ? 'rgba(255, 255, 255, 0.9)' : '#6b7280'}
+          />
+        )}
       </div>
     </div>
   );

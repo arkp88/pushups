@@ -1,3 +1,5 @@
+import { Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
+
 function FlashcardControls({ practice, handleNextWrapper }) {
   if (!practice.isFlipped) {
     return (
@@ -7,7 +9,8 @@ function FlashcardControls({ practice, handleNextWrapper }) {
           onClick={practice.handlePrevious}
           disabled={practice.currentQuestionIndex === 0 || practice.processingNext}
         >
-          ← Prev
+          <ChevronLeft size={18} />
+          Prev
         </button>
         <button
           className="btn btn-secondary"
@@ -15,7 +18,12 @@ function FlashcardControls({ practice, handleNextWrapper }) {
           disabled={practice.processingNext}
           style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
         >
-          {practice.processingNext ? '...' : 'Next →'}
+          {practice.processingNext ? '...' : (
+            <>
+              Next
+              <ChevronRight size={18} />
+            </>
+          )}
         </button>
       </>
     );
@@ -29,7 +37,12 @@ function FlashcardControls({ practice, handleNextWrapper }) {
         disabled={practice.processingNext}
         style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
       >
-        {practice.processingNext ? '...' : '✗ Missed it'}
+        {practice.processingNext ? '...' : (
+          <>
+            <X size={18} />
+            Missed it
+          </>
+        )}
       </button>
       <button
         className="btn btn-success"
@@ -37,7 +50,12 @@ function FlashcardControls({ practice, handleNextWrapper }) {
         disabled={practice.processingNext}
         style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
       >
-        {practice.processingNext ? '...' : '✓ Got it'}
+        {practice.processingNext ? '...' : (
+          <>
+            <Check size={18} />
+            Got it
+          </>
+        )}
       </button>
     </>
   );

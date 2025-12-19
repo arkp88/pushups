@@ -624,6 +624,136 @@ def import_drive_file():
 def health_check():
     return jsonify({'status': 'healthy', 'timestamp': datetime.utcnow().isoformat()})
 
+# ============================================================================
+# PUBLIC ENDPOINTS (No authentication required - for guest mode)
+# ============================================================================
+
+@app.route('/api/public/question-sets', methods=['GET'])
+def get_public_question_sets():
+    """Get all question sets without user-specific progress (for guest users)"""
+    conn = None
+    try:
+        # Optional pagination parameters
+        limit = request.args.get('limit', type=int)
+        offset = request.args.get('offset', default=0, type=int)
+
+        conn = get_db()
+        cur = conn.cursor()
+
+        # Build query without user-specific joins
+        query = '''
+            SELECT qs.id, qs.name, qs.description, qs.tags, qs.created_at,
+                   u.username as uploaded_by_username,
+                   COUNT(q.id) as total_questions
+            FROM question_sets qs
+            LEFT JOIN users u ON qs.uploaded_by = u.id
+            LEFT JOIN questions q ON q.set_id = qs.id
+            WHERE qs.is_deleted = false
+            GROUP BY qs.id, u.username
+            ORDER BY qs.created_at DESC
+        '''
+        params = []
+
+        # Add pagination if limit is specified
+        if limit is not None:
+            query += ' LIMIT %s OFFSET %s'
+            params.extend([limit, offset])
+
+        cur.execute(query, params)
+        sets = cur.fetchall()
+        cur.close()
+        return jsonify({'sets': sets})
+    except Exception as e:
+        logger.error(f"Error fetching public question sets: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
+
+@app.route('/api/public/question-sets/<int:set_id>/questions', methods=['GET'])
+def get_public_questions(set_id):
+    """Get questions for a set without user progress (for guest users)"""
+    conn = None
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+
+        # Fetch instructions for this set
+        instructions = []
+        try:
+            cur.execute('''
+                SELECT instruction_text
+                FROM set_instructions
+                WHERE set_id = %s
+                ORDER BY display_order
+            ''', (set_id,))
+            instructions = [row['instruction_text'] for row in cur.fetchall()]
+        except Exception as inst_error:
+            logger.warning(f"Could not fetch instructions for set {set_id}: {str(inst_error)}")
+            instructions = []
+
+        # Fetch questions without user progress
+        cur.execute('''
+            SELECT q.id, q.set_id, q.round_no, q.question_no,
+                   q.question_text, q.answer_text, q.image_url
+            FROM questions q
+            WHERE q.set_id = %s
+            ORDER BY q.id
+        ''', (set_id,))
+        questions = cur.fetchall()
+        cur.close()
+        return jsonify({'questions': questions, 'instructions': instructions})
+    except Exception as e:
+        logger.error(f"Error fetching public questions for set {set_id}: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
+
+@app.route('/api/public/questions/mixed', methods=['GET'])
+def get_public_mixed_questions():
+    """Get random mixed questions without user progress (for guest users)"""
+    conn = None
+    try:
+        # Guest users get all questions randomly - no filtering by unattempted/missed/bookmarks
+        limit = request.args.get('limit', type=int)
+        offset = request.args.get('offset', default=0, type=int)
+
+        conn = get_db()
+        cur = conn.cursor()
+
+        # Base query without user-specific joins
+        query = '''
+            SELECT q.id, q.set_id, q.round_no, q.question_no,
+                   q.question_text, q.answer_text, q.image_url,
+                   qs.name as set_name
+            FROM questions q
+            JOIN question_sets qs ON q.set_id = qs.id
+            WHERE qs.is_deleted = false
+            ORDER BY RANDOM()
+        '''
+        params = []
+
+        # Add pagination if limit is specified
+        if limit is not None:
+            query += ' LIMIT %s OFFSET %s'
+            params.extend([limit, offset])
+
+        cur.execute(query, params)
+        questions = cur.fetchall()
+        cur.close()
+        return jsonify({'questions': questions})
+    except Exception as e:
+        logger.error(f"Error fetching public mixed questions: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
+
+# ============================================================================
+# AUTHENTICATED ENDPOINTS
+# ============================================================================
+
 @app.route('/api/upload-tsv', methods=['POST'])
 @token_required
 @limiter.limit("100 per hour")  # Allow batch uploads (20+ files), prevent extreme abuse

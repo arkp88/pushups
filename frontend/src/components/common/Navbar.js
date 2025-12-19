@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { supabase } from '../../lib/supabase';
+import { Home, BookOpen, Upload, BarChart3, HelpCircle, Lock, LogOut, LogIn } from 'lucide-react';
 
 const Navbar = memo(function Navbar({ view, setView, showNavbar, session }) {
   return (
@@ -11,10 +12,20 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session }) {
           <h1>Pushups</h1>
         </div>
         <div className="mobile-header-user">
-          <span className="username">{session.user.email.split('@')[0]}</span>
-          <button className="btn-logout-mobile" onClick={() => supabase.auth.signOut()}>
-            Logout
-          </button>
+          {session ? (
+            <>
+              <span className="username">{session.user.email.split('@')[0]}</span>
+              <button className="btn-logout-mobile" onClick={() => supabase.auth.signOut()}>
+                <LogOut size={16} />
+                Logout
+              </button>
+            </>
+          ) : (
+            <button className="btn-signin-mobile" onClick={() => setView('auth')}>
+              <LogIn size={16} />
+              Sign In
+            </button>
+          )}
         </div>
       </div>
 
@@ -31,29 +42,54 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session }) {
 
         {/* Navigation Tabs */}
         <div className="nav-links">
-          <button data-icon="🏠" onClick={() => setView('home')} className={`nav-btn ${view === 'home' ? 'active' : ''}`}>
-            Home
+          <button onClick={() => setView('home')} className={`nav-btn ${view === 'home' ? 'active' : ''}`}>
+            <Home size={18} />
+            <span>Home</span>
           </button>
-          <button data-icon="📚" onClick={() => setView('sets')} className={`nav-btn ${view === 'sets' ? 'active' : ''}`}>
-            Sets
+          <button onClick={() => setView('sets')} className={`nav-btn ${view === 'sets' ? 'active' : ''}`}>
+            <BookOpen size={18} />
+            <span>Sets</span>
           </button>
-          <button data-icon="📥" onClick={() => setView('upload')} className={`nav-btn ${view === 'upload' ? 'active' : ''}`}>
-            Upload
+          <button
+            onClick={() => session ? setView('upload') : setView('auth')}
+            className={`nav-btn ${view === 'upload' ? 'active' : ''} ${!session ? 'guest-disabled' : ''}`}
+            title={!session ? 'Sign in to upload questions' : 'Upload questions'}
+          >
+            <Upload size={18} />
+            <span>Upload</span>
+            {!session && <Lock size={14} className="guest-lock-icon" />}
           </button>
-          <button data-icon="📊" onClick={() => setView('stats')} className={`nav-btn ${view === 'stats' ? 'active' : ''}`}>
-            Stats
+          <button
+            onClick={() => session ? setView('stats') : setView('auth')}
+            className={`nav-btn ${view === 'stats' ? 'active' : ''} ${!session ? 'guest-disabled' : ''}`}
+            title={!session ? 'Sign in to view your stats' : 'View your statistics'}
+          >
+            <BarChart3 size={18} />
+            <span>Stats</span>
+            {!session && <Lock size={14} className="guest-lock-icon" />}
           </button>
-          <button data-icon="❓" onClick={() => setView('help')} className={`nav-btn ${view === 'help' ? 'active' : ''}`}>
-            Help
+          <button onClick={() => setView('help')} className={`nav-btn ${view === 'help' ? 'active' : ''}`}>
+            <HelpCircle size={18} />
+            <span>Help</span>
           </button>
         </div>
 
-        {/* User & Logout */}
+        {/* User & Logout / Sign In */}
         <div className="nav-user">
-          <span>{session.user.email.split('@')[0]}</span>
-          <button className="btn-logout" onClick={() => supabase.auth.signOut()}>
-            Logout
-          </button>
+          {session ? (
+            <>
+              <span>{session.user.email.split('@')[0]}</span>
+              <button className="btn-logout" onClick={() => supabase.auth.signOut()}>
+                <LogOut size={16} />
+                Logout
+              </button>
+            </>
+          ) : (
+            <button className="btn-signin" onClick={() => setView('auth')}>
+              <LogIn size={16} />
+              Sign In
+            </button>
+          )}
         </div>
       </nav>
     </>

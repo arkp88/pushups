@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 
-function Auth() {
+function Auth({ onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -14,19 +14,22 @@ function Auth() {
     setLoading(true);
     const email = `${username.toLowerCase().trim()}@quiz.local`;
     try {
-      const { error } = isSignUp 
+      const { error } = isSignUp
         ? await supabase.auth.signUp({ email, password })
         : await supabase.auth.signInWithPassword({ email, password });
-      
+
       if (error) throw error;
-      
+
       if (isSignUp) {
         // Use local state for message
-        setError('Account created! Sign in now.'); 
+        setError('Account created! Sign in now.');
+      } else {
+        // Sign in successful - call onSuccess callback
+        if (onSuccess) onSuccess();
       }
     } catch (error) {
       // Set error locally to display on Auth screen
-      setError(error.message); 
+      setError(error.message);
     } finally {
       setLoading(false);
     }

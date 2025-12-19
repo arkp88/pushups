@@ -1,20 +1,22 @@
 import React, { memo } from 'react';
+import { RotateCcw, Library, Shuffle, Dices, XCircle, Bookmark, Loader2 } from 'lucide-react';
 
-const HomeView = memo(function HomeView({ 
-  stats, 
-  questionSets, 
-  practice, 
-  startPracticeWrapper, 
-  startMixedPracticeWrapper, 
-  mixedFilter, 
+const HomeView = memo(function HomeView({
+  stats,
+  questionSets,
+  practice,
+  startPracticeWrapper,
+  startMixedPracticeWrapper,
+  mixedFilter,
   setMixedFilter,
   setView,
-  setAppNotification // NEW PROP
+  setAppNotification, // NEW PROP
+  session
 }) {
   return (
     <div className="home-container">
       {/* Streak Banner */}
-      {stats.streak > 0 && (
+      {session && stats.streak > 0 && (
         <div style={{
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           padding: '16px 20px',
@@ -58,28 +60,30 @@ const HomeView = memo(function HomeView({
         <div className="practice-mode-grid">
           
           {/* 1. CONTINUE */}
-          <button 
-            className="practice-mode-button" 
+          <button
+            className="practice-mode-button"
             onClick={() => {
               const lastSetId = localStorage.getItem('pushups-last-set-id');
-              if (!lastSetId) { 
+              if (!lastSetId) {
                 // REPLACE alert()
-                setAppNotification('No recent set found. Start a set first!', false); 
-                return; 
+                setAppNotification('No recent set found. Start a set first!', false);
+                return;
               }
               const lastSet = questionSets.find(s => s.id === parseInt(lastSetId));
-              if (!lastSet) { 
+              if (!lastSet) {
                 // REPLACE alert()
-                setAppNotification('Last practiced set not found. Cleared session.', false); 
-                localStorage.removeItem('pushups-last-set-id'); 
-                return; 
+                setAppNotification('Last practiced set not found. Cleared session.', false);
+                localStorage.removeItem('pushups-last-set-id');
+                return;
               }
               startPracticeWrapper(lastSet);
-            }} 
+            }}
             disabled={practice.startingPractice || !localStorage.getItem('pushups-last-set-id')}
             style={{opacity: practice.startingPractice ? 0.7 : 1, cursor: practice.startingPractice ? 'wait' : 'pointer', border: '2px solid #667eea'}}
           >
-            <div className="practice-mode-icon">🔄</div>
+            <div className="practice-mode-icon">
+              <RotateCcw size={32} color="#667eea" strokeWidth={2.5} />
+            </div>
             <div className="practice-mode-content">
               <h4>Continue Last Set</h4>
               <p>Resume your most recent session</p>
@@ -87,13 +91,15 @@ const HomeView = memo(function HomeView({
           </button>
 
           {/* 2. BROWSE */}
-          <button 
-            className="practice-mode-button" 
+          <button
+            className="practice-mode-button"
             onClick={() => setView('sets')}
             disabled={practice.startingPractice}
             style={{opacity: practice.startingPractice ? 0.7 : 1, cursor: practice.startingPractice ? 'wait' : 'pointer'}}
           >
-            <div className="practice-mode-icon">📚</div>
+            <div className="practice-mode-icon">
+              <Library size={32} color="#10b981" strokeWidth={2.5} />
+            </div>
             <div className="practice-mode-content">
               <h4>Browse Question Sets</h4>
               <p>Choose a specific set to play</p>
@@ -101,7 +107,7 @@ const HomeView = memo(function HomeView({
           </button>
 
           {/* 3. RANDOM SET */}
-          <button 
+          <button
             className="practice-mode-button"
             onClick={() => {
               const unplayedSets = questionSets.filter(s => !s.questions_attempted || s.questions_attempted === 0);
@@ -118,7 +124,9 @@ const HomeView = memo(function HomeView({
             disabled={practice.startingPractice || questionSets.filter(s => !s.questions_attempted || s.questions_attempted === 0).length === 0}
             style={{opacity: practice.startingPractice ? 0.7 : 1, cursor: practice.startingPractice ? 'wait' : 'pointer'}}
           >
-            <div className="practice-mode-icon">🎰</div>
+            <div className="practice-mode-icon">
+              <Shuffle size={32} color="#f59e0b" strokeWidth={2.5} />
+            </div>
             <div className="practice-mode-content">
               <h4>Random Unplayed Set</h4>
               <p>Jump into a set you haven't started</p>
@@ -126,14 +134,18 @@ const HomeView = memo(function HomeView({
           </button>
 
           {/* 4. RANDOM MODE - ALL */}
-          <button 
-            className="practice-mode-button" 
+          <button
+            className="practice-mode-button"
             onClick={() => { setMixedFilter('all'); startMixedPracticeWrapper('all'); }}
             disabled={practice.startingPractice}
             style={{opacity: practice.startingPractice ? 0.7 : 1, cursor: practice.startingPractice ? 'wait' : 'pointer'}}
           >
             <div className="practice-mode-icon">
-              {practice.startingPractice && mixedFilter === 'all' ? '⏳' : '🎲'}
+              {practice.startingPractice && mixedFilter === 'all' ? (
+                <Loader2 size={32} color="#8b5cf6" strokeWidth={2.5} className="spin" />
+              ) : (
+                <Dices size={32} color="#8b5cf6" strokeWidth={2.5} />
+              )}
             </div>
             <div className="practice-mode-content">
               <h4>Random Mode - All</h4>
@@ -142,14 +154,18 @@ const HomeView = memo(function HomeView({
           </button>
 
           {/* 5. MISSED */}
-          <button 
-            className="practice-mode-button" 
-            onClick={() => { setMixedFilter('missed'); startMixedPracticeWrapper('missed'); }} 
+          <button
+            className="practice-mode-button"
+            onClick={() => { setMixedFilter('missed'); startMixedPracticeWrapper('missed'); }}
             disabled={practice.startingPractice || stats.missed === 0}
             style={{opacity: practice.startingPractice ? 0.7 : 1, cursor: practice.startingPractice ? 'wait' : 'pointer'}}
           >
             <div className="practice-mode-icon">
-              {practice.startingPractice && mixedFilter === 'missed' ? '⏳' : '❌'}
+              {practice.startingPractice && mixedFilter === 'missed' ? (
+                <Loader2 size={32} color="#ef4444" strokeWidth={2.5} className="spin" />
+              ) : (
+                <XCircle size={32} color="#ef4444" strokeWidth={2.5} />
+              )}
             </div>
             <div className="practice-mode-content">
               <h4>Retry Missed Questions</h4>
@@ -158,14 +174,18 @@ const HomeView = memo(function HomeView({
           </button>
 
           {/* 6. BOOKMARKS */}
-          <button 
-            className="practice-mode-button" 
-            onClick={() => { setMixedFilter('bookmarks'); startMixedPracticeWrapper('bookmarks'); }} 
+          <button
+            className="practice-mode-button"
+            onClick={() => { setMixedFilter('bookmarks'); startMixedPracticeWrapper('bookmarks'); }}
             disabled={practice.startingPractice || !stats.bookmarks || stats.bookmarks === 0}
             style={{opacity: practice.startingPractice ? 0.7 : 1, cursor: practice.startingPractice ? 'wait' : 'pointer'}}
           >
             <div className="practice-mode-icon">
-              {practice.startingPractice && mixedFilter === 'bookmarks' ? '⏳' : '⭐'}
+              {practice.startingPractice && mixedFilter === 'bookmarks' ? (
+                <Loader2 size={32} color="#fbbf24" strokeWidth={2.5} className="spin" />
+              ) : (
+                <Bookmark size={32} color="#fbbf24" strokeWidth={2.5} fill="#fbbf24" />
+              )}
             </div>
             <div className="practice-mode-content">
               <h4>Review Bookmarks</h4>

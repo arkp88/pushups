@@ -20,6 +20,24 @@ async function getAuthHeaders() {
   };
 }
 
+// Optional auth headers - returns headers without throwing if no session
+async function getOptionalAuthHeaders() {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    return { 'Content-Type': 'application/json' };
+  }
+  return {
+    'Authorization': `Bearer ${session.access_token}`,
+    'Content-Type': 'application/json',
+  };
+}
+
+// Check if user is authenticated
+async function isAuthenticated() {
+  const { data: { session } } = await supabase.auth.getSession();
+  return !!session;
+}
+
 // Wrapper to detect slow requests (backend waking up)
 async function fetchWithWakeDetection(url, options = {}) {
   let wakeNotificationShown = false;
@@ -97,15 +115,21 @@ export const api = {
   },
 
   async getQuestionSets() {
-    const headers = await getAuthHeaders();
-    const response = await fetchWithWakeDetection(`${API_URL}/api/question-sets`, { headers });
+    const authenticated = await isAuthenticated();
+    const endpoint = authenticated ? '/api/question-sets' : '/api/public/question-sets';
+    const headers = await getOptionalAuthHeaders();
+    const response = await fetchWithWakeDetection(`${API_URL}${endpoint}`, { headers });
     if (!response.ok) throw new Error('Failed to fetch question sets');
     return response.json();
   },
 
   async getQuestions(setId) {
-    const headers = await getAuthHeaders();
-    const response = await fetchWithWakeDetection(`${API_URL}/api/question-sets/${setId}/questions`, { headers });
+    const authenticated = await isAuthenticated();
+    const endpoint = authenticated
+      ? `/api/question-sets/${setId}/questions`
+      : `/api/public/question-sets/${setId}/questions`;
+    const headers = await getOptionalAuthHeaders();
+    const response = await fetchWithWakeDetection(`${API_URL}${endpoint}`, { headers });
     if (!response.ok) throw new Error('Failed to fetch questions');
     return response.json();
   },
@@ -156,8 +180,12 @@ export const api = {
   },
 
   async getMixedQuestions(filter = 'all') {
-    const headers = await getAuthHeaders();
-    const response = await fetch(`${API_URL}/api/questions/mixed?filter=${filter}`, { headers });
+    const authenticated = await isAuthenticated();
+    const endpoint = authenticated
+      ? `/api/questions/mixed?filter=${filter}`
+      : `/api/public/questions/mixed?filter=${filter}`;
+    const headers = await getOptionalAuthHeaders();
+    const response = await fetchWithWakeDetection(`${API_URL}${endpoint}`, { headers });
     if (!response.ok) throw new Error('Failed to fetch mixed questions');
     return response.json();
   },

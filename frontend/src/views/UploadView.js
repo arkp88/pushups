@@ -1,4 +1,5 @@
 import React from 'react';
+import { Folder, FileText, Check, HardDrive } from 'lucide-react';
 
 function UploadView({ 
   upload, 
@@ -139,7 +140,7 @@ function UploadView({
                               fontWeight: '500'
                             }}
                           >
-                            ✓ Select All
+<Check size={16} style={{marginRight: '4px'}} /> Select All
                           </button>
                           <button
                             onClick={upload.deselectAllPendingFiles}
@@ -201,10 +202,12 @@ function UploadView({
                                 }}
                               />
                               <div style={{flex: 1}}>
-                                <div style={{fontWeight: '500', color: '#1f2937'}}>📄 {file.name}</div>
+                                <div style={{fontWeight: '500', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '6px'}}>
+                                  <FileText size={16} /> {file.name}
+                                </div>
                                 {file.path && (
-                                  <div style={{color: '#6b7280', fontSize: '12px', marginLeft: '20px'}}>
-                                    📁 {file.path}
+                                  <div style={{color: '#6b7280', fontSize: '12px', marginLeft: '20px', display: 'flex', alignItems: 'center', gap: '4px'}}>
+                                    <Folder size={14} /> {file.path}
                                   </div>
                                 )}
                               </div>
@@ -219,10 +222,12 @@ function UploadView({
                             borderBottom: idx < upload.pendingUpload.data.length - 1 ? '1px solid #e5e7eb' : 'none',
                             fontSize: '13px'
                           }}>
-                            <div style={{fontWeight: '500', color: '#1f2937'}}>📄 {file.name}</div>
+                            <div style={{fontWeight: '500', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '6px'}}>
+                              <FileText size={16} /> {file.name}
+                            </div>
                             {file.path && (
-                              <div style={{color: '#6b7280', fontSize: '12px', marginLeft: '20px'}}>
-                                📁 {file.path}
+                              <div style={{color: '#6b7280', fontSize: '12px', marginLeft: '20px', display: 'flex', alignItems: 'center', gap: '4px'}}>
+                                <Folder size={14} /> {file.path}
                               </div>
                             )}
                           </div>
@@ -289,7 +294,11 @@ function UploadView({
                   <span style={{fontWeight: 'bold', color: '#555'}}>Selected: </span>
                   {upload.pendingUpload.type === 'local'
                     ? `${upload.pendingUpload.data.length} file(s) from Device`
-                    : `📄 ${upload.pendingUpload.data.name} (from Drive)`}
+                    : (
+                      <span style={{display: 'flex', alignItems: 'center', gap: '6px'}}>
+                        <FileText size={16} /> {upload.pendingUpload.data.name} (from Drive)
+                      </span>
+                    )}
                 </div>
 
               <div style={{marginBottom: '15px'}}>
@@ -388,7 +397,8 @@ function UploadView({
 
               <div style={{display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap'}}>
                 <button className={`btn ${uploadMode === 'local' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setUploadMode('local')}>
-                  📁 From Your Device
+                  <HardDrive size={18} style={{marginRight: '6px'}} />
+                  From Your Device
                 </button>
                 <button className={`btn ${uploadMode === 'drive' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setUploadMode('drive')}>
                   ☁️ From B612 Friendlies Drive
@@ -433,7 +443,7 @@ function UploadView({
                         onClick={upload.selectAllDriveFiles}
                         style={{fontSize: '14px', padding: '8px 16px', whiteSpace: 'nowrap'}}
                       >
-                        ✓ Select All Files
+<Check size={16} style={{marginRight: '4px'}} /> Select All Files
                       </button>
                     )}
                     {upload.selectedDriveFiles.length > 0 && (
@@ -501,8 +511,8 @@ function UploadView({
                                     }}
                                   />
                                 )}
-                                <div style={{fontSize: '20px', flexShrink: 0, marginLeft: isFolder ? '26px' : '0'}}>
-                                  {isFolder ? '📁' : '📄'}
+                                <div style={{flexShrink: 0, marginLeft: isFolder ? '26px' : '0'}}>
+                                  {isFolder ? <Folder size={20} color="#667eea" /> : <FileText size={20} color="#6b7280" />}
                                 </div>
                                 <div style={{flex: 1, minWidth: 0}}>
                                   <div style={{

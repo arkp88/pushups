@@ -17,9 +17,8 @@ export function useQuestionSets(session) {
   };
 
   useEffect(() => {
-    if (session) {
-      loadQuestionSets();
-    }
+    // Load question sets for both authenticated and guest users
+    loadQuestionSets();
   }, [session]);
 
   return { questionSets, loading, loadQuestionSets };

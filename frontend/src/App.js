@@ -49,7 +49,7 @@ function App() {
   // Custom hooks - pass new wrapper
   const { stats, loadStats } = useStats(session);
   const { questionSets, loadQuestionSets } = useQuestionSets(session);
-  const practice = usePractice(setGlobalNotificationWrapper); // Pass setter
+  const practice = usePractice(session, setGlobalNotificationWrapper); // Pass session and setter
   const upload = useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setGlobalNotificationWrapper); // Pass setter
 
   useEffect(() => {
@@ -179,8 +179,9 @@ function App() {
   ), []);
 
   if (loading) return <div className="loading">Loading...</div>;
-  if (!session) return <Auth />; // Auth manages its own errors now
 
+  // Guest mode: Allow users to access the app without authentication
+  // session can be null for guests
   return (
     <div className="App">
       <Navbar view={view} setView={setView} showNavbar={showNavbar} session={session} />
@@ -206,7 +207,7 @@ function App() {
 
         {/* HOME VIEW */}
         {view === 'home' && stats && (
-        <HomeView 
+        <HomeView
           // Pass notification setter to HomeView
           setAppNotification={setGlobalNotificationWrapper}
           stats={stats}
@@ -217,6 +218,7 @@ function App() {
           mixedFilter={mixedFilter}
           setMixedFilter={setMixedFilter}
           setView={setView}
+          session={session}
         />
       )}
 
@@ -225,6 +227,17 @@ function App() {
 
       {/* HELP VIEW */}
       {view === 'help' && <HelpView />}
+
+      {/* AUTH VIEW - Sign in/Sign up */}
+      {view === 'auth' && (
+        <div style={{
+          maxWidth: '500px',
+          margin: '80px auto',
+          padding: '20px'
+        }}>
+          <Auth onSuccess={() => setView('home')} />
+        </div>
+      )}
 
       {/* SETS VIEW */}
       {view === 'sets' && (

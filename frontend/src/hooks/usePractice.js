@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { api } from '../lib';
 
-export function usePractice(setAppNotification = () => {}) {
+export function usePractice(session, setAppNotification = () => {}) {
   const [questions, setQuestions] = useState([]);
   const [currentSet, setCurrentSet] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -37,7 +37,12 @@ export function usePractice(setAppNotification = () => {}) {
   const startPractice = async (set, isRandomSession = false) => {
     try {
       setStartingPractice(true);
-      await api.markSetOpened(set.id);
+
+      // Mark set as opened in backend (authenticated only), but always track in localStorage
+      if (session) {
+        await api.markSetOpened(set.id);
+      }
+      // Track last set for both guests and authenticated users (for "Continue Last Set")
       localStorage.setItem('pushups-last-set-id', set.id);
 
       // Track this set in the current random session
@@ -173,9 +178,12 @@ export function usePractice(setAppNotification = () => {}) {
         sessionAnswersRef.current.set(questionId, newAnswer);
       }
 
-      await api.updateProgress(currentQuestion.id, true, markAsCorrect);
-      if (markAsCorrect === false) await api.markMissed(currentQuestion.id);
-      if (markAsCorrect === true && currentQuestion.is_missed) await api.unmarkMissed(currentQuestion.id);
+      // Only update progress if user is authenticated
+      if (session) {
+        await api.updateProgress(currentQuestion.id, true, markAsCorrect);
+        if (markAsCorrect === false) await api.markMissed(currentQuestion.id);
+        if (markAsCorrect === true && currentQuestion.is_missed) await api.unmarkMissed(currentQuestion.id);
+      }
 
       if (currentQuestionIndex < questions.length - 1) {
         const newIndex = currentQuestionIndex + 1;
@@ -218,6 +226,13 @@ export function usePractice(setAppNotification = () => {}) {
 
   const handleBookmark = async (e) => {
     e.stopPropagation();
+
+    // Guests can't bookmark - show message
+    if (!session) {
+      setAppNotification('Sign in to bookmark questions', true);
+      return;
+    }
+
     const currentQuestion = questions[currentQuestionIndex];
 
     const updatedQuestions = [...questions];

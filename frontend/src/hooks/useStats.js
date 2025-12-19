@@ -19,6 +19,18 @@ export function useStats(session) {
   useEffect(() => {
     if (session) {
       loadStats();
+    } else {
+      // For guests, return empty stats
+      setStats({
+        total_questions: 0,
+        attempted: 0,
+        correct: 0,
+        missed: 0,
+        accuracy: 0,
+        bookmarks: 0,
+        streak_days: 0
+      });
+      setLoading(false);
     }
   }, [session]);
 
