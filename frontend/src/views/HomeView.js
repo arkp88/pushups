@@ -11,7 +11,8 @@ const HomeView = memo(function HomeView({
   setMixedFilter,
   setView,
   setAppNotification, // NEW PROP
-  session
+  session,
+  backendWaking
 }) {
   return (
     <div className="home-container">
@@ -52,10 +53,23 @@ const HomeView = memo(function HomeView({
           </div>
         </div>
       )}
-      
+
       <h2 style={{marginBottom: '30px', textAlign: 'center'}}>Ready to Play?</h2>
 
-      <div className="practice-modes">
+      {/* Hide buttons while server is waking up */}
+      {backendWaking ? (
+        <div style={{
+          textAlign: 'center',
+          padding: '60px 20px',
+          color: '#6b7280',
+          fontSize: '16px'
+        }}>
+          <Loader2 size={40} color="#667eea" strokeWidth={2.5} className="spin" style={{marginBottom: '20px'}} />
+          <p>Waking up the server... This may take 30-40 seconds.</p>
+        </div>
+      ) : (
+        <>
+        <div className="practice-modes">
         <h3 style={{marginBottom: '20px'}}>Choose Mode</h3>
         <div className="practice-mode-grid">
           
@@ -211,6 +225,8 @@ const HomeView = memo(function HomeView({
           <div className="quick-stat-label">Accuracy</div>
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 });

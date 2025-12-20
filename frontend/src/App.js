@@ -219,6 +219,7 @@ function App() {
           setMixedFilter={setMixedFilter}
           setView={setView}
           session={session}
+          backendWaking={backendWaking}
         />
       )}
 
