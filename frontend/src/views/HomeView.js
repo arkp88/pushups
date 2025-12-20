@@ -56,18 +56,8 @@ const HomeView = memo(function HomeView({
 
       <h2 style={{marginBottom: '30px', textAlign: 'center'}}>Ready to Play?</h2>
 
-      {/* Hide buttons while server is waking up */}
-      {backendWaking ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 20px',
-          color: '#6b7280',
-          fontSize: '16px'
-        }}>
-          <Loader2 size={40} color="#667eea" strokeWidth={2.5} className="spin" style={{marginBottom: '20px'}} />
-          <p>Waking up the server... This may take 30-40 seconds.</p>
-        </div>
-      ) : (
+      {/* Hide buttons while server is waking up - yellow banner shows message */}
+      {!backendWaking && (
         <>
         <div className="practice-modes">
         <h3 style={{marginBottom: '20px'}}>Choose Mode</h3>

@@ -242,10 +242,11 @@ function App() {
 
       {/* SETS VIEW */}
       {view === 'sets' && (
-        <SetsView 
+        <SetsView
           questionSets={questionSets}
           practice={practice}
           startPracticeWrapper={startPracticeWrapper}
+          backendWaking={backendWaking}
         />
       )}
 

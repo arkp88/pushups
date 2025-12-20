@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-function SetsView({ questionSets, practice, startPracticeWrapper }) {
+function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [setsFilter, setSetsFilter] = useState('all');
   const [sortBy, setSortBy] = useState('upload-date');
@@ -90,13 +90,13 @@ function SetsView({ questionSets, practice, startPracticeWrapper }) {
         <>
           <div className="set-list">
             {displayed.map(set => (
-              <div 
-                key={set.id} 
-                className="set-card" 
-                onClick={() => !practice.startingPractice && startPracticeWrapper(set)}
+              <div
+                key={set.id}
+                className="set-card"
+                onClick={() => !practice.startingPractice && !backendWaking && startPracticeWrapper(set)}
                 style={{
-                  cursor: practice.startingPractice ? 'wait' : 'pointer', 
-                  opacity: practice.startingPractice ? 0.7 : 1,
+                  cursor: (practice.startingPractice || backendWaking) ? 'wait' : 'pointer',
+                  opacity: (practice.startingPractice || backendWaking) ? 0.7 : 1,
                   position: 'relative'
                 }}
               >
