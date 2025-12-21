@@ -1,3 +1,6 @@
+/* Import premium fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -5,6 +8,10 @@
 }
 
 :root {
+  /* Typography - Tinted black for better brand harmony */
+  --text-heading: #1e1b4b; /* Dark indigo instead of pure black */
+  --text-body: #374151;
+  --text-muted: #6b7280;
   /* Modern elevation system */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.05);
@@ -28,23 +35,48 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Animated gradient mesh background */
-  background:
-    radial-gradient(at 20% 30%, var(--gradient-1) 0px, transparent 50%),
-    radial-gradient(at 80% 70%, var(--gradient-2) 0px, transparent 50%),
-    radial-gradient(at 50% 50%, var(--gradient-3) 0px, transparent 50%),
-    linear-gradient(135deg, #f0f4ff 0%, #fafbff 50%, #f9fafb 100%);
+  color: var(--text-body);
+  /* Static base background */
+  background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 50%, #f9fafb 100%);
   background-attachment: fixed;
   min-height: 100vh;
-  animation: gradientShift 20s ease infinite;
+  position: relative;
+  overflow-x: hidden;
 }
 
-@keyframes gradientShift {
+/* Animated gradient mesh on pseudo-element for better performance */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 20% 30%, var(--gradient-1) 0px, transparent 50%),
+    radial-gradient(circle at 80% 70%, var(--gradient-2) 0px, transparent 50%),
+    radial-gradient(circle at 50% 50%, var(--gradient-3) 0px, transparent 50%);
+  animation: gradientFloat 20s ease-in-out infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* FORCE all elements to use Inter font - including form elements that don't inherit by default */
+p, span, div, a, button, input, textarea, select, optgroup {
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Performance-optimized gradient animation using transform instead of background-position */
+@keyframes gradientFloat {
   0%, 100% {
-    background-position: 0% 0%, 100% 100%, 50% 50%, 0% 0%;
+    transform: translate(0%, 0%) rotate(0deg);
   }
-  50% {
-    background-position: 100% 100%, 0% 0%, 50% 50%, 0% 0%;
+  33% {
+    transform: translate(-5%, 5%) rotate(1deg);
+  }
+  66% {
+    transform: translate(5%, -3%) rotate(-1deg);
   }
 }
 
@@ -90,6 +122,7 @@ body {
     0 2px 8px rgba(0, 0, 0, 0.03),
     inset 0 -1px 0 0 rgba(255, 255, 255, 0.4);
   transition: transform 0.3s var(--ease-out-expo);
+  font-family: 'Inter', sans-serif;
 }
 
 .navbar.hidden {
@@ -107,6 +140,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px; /* Space between target and text */
+  font-family: 'Inter', sans-serif;
 }
 
 .brand-icon {
@@ -118,19 +152,21 @@ body {
 .nav-brand h1 {
   font-size: 26px; /* Bigger title */
   margin: 0;
+  font-family: 'Inter', sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 800;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.02em; /* Tighter spacing for premium feel */
 }
 
 .brand-quote {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--text-muted);
   font-weight: 500;
   margin-top: 2px;
   margin-left: 2px;
+  font-family: 'Inter', sans-serif;
 }
 
 /* Central Tabs */
@@ -147,7 +183,7 @@ body {
   border: none;
   background: none;
   border-radius: 8px;
-  color: #4b5563;
+  color: var(--text-body);
   font-size: 16px; /* Larger font */
   font-weight: 600;
   cursor: pointer;
@@ -157,6 +193,11 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.nav-btn span {
+  font-family: 'Inter', sans-serif !important;
 }
 
 .nav-btn::before {
@@ -214,8 +255,9 @@ body {
 
 .nav-user span {
   font-size: 15px; /* Bigger */
-  color: #374151;
+  color: var(--text-body);
   font-weight: 600;
+  font-family: 'Inter', sans-serif;
 }
 
 .btn-logout {
@@ -319,7 +361,8 @@ body {
   .mobile-header-brand h1 {
     font-size: 18px;
     margin: 0;
-    color: #1f2937;
+    color: var(--text-heading);
+    font-family: 'Inter', sans-serif !important;
   }
 
   .mobile-header-brand .brand-icon {
@@ -334,19 +377,21 @@ body {
 
   .mobile-header-user .username {
     font-size: 13px;
-    color: #6b7280;
+    color: var(--text-muted);
     font-weight: 500;
+    font-family: 'Inter', sans-serif !important;
   }
 
   .btn-logout-mobile {
     padding: 6px 12px;
     font-size: 12px;
     background: #e5e7eb;
-    color: #4b5563;
+    color: var(--text-body);
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 500;
+    font-family: 'Inter', sans-serif !important;
     transition: all 0.2s;
     display: flex;
     align-items: center;
@@ -362,6 +407,7 @@ body {
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
+    font-family: 'Inter', sans-serif !important;
     transition: all 0.2s;
     box-shadow: 0 2px 6px rgba(102, 126, 234, 0.25);
     display: flex;
@@ -420,6 +466,7 @@ body {
     flex-direction: column;
     align-items: center;
     gap: 4px;
+    font-family: 'Inter', sans-serif !important;
   }
 
   /* Icons are now inline SVG elements */
@@ -451,6 +498,7 @@ body {
   align-items: center;
   gap: 8px;
   justify-content: center;
+  font-family: 'Inter', sans-serif !important;
 }
 
 button::after {
@@ -513,7 +561,24 @@ button:active::after {
     inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
 }
 
-.container h2 { color: #333; margin-bottom: 15px; font-size: 28px; }
+.container h2 {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-heading);
+  margin-bottom: 15px;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+/* Apply Inter font to all headings and stat values for consistency */
+h1, h2, h3, h4, h5, h6,
+.stat-value,
+.quick-stat-value {
+  font-family: 'Inter', sans-serif !important;
+  letter-spacing: -0.02em;
+  color: var(--text-heading);
+  font-weight: 700; /* Make headings bold to distinguish from body text */
+}
 
 /* Home Container */
 .home-container {
@@ -525,7 +590,14 @@ button:active::after {
   margin: 0 auto;
 }
 
-.home-container h2 { color: #1f2937; font-size: 32px; font-weight: 800; margin-bottom: 40px; }
+.home-container h2 {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-heading);
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 40px;
+  letter-spacing: -0.02em;
+}
 
 /* Quick Stats Grid */
 .quick-stats-grid {
@@ -585,15 +657,16 @@ button:active::after {
   padding: 18px 20px;
   border: 1px solid rgba(102, 126, 234, 0.15);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy spring effect */
   text-align: left;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.8);
   position: relative;
   overflow: hidden;
+  will-change: transform;
 }
 
 .practice-mode-button::before {
@@ -614,10 +687,19 @@ button:active::after {
 }
 
 .practice-mode-button:hover:not(:disabled) {
-  border-color: rgba(102, 126, 234, 0.3);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1);
-  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(102, 126, 234, 0.4);
+  transform: translateY(-6px) scale(1.01);
+  box-shadow:
+    0 12px 32px -8px rgba(102, 126, 234, 0.2),
+    0 6px 16px -4px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(102, 126, 234, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.practice-mode-button:active:not(:disabled) {
+  transform: translateY(-3px) scale(1.0);
+  transition: all 0.1s ease;
 }
 
 .practice-mode-button:disabled { 
@@ -821,15 +903,16 @@ button:active::after {
   border-radius: 16px;
   padding: 25px;
   cursor: pointer;
-  transition: all 0.4s var(--ease-out-expo);
-  background: rgba(255, 255, 255, 0.7);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy spring effect */
+  background: rgba(255, 255, 255, 0.85); /* Slightly more opaque for better elevation */
   backdrop-filter: blur(10px) saturate(150%);
   -webkit-backdrop-filter: blur(10px) saturate(150%);
   box-shadow:
     var(--shadow-md),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.7);
   position: relative;
   overflow: hidden;
+  will-change: transform; /* Optimize animations */
 }
 
 .set-card::before {
@@ -848,12 +931,18 @@ button:active::after {
 }
 
 .set-card:hover {
-  border-color: rgba(102, 126, 234, 0.4);
-  transform: translateY(-6px) scale(1.01);
+  border-color: rgba(102, 126, 234, 0.5);
+  transform: translateY(-8px) scale(1.02); /* More pronounced lift */
   box-shadow:
-    var(--shadow-xl),
-    0 0 0 1px rgba(102, 126, 234, 0.1),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.8);
+    0 20px 40px -12px rgba(102, 126, 234, 0.25), /* Deeper colored shadow */
+    0 10px 20px -8px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(102, 126, 234, 0.15),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+}
+
+.set-card:active {
+  transform: translateY(-4px) scale(1.01); /* Pressed state */
+  transition: all 0.1s ease;
 }
 .set-card h3 {
   color: #1f2937;
@@ -881,6 +970,7 @@ button:active::after {
   text-align: center;
   font-size: 15px;
   font-weight: 500;
+  font-family: 'Inter', sans-serif !important;
   animation: slideDown 0.3s ease-out;
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   z-index: 1001; /* Above navbar (z-index: 1000) */
@@ -1003,8 +1093,12 @@ button:active::after {
 .empty-state p { font-size: 16px; max-width: 500px; margin: 0 auto; line-height: 1.6; }
 
 .auth-container {
-  max-width: 450px; margin: 120px auto; background: white; padding: 50px;
-  border-radius: 20px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+  max-width: 450px;
+  margin: 40px auto; /* Reduced from 120px for better positioning */
+  background: white;
+  padding: 50px;
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
 }
 .auth-container h2 { text-align: center; margin-bottom: 40px; font-size: 32px; color: #1f2937; }
 .form-group { margin-bottom: 25px; }
@@ -1013,6 +1107,46 @@ button:active::after {
   width: 100%; padding: 15px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 16px; transition: border-color 0.3s; background: #f9fafb;
 }
 .form-group input:focus { outline: none; border-color: #667eea; background: white; }
+
+/* --- CUSTOM SELECT STYLING --- */
+select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23667eea%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px top 50% !important;
+  background-size: 12px auto !important;
+  padding-right: 40px !important; /* Space for custom arrow */
+  transition: all 0.3s var(--ease-out-expo);
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+  line-height: 1.5;
+}
+
+select option {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  padding: 8px;
+}
+
+select:hover {
+  border-color: rgba(102, 126, 234, 0.4) !important;
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+select:focus {
+  outline: none !important;
+  border-color: #667eea !important;
+  background-color: white !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+}
+
+/* Label styling for consistency */
+label {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-body);
+}
 .error-message { background: #fef2f2; color: #dc2626; padding: 15px; border-radius: 10px; margin-bottom: 25px; font-size: 15px; border: 1px solid #fee2e2; }
 .auth-toggle { text-align: center; margin-top: 30px; color: #6b7280; font-size: 15px; }
 .auth-toggle button { background: none; border: none; color: #667eea; cursor: pointer; font-weight: 600; text-decoration: none; margin-left: 5px; }

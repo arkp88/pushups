@@ -40,13 +40,15 @@ const HomeView = memo(function HomeView({
               color: 'white',
               fontSize: '20px',
               fontWeight: '700',
-              marginBottom: '2px'
+              marginBottom: '2px',
+              fontFamily: 'Inter, sans-serif'
             }}>
               {stats.streak} Day Streak!
             </div>
             <div style={{
               color: 'rgba(255, 255, 255, 0.9)',
-              fontSize: '13px'
+              fontSize: '13px',
+              fontFamily: 'Inter, sans-serif'
             }}>
               {stats.streak === 1 ? 'Great start! Keep it going.' : `You're on fire! Don't break the chain.`}
             </div>
@@ -229,14 +231,16 @@ const HomeView = memo(function HomeView({
             fontSize: '16px',
             color: '#667eea',
             fontWeight: '600',
-            marginBottom: '8px'
+            marginBottom: '8px',
+            fontFamily: 'Inter, sans-serif'
           }}>
             Sign in to unlock tracking
           </div>
           <div style={{
             fontSize: '14px',
             color: '#64748b',
-            lineHeight: '1.5'
+            lineHeight: '1.5',
+            fontFamily: 'Inter, sans-serif'
           }}>
             Track your stats, bookmarks, and missed questions by signing in
           </div>
