@@ -38,13 +38,14 @@ def get_public_question_sets():
         # Build query without user-specific joins
         query = '''
             SELECT qs.id, qs.name, qs.description, qs.tags, qs.created_at,
+                   qs.summary,
                    u.username as uploaded_by_username,
                    COUNT(q.id) as total_questions
             FROM question_sets qs
             LEFT JOIN users u ON qs.uploaded_by = u.id
             LEFT JOIN questions q ON q.set_id = qs.id
             WHERE qs.is_deleted = false
-            GROUP BY qs.id, u.username
+            GROUP BY qs.id, u.username, qs.summary
             ORDER BY qs.created_at DESC
         '''
         params = []

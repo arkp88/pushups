@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Folder, FileText, Check, HardDrive } from 'lucide-react';
+import { api } from '../lib';
 
-function UploadView({ 
-  upload, 
-  uploadMode, 
+function UploadView({
+  upload,
+  uploadMode,
   setUploadMode,
   loadQuestionSets,
   questionSets,
@@ -15,6 +16,25 @@ function UploadView({
   handleDeleteSet,
   openRenameModal
 }) {
+  const [generatingId, setGeneratingId] = useState(null);
+
+  const handleGenerateSummary = async (setId, e) => {
+    e.stopPropagation();
+    try {
+      setGeneratingId(setId);
+      await api.generateSummary(setId);
+
+      // Reload sets to get updated data
+      if (loadQuestionSets) {
+        await loadQuestionSets();
+      }
+    } catch (error) {
+      console.error('Failed to generate summary:', error);
+      alert('Failed to generate summary: ' + error.message);
+    } finally {
+      setGeneratingId(null);
+    }
+  };
   return (
     <div className="container">
       <h2>Manage Questions</h2>
@@ -613,7 +633,7 @@ function UploadView({
                   <div key={set.id} className="set-card">
                     <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', marginBottom: '10px', flexWrap: 'wrap'}}>
                       <h2 style={{margin: 0, wordBreak: 'break-word', lineHeight: '1.4', flex: '1 1 200px', fontSize: '17px'}}>{set.name}</h2>
-                      
+
                       <div style={{display: 'flex', gap: '5px', flexShrink: 0, marginLeft: 'auto'}}>
                         {setToDelete !== set.id && (
                           <button
@@ -625,7 +645,7 @@ function UploadView({
                             ✏️
                           </button>
                         )}
-                        
+
                         {setToDelete === set.id ? (
                           <>
                             <button
@@ -655,7 +675,21 @@ function UploadView({
                         )}
                       </div>
                     </div>
-                    
+
+                    {/* Display summary or generate button */}
+                    {set.summary ? (
+                      <p className="set-summary">{set.summary}</p>
+                    ) : (
+                      <button
+                        className="btn-generate-summary"
+                        onClick={(e) => handleGenerateSummary(set.id, e)}
+                        disabled={generatingId === set.id || upload.backendWaking}
+                        style={{marginBottom: '12px'}}
+                      >
+                        {generatingId === set.id ? 'Generating...' : '✨ Generate Description'}
+                      </button>
+                    )}
+
                     <div className="set-info">
                       <span>📝 {set.total_questions} questions</span>
                       <span>✅ {set.questions_attempted || 0} attempted</span>

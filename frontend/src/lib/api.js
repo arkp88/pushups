@@ -285,5 +285,20 @@ async renameSet(setId, newName) {
     });
     if (!response.ok) throw new Error('Failed to import file');
     return response.json();
+  },
+
+  async generateSummary(setId) {
+    const headers = await getAuthHeaders();
+    const response = await fetchWithWakeDetection(`${API_URL}/api/sets/${setId}/generate-summary`, {
+      method: 'POST',
+      headers,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to generate summary');
+    }
+
+    return response.json();
   }
 };

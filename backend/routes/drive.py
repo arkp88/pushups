@@ -13,6 +13,7 @@ from config import GOOGLE_DRIVE_API_KEY
 from auth import token_required
 from services.database import get_db, return_db
 from services.tsv_parser import parse_and_save_set
+from utils.summarize import generate_summary_safe
 
 logger = logging.getLogger(__name__)
 
@@ -215,6 +216,40 @@ def import_drive_file():
             google_id=file_id
         )
 
+        # Auto-generate AI summary for the imported set
+        summary = None
+        try:
+            conn_summary = get_db()
+            cursor_summary = conn_summary.cursor()
+
+            # Get sample questions for summary generation
+            cursor_summary.execute("""
+                SELECT question_text FROM questions
+                WHERE set_id = %s
+                ORDER BY RANDOM()
+                LIMIT 8
+            """, (set_id,))
+
+            sample_questions = [{'questionText': row['question_text']} for row in cursor_summary.fetchall()]
+
+            if sample_questions:
+                summary = generate_summary_safe(set_name, sample_questions, count)
+
+                if summary:
+                    cursor_summary.execute(
+                        "UPDATE question_sets SET summary = %s WHERE id = %s",
+                        (summary, set_id)
+                    )
+                    conn_summary.commit()
+                    logger.info(f"✓ Generated summary for Drive import '{set_name}': {summary}")
+                else:
+                    logger.warning(f"⚠ Summary generation failed for '{set_name}', set created without summary")
+
+            return_db(conn_summary)
+        except Exception as e:
+            logger.warning(f"⚠ Error during summary generation: {e}")
+            # Don't fail the import - summary is optional
+
         response = {
             'success': True,
             'set_id': set_id,
@@ -223,6 +258,9 @@ def import_drive_file():
             'is_partial': is_partial,
             'processing_time': round(processing_time, 2)
         }
+
+        if summary:
+            response['summary'] = summary
 
         if is_partial:
             # Provide better warning messages based on whether it was a timeout or data issue

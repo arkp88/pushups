@@ -9,6 +9,7 @@ from flask import Blueprint, request, jsonify
 from auth import token_required
 from services.database import get_db, return_db
 from services.tsv_parser import parse_and_save_set
+from utils.summarize import generate_summary_safe
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,40 @@ def upload_tsv():
             tags=tags
         )
 
+        # Auto-generate AI summary for the uploaded set
+        summary = None
+        try:
+            conn = get_db()
+            cursor = conn.cursor()
+
+            # Get sample questions for summary generation
+            cursor.execute("""
+                SELECT question_text FROM questions
+                WHERE set_id = %s
+                ORDER BY RANDOM()
+                LIMIT 8
+            """, (set_id,))
+
+            sample_questions = [{'questionText': row['question_text']} for row in cursor.fetchall()]
+
+            if sample_questions:
+                summary = generate_summary_safe(set_name, sample_questions, count)
+
+                if summary:
+                    cursor.execute(
+                        "UPDATE question_sets SET summary = %s WHERE id = %s",
+                        (summary, set_id)
+                    )
+                    conn.commit()
+                    logger.info(f"✓ Generated summary for '{set_name}': {summary}")
+                else:
+                    logger.warning(f"⚠ Summary generation failed for '{set_name}', set created without summary")
+
+            return_db(conn)
+        except Exception as e:
+            logger.warning(f"⚠ Error during summary generation: {e}")
+            # Don't fail the upload - summary is optional
+
         response = {
             'success': True,
             'set_id': set_id,
@@ -94,6 +129,9 @@ def upload_tsv():
             'processing_time': round(processing_time, 2),
             'set_name': set_name
         }
+
+        if summary:
+            response['summary'] = summary
 
         if is_partial:
             # Provide better warning messages based on whether it was a timeout or data issue
@@ -277,6 +315,70 @@ def delete_question_set(set_id):
         cur.close()
         return jsonify({'success': True})
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if conn:
+            return_db(conn)
+
+
+@sets_bp.route('/sets/<int:set_id>/generate-summary', methods=['POST'])
+@token_required
+def generate_summary_endpoint(set_id):
+    """
+    Generate or regenerate AI summary for a question set.
+
+    Args:
+        set_id (int): ID of the question set
+
+    Returns:
+        JSON response with generated summary or error
+    """
+    conn = None
+    try:
+        from utils.summarize import generate_set_summary
+
+        conn = get_db()
+        cursor = conn.cursor()
+
+        # Get set name
+        cursor.execute("SELECT name FROM question_sets WHERE id = %s AND is_deleted = false", (set_id,))
+        set_row = cursor.fetchone()
+
+        if not set_row:
+            return jsonify({'error': 'Set not found'}), 404
+
+        set_name = set_row['name']
+
+        # Get sample questions
+        cursor.execute("""
+            SELECT question_text FROM questions
+            WHERE set_id = %s
+            ORDER BY RANDOM()
+            LIMIT 8
+        """, (set_id,))
+
+        sample_questions = [{'questionText': row['question_text']} for row in cursor.fetchall()]
+
+        if not sample_questions:
+            return jsonify({'error': 'No questions in set'}), 400
+
+        # Generate summary
+        summary = generate_set_summary(set_name, sample_questions, len(sample_questions))
+
+        # Update database
+        cursor.execute(
+            "UPDATE question_sets SET summary = %s WHERE id = %s",
+            (summary, set_id)
+        )
+        conn.commit()
+
+        logger.info(f"✓ Generated summary for set {set_id}: {summary}")
+        return jsonify({'summary': summary}), 200
+
+    except Exception as e:
+        logger.error(f"Generate summary error: {str(e)}")
+        if conn:
+            conn.rollback()
         return jsonify({'error': str(e)}), 500
     finally:
         if conn:

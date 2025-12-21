@@ -151,6 +151,13 @@ def init_db():
         print(f"Migration note (safe to ignore): {e}")
         conn.rollback()
 
+    # Migration: Add summary column for AI-generated descriptions
+    try:
+        cur.execute("ALTER TABLE question_sets ADD COLUMN IF NOT EXISTS summary TEXT")
+    except Exception as e:
+        print(f"Migration note (safe to ignore): {e}")
+        conn.rollback()
+
     conn.commit()
     cur.close()
     conn.close()

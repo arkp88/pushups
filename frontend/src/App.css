@@ -1088,11 +1088,43 @@ button:active::after {
   display: none !important; /* !important to override inline styles */
 }
 
+/* AI-generated summary styles */
+.set-summary {
+  color: #666;
+  font-size: 14px;
+  font-style: italic;
+  margin: 8px 0 12px 0;
+  line-height: 1.4;
+}
+
+.btn-generate-summary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin: 8px 0 12px 0;
+  display: inline-block;
+}
+
+.btn-generate-summary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-generate-summary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
   .desktop-only {
     display: none !important;
   }
-  
+
   .mobile-only {
     display: flex !important; /* Use flex for tutorial overlay, block for other mobile elements */
   }

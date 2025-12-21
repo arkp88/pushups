@@ -104,6 +104,12 @@ function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking 
                   <div style={{position: 'absolute', top: '10px', right: '10px'}}>⏳</div>
                 )}
                 <h3>{set.name}</h3>
+
+                {/* Display summary if available */}
+                {set.summary && (
+                  <p className="set-summary">{set.summary}</p>
+                )}
+
                 <div className="set-info">
                   <span>📝 {set.total_questions}</span>
                   <span>✅ {set.questions_attempted || 0}</span>
