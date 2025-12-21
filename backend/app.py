@@ -39,9 +39,9 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 app.config['MAX_CONTENT_PATH'] = None
-
 # CORS configuration - whitelist specific origins
 logger.info(f"CORS allowed origins: {CORS_ALLOWED_ORIGINS}")
+
 CORS(app, origins=CORS_ALLOWED_ORIGINS)
 
 

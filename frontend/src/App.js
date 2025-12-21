@@ -48,7 +48,7 @@ function App() {
 
   // Custom hooks - pass new wrapper
   const { stats, loadStats } = useStats(session);
-  const { questionSets, loadQuestionSets } = useQuestionSets(session);
+  const { questionSets, loading: setsLoading, error: setsError, loadQuestionSets } = useQuestionSets(session);
   const practice = usePractice(session, setGlobalNotificationWrapper); // Pass session and setter
   const upload = useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setGlobalNotificationWrapper); // Pass setter
 
@@ -58,8 +58,13 @@ function App() {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
+
+      // Redirect to home on logout
+      if (event === 'SIGNED_OUT') {
+        setView('home');
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -191,7 +196,7 @@ function App() {
         {/* Backend Wake-Up Notification */}
         {backendWaking && (
           <div className="notification-banner wake-notification">
-            ⏳ Server is waking up from sleep... This may take 30-40 seconds. Please wait.
+            Waking server up... ready in 30-40 seconds.
           </div>
         )}
 
@@ -206,22 +211,82 @@ function App() {
         )}
 
         {/* HOME VIEW */}
-        {view === 'home' && stats && (
-        <HomeView
-          // Pass notification setter to HomeView
-          setAppNotification={setGlobalNotificationWrapper}
-          stats={stats}
-          questionSets={questionSets}
-          practice={practice}
-          startPracticeWrapper={startPracticeWrapper}
-          startMixedPracticeWrapper={startMixedPracticeWrapper}
-          mixedFilter={mixedFilter}
-          setMixedFilter={setMixedFilter}
-          setView={setView}
-          session={session}
-          backendWaking={backendWaking}
-        />
-      )}
+        {view === 'home' && (
+          setsLoading ? (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: '60vh',
+              gap: '20px'
+            }}>
+              <div style={{
+                color: '#667eea',
+                fontSize: '48px',
+                animation: 'pulse 1.5s ease-in-out infinite'
+              }}>
+                💪
+              </div>
+              <div style={{
+                color: '#667eea',
+                fontSize: '18px',
+                fontWeight: '600'
+              }}>
+                Loading your pushups...
+              </div>
+            </div>
+          ) : setsError ? (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: '60vh',
+              gap: '20px',
+              padding: '20px'
+            }}>
+              <div style={{ fontSize: '48px' }}>⚠️</div>
+              <div style={{
+                color: '#dc2626',
+                fontSize: '18px',
+                fontWeight: '600',
+                textAlign: 'center'
+              }}>
+                Failed to connect to server
+              </div>
+              <div style={{
+                color: '#666',
+                fontSize: '14px',
+                textAlign: 'center',
+                maxWidth: '400px'
+              }}>
+                {setsError}
+              </div>
+              <button
+                className="btn btn-primary"
+                onClick={() => loadQuestionSets()}
+                style={{ marginTop: '10px' }}
+              >
+                Retry Connection
+              </button>
+            </div>
+          ) : stats ? (
+            <HomeView
+              setAppNotification={setGlobalNotificationWrapper}
+              stats={stats}
+              questionSets={questionSets}
+              practice={practice}
+              startPracticeWrapper={startPracticeWrapper}
+              startMixedPracticeWrapper={startMixedPracticeWrapper}
+              mixedFilter={mixedFilter}
+              setMixedFilter={setMixedFilter}
+              setView={setView}
+              session={session}
+              backendWaking={backendWaking}
+            />
+          ) : null
+        )}
 
       {/* STATS VIEW */}
       {view === 'stats' && stats && <StatsView stats={stats} />}

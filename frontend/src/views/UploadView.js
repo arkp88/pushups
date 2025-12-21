@@ -18,14 +18,14 @@ function UploadView({
   return (
     <div className="container">
       <h2>Manage Questions</h2>
-      
+
       {/* Sub-Navigation Tabs */}
       <div style={{display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '20px'}}>
-        <button 
+        <button
           style={{
-            padding: '10px 20px', 
-            border: 'none', 
-            background: 'none', 
+            padding: '10px 20px',
+            border: 'none',
+            background: 'none',
             borderBottom: upload.uploadSubView === 'import' ? '2px solid #667eea' : 'none',
             color: upload.uploadSubView === 'import' ? '#667eea' : '#666',
             fontWeight: '600',
@@ -35,11 +35,11 @@ function UploadView({
         >
           📥 Import New
         </button>
-        <button 
+        <button
           style={{
-            padding: '10px 20px', 
-            border: 'none', 
-            background: 'none', 
+            padding: '10px 20px',
+            border: 'none',
+            background: 'none',
             borderBottom: upload.uploadSubView === 'library' ? '2px solid #667eea' : 'none',
             color: upload.uploadSubView === 'library' ? '#667eea' : '#666',
             fontWeight: '600',
@@ -56,30 +56,15 @@ function UploadView({
         <>
           {upload.pendingUpload ? (
             upload.pendingUpload.type === 'drive-multi' ? (
-              // Multi-file import modal with full file list
+              // Multi-file import review (inline, not modal)
               <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0, 0, 0, 0.5)',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                zIndex: 1000
+                background: '#f9fafb',
+                padding: '25px',
+                borderRadius: '12px',
+                border: '1px solid #e5e7eb',
+                maxWidth: '800px',
+                margin: '0 auto'
               }}>
-                <div style={{
-                  background: 'white',
-                  padding: '30px',
-                  borderRadius: '12px',
-                  maxWidth: '600px',
-                  width: '90%',
-                  maxHeight: '90vh',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
-                }}>
                   <h3 style={{marginTop: 0, color: '#333', marginBottom: '15px'}}>
                     📝 Review Multi-File Import
                   </h3>
@@ -238,47 +223,46 @@ function UploadView({
 
                   {/* Fixed tags input and buttons section */}
                   <div style={{flex: '0 0 auto'}}>
-                  <div style={{marginBottom: '20px'}}>
-                    <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>Tags (optional)</label>
-                    <input
-                      type="text"
-                      value={upload.uploadTags}
-                      onChange={(e) => upload.setUploadTags(e.target.value)}
-                      placeholder="e.g. History, Science"
-                      disabled={upload.uploading}
-                      style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc'}}
-                    />
-                  </div>
+                    <div style={{marginBottom: '20px'}}>
+                      <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>Tags (optional)</label>
+                      <input
+                        type="text"
+                        value={upload.uploadTags}
+                        onChange={(e) => upload.setUploadTags(e.target.value)}
+                        placeholder="e.g. History, Science"
+                        disabled={upload.uploading}
+                        style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc'}}
+                      />
+                    </div>
 
-                  <div style={{display: 'flex', gap: '10px', justifyContent: 'flex-end'}}>
-                    <button
-                      className="btn btn-secondary"
-                      disabled={upload.uploading}
-                      onClick={() => {
-                        upload.setPendingUpload(null);
-                        upload.setUploadTags('');
-                      }}
-                    >
-                      Cancel
-                    </button>
+                    <div style={{display: 'flex', gap: '10px', justifyContent: 'flex-end'}}>
+                      <button
+                        className="btn btn-secondary"
+                        disabled={upload.uploading}
+                        onClick={() => {
+                          upload.setPendingUpload(null);
+                          upload.setUploadTags('');
+                        }}
+                      >
+                        Cancel
+                      </button>
 
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => upload.executeUpload(loadQuestionSets)}
-                      disabled={upload.uploading || upload.pendingUpload.data.length === 0}
-                      style={{minWidth: '120px'}}
-                    >
-                      {upload.uploading
-                        ? 'Processing...'
-                        : upload.pendingUpload.data.length === 0
-                          ? 'Select at least 1 file'
-                          : `Import ${upload.pendingUpload.data.length} File${upload.pendingUpload.data.length > 1 ? 's' : ''}`
-                      }
-                    </button>
-                  </div>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => upload.executeUpload(loadQuestionSets)}
+                        disabled={upload.uploading || upload.pendingUpload.data.length === 0}
+                        style={{minWidth: '120px'}}
+                      >
+                        {upload.uploading
+                          ? 'Processing...'
+                          : upload.pendingUpload.data.length === 0
+                            ? 'Select at least 1 file'
+                            : `Import ${upload.pendingUpload.data.length} File${upload.pendingUpload.data.length > 1 ? 's' : ''}`
+                        }
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
             ) : (
               // Single file import (local or single drive file)
               <div style={{background: '#f9fafb', padding: '25px', borderRadius: '12px', border: '1px solid #e5e7eb', maxWidth: '600px', margin: '0 auto'}}>
@@ -573,6 +557,28 @@ function UploadView({
                   </div>
                 </div>
               )}
+
+              {/* Pro Tips Section - Only show when not reviewing files */}
+              <div style={{marginTop: '40px', padding: '20px', background: '#f9fafb', borderRadius: '12px', border: '1px solid #e5e7eb'}}>
+                <h3 style={{color: '#667eea', marginBottom: '15px', fontSize: '18px'}}>💡 Tips & Best Practices</h3>
+
+                <div style={{color: '#666', lineHeight: '1.7', fontSize: '14px'}}>
+                  <p style={{marginBottom: '12px'}}>
+                    <strong>File Naming:</strong> When uploading from your device, you can provide a custom name.
+                    If left blank, the filename will be used. When importing from Google Drive, the file name is used by default.
+                    For multiple files, each gets its own name automatically.
+                  </p>
+
+                  <p style={{marginBottom: '12px'}}>
+                    <strong>Tagging:</strong> Tag your uploaded sets with categories (like "Art", "History", "Films")
+                    to easily filter and find them later. Tags work across all import methods.
+                  </p>
+
+                  <p style={{margin: 0}}>
+                    <strong>Visibility:</strong> All users can see and practice all uploaded sets. Only the uploader can delete or rename their own sets.
+                  </p>
+                </div>
+              </div>
             </>
           )}
         </>
@@ -662,28 +668,6 @@ function UploadView({
           })()}
         </div>
       )}
-
-      {/* Pro Tips Section */}
-      <div style={{marginTop: '40px', padding: '20px', background: '#f9fafb', borderRadius: '12px', border: '1px solid #e5e7eb'}}>
-        <h3 style={{color: '#667eea', marginBottom: '15px', fontSize: '18px'}}>💡 Tips & Best Practices</h3>
-        
-        <div style={{color: '#666', lineHeight: '1.7', fontSize: '14px'}}>
-          <p style={{marginBottom: '12px'}}>
-            <strong>File Naming:</strong> When uploading from your device, you can provide a custom name. 
-            If left blank, the filename will be used. When importing from Google Drive, the file name is used by default. 
-            For multiple files, each gets its own name automatically.
-          </p>
-          
-          <p style={{marginBottom: '12px'}}>
-            <strong>Tagging:</strong> Tag your uploaded sets with categories (like "Art", "History", "Films") 
-            to easily filter and find them later. Tags work across all import methods.
-          </p>
-          
-          <p style={{margin: 0}}>
-            <strong>Visibility:</strong> All users can see and practice all uploaded sets. Only the uploader can delete or rename their own sets.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }

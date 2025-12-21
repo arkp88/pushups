@@ -200,21 +200,48 @@ const HomeView = memo(function HomeView({
         </div>
       </div>
 
-      {/* Stats at bottom - motivational context */}
-      <div className="quick-stats-grid" style={{marginTop: '40px'}}>
-        <div className="quick-stat-card">
-          <div className="quick-stat-value">{stats.total_questions}</div>
-          <div className="quick-stat-label">Questions Available</div>
+      {/* Stats at bottom - motivational context (or sign-in message for guests) */}
+      {session ? (
+        <div className="quick-stats-grid" style={{marginTop: '40px'}}>
+          <div className="quick-stat-card">
+            <div className="quick-stat-value">{stats.total_questions}</div>
+            <div className="quick-stat-label">Questions Available</div>
+          </div>
+          <div className="quick-stat-card">
+            <div className="quick-stat-value">{stats.attempted}</div>
+            <div className="quick-stat-label">Attempted ({Math.round((stats.attempted / stats.total_questions) * 100) || 0}%)</div>
+          </div>
+          <div className="quick-stat-card">
+            <div className="quick-stat-value">{stats.accuracy}%</div>
+            <div className="quick-stat-label">Accuracy</div>
+          </div>
         </div>
-        <div className="quick-stat-card">
-          <div className="quick-stat-value">{stats.attempted}</div>
-          <div className="quick-stat-label">Attempted ({Math.round((stats.attempted / stats.total_questions) * 100) || 0}%)</div>
+      ) : (
+        <div style={{
+          marginTop: '40px',
+          padding: '24px',
+          borderRadius: '10px',
+          background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
+          border: '2px solid rgba(102, 126, 234, 0.3)',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            fontSize: '16px',
+            color: '#667eea',
+            fontWeight: '600',
+            marginBottom: '8px'
+          }}>
+            Sign in to unlock tracking
+          </div>
+          <div style={{
+            fontSize: '14px',
+            color: '#64748b',
+            lineHeight: '1.5'
+          }}>
+            Track your stats, bookmarks, and missed questions by signing in
+          </div>
         </div>
-        <div className="quick-stat-card">
-          <div className="quick-stat-value">{stats.accuracy}%</div>
-          <div className="quick-stat-label">Accuracy</div>
-        </div>
-      </div>
+      )}
       </>
       )}
     </div>

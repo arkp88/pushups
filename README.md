@@ -51,7 +51,7 @@ A modern, production-ready flashcard quiz application with multi-user support, m
 
 ## 🚀 Quick Start
 
-**[📖 Read Complete Documentation](./DOCS.md)**
+**[📖 Read API Documentation](./docs/API_REFERENCE.md)**
 
 ### 5-Minute Local Setup
 
@@ -80,9 +80,10 @@ Visit `http://localhost:3000` and sign up!
 
 ## 📚 Documentation
 
-- **[Complete Documentation](./DOCS.md)** - Architecture, deployment, API reference, performance
+- **[API Reference](./docs/API_REFERENCE.md)** - Complete API endpoints documentation
 - **[Backend README](./backend/README.md)** - Backend-specific details
 - **[Frontend README](./frontend/README.md)** - Frontend-specific details
+- **[Development Docs](./docs/)** - Refactoring notes, testing guides, troubleshooting
 
 ## 🛠️ Tech Stack
 
@@ -347,32 +348,31 @@ quiz-app/
 
 ## Troubleshooting
 
-### Backend won't connect to database
+For detailed troubleshooting guides, see **[docs/troubleshooting/](./docs/troubleshooting/)**
+
+### Common Issues
+
+**Backend won't connect to database**
 - Check DATABASE_URL is correct (use Transaction mode connection string)
 - Verify database is running in Supabase dashboard
-- Check network/firewall settings
 
-### CORS errors
-- Verify backend CORS is enabled (already in code)
+**CORS errors**
 - Check REACT_APP_API_URL points to correct backend
 - Make sure backend is deployed and running
 
-### Authentication not working
+**Authentication not working**
+- See [Authentication Issue Fix](./docs/troubleshooting/AUTH_ISSUE_FIX.md)
 - Verify Supabase credentials are correct
-- Check email confirmation settings in Supabase
-- Look at browser console for errors
+- Check browser console for errors
 
-### Upload fails
+**Upload fails**
 - Check TSV format (tabs, not spaces)
 - Verify file has correct headers
-- Check backend logs for specific errors
 
-## Support
-
-Having issues? Check:
+For more help, check:
 1. Backend logs on Render dashboard
 2. Browser console (F12) for frontend errors
-3. Supabase dashboard for database issues
+3. [Troubleshooting guides](./docs/troubleshooting/)
 
 ## License
 

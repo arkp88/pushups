@@ -42,13 +42,15 @@ async function isAuthenticated() {
 async function fetchWithWakeDetection(url, options = {}) {
   let wakeNotificationShown = false;
 
-  // Set a timer to show "waking up" message after 3 seconds
+  // Set a timer to show "waking up" message after 5 seconds
+  // This threshold is high enough to avoid false positives on normal slow requests
+  // but low enough to catch real cold starts (which take 30-40 seconds on Render free tier)
   const wakeTimer = setTimeout(() => {
     if (onBackendWakingCallback) {
       wakeNotificationShown = true;
       onBackendWakingCallback(true);
     }
-  }, 3000);
+  }, 5000);
 
   try {
     const response = await fetch(url, options);
@@ -79,7 +81,7 @@ export const api = {
     formData.append('tags', tags);
 
     try {
-      const response = await fetch(`${API_URL}/api/upload-tsv`, {
+      const response = await fetchWithWakeDetection(`${API_URL}/api/upload-tsv`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -226,7 +228,7 @@ export const api = {
   // --- GOOGLE DRIVE METHODS (NEW) ---
   async listDriveFiles(folderId) {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_URL}/api/drive/files?folderId=${folderId}`, { headers });
+    const response = await fetchWithWakeDetection(`${API_URL}/api/drive/files?folderId=${folderId}`, { headers });
     if (!response.ok) throw new Error('Failed to list Drive files');
     return response.json();
   },
@@ -239,7 +241,7 @@ export const api = {
     const timeoutId = setTimeout(() => controller.abort(), 25000);
 
     try {
-      const response = await fetch(`${API_URL}/api/drive/files/recursive?folderId=${folderId}`, {
+      const response = await fetchWithWakeDetection(`${API_URL}/api/drive/files/recursive?folderId=${folderId}`, {
         headers,
         signal: controller.signal
       });
@@ -276,7 +278,7 @@ async renameSet(setId, newName) {
 
   async importDriveFile(fileId, fileName, tags = '', setName = '') {
     const headers = await getAuthHeaders();
-    const response = await fetch(`${API_URL}/api/drive/import`, {
+    const response = await fetchWithWakeDetection(`${API_URL}/api/drive/import`, {
       method: 'POST',
       headers,
       body: JSON.stringify({ fileId, fileName, tags, setName }),

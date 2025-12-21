@@ -31,8 +31,9 @@ export function useUpload(ROOT_FOLDER_ID, view, uploadMode, session, setAppNotif
       setSelectedDriveFiles([]); // Clear selection when navigating
     } catch (error) {
       console.error('Error loading Drive files:', error);
-      // REPLACE alert()
-      setAppNotification('Failed to load Drive files. Check API key and folder ID.', true);
+      // Show the actual error message from the API
+      const errorMessage = error.message || 'Failed to load Drive files. Check API key and folder ID.';
+      setAppNotification(errorMessage, true);
     } finally {
       setDriveLoading(false);
     }

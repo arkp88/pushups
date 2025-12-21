@@ -52,7 +52,8 @@ def list_drive_files():
         if not root_folder_id:
             return jsonify({'error': 'Folder ID required'}), 400
 
-        query = f"'{root_folder_id}' in parents and (mimeType = 'application/vnd.google-apps.folder' or name contains '.tsv') and trashed = false"
+        # Query for folders and TSV files only (exclude PDFs and other file types)
+        query = f"'{root_folder_id}' in parents and (mimeType = 'application/vnd.google-apps.folder' or (name contains '.tsv' and not name contains '.pdf')) and trashed = false"
 
         all_files = []
         page_token = None
@@ -67,7 +68,12 @@ def list_drive_files():
             ).execute()
 
             items = results.get('files', [])
-            all_files.extend(items)
+            # Filter to only include folders and files ending with .tsv
+            filtered_items = [
+                item for item in items
+                if item['mimeType'] == 'application/vnd.google-apps.folder' or item['name'].endswith('.tsv')
+            ]
+            all_files.extend(filtered_items)
 
             page_token = results.get('nextPageToken')
             if not page_token:

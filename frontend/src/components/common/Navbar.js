@@ -15,7 +15,16 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session }) {
           {session ? (
             <>
               <span className="username">{session.user.email.split('@')[0]}</span>
-              <button className="btn-logout-mobile" onClick={() => supabase.auth.signOut()}>
+              <button className="btn-logout-mobile" onClick={async () => {
+                console.log('Logout clicked (mobile)');
+                try {
+                  const { error } = await supabase.auth.signOut();
+                  if (error) console.error('Logout error:', error);
+                  else console.log('Logout successful');
+                } catch (err) {
+                  console.error('Logout exception:', err);
+                }
+              }}>
                 <LogOut size={16} />
                 Logout
               </button>
@@ -79,7 +88,16 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session }) {
           {session ? (
             <>
               <span>{session.user.email.split('@')[0]}</span>
-              <button className="btn-logout" onClick={() => supabase.auth.signOut()}>
+              <button className="btn-logout" onClick={async () => {
+                console.log('Logout clicked (desktop)');
+                try {
+                  const { error } = await supabase.auth.signOut();
+                  if (error) console.error('Logout error:', error);
+                  else console.log('Logout successful');
+                } catch (err) {
+                  console.error('Logout exception:', err);
+                }
+              }}>
                 <LogOut size={16} />
                 Logout
               </button>
