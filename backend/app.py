@@ -18,7 +18,7 @@ from config import SECRET_KEY, MAX_CONTENT_LENGTH, CORS_ALLOWED_ORIGINS
 from services.database import connection_pool
 
 # Import route blueprints
-from routes.health import health_bp
+from routes.health import health_bp, is_server_warming_up
 from routes.public import public_bp
 from routes.drive import drive_bp
 from routes.sets import sets_bp
@@ -43,6 +43,19 @@ app.config['MAX_CONTENT_PATH'] = None
 logger.info(f"CORS allowed origins: {CORS_ALLOWED_ORIGINS}")
 
 CORS(app, origins=CORS_ALLOWED_ORIGINS)
+
+
+# Add middleware to include warming header in all responses
+@app.after_request
+def add_warming_header(response):
+    """
+    Add X-Server-Warming header to all responses during the first 60 seconds
+    after server start. This helps the frontend detect genuine cold starts
+    on Render's free tier.
+    """
+    if is_server_warming_up():
+        response.headers['X-Server-Warming'] = 'true'
+    return response
 
 
 # Rate limiting configuration

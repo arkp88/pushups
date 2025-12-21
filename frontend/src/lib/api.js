@@ -4,9 +4,12 @@ const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
 // Global callback for backend wake-up detection
 let onBackendWakingCallback = null;
+let serverHasResponded = false; // Track if we've received any successful response
 
 export function setBackendWakingCallback(callback) {
   onBackendWakingCallback = callback;
+  // Reset the flag when callback is set (on app initialization)
+  serverHasResponded = false;
 }
 
 async function getAuthHeaders() {
@@ -38,33 +41,39 @@ async function isAuthenticated() {
   return !!session;
 }
 
-// Wrapper to detect slow requests (backend waking up)
+// Wrapper to detect genuine cold starts (backend waking up)
 async function fetchWithWakeDetection(url, options = {}) {
-  let wakeNotificationShown = false;
-
-  // Set a timer to show "waking up" message after 5 seconds
-  // This threshold is high enough to avoid false positives on normal slow requests
-  // but low enough to catch real cold starts (which take 30-40 seconds on Render free tier)
-  const wakeTimer = setTimeout(() => {
-    if (onBackendWakingCallback) {
-      wakeNotificationShown = true;
-      onBackendWakingCallback(true);
-    }
-  }, 5000);
-
   try {
     const response = await fetch(url, options);
-    clearTimeout(wakeTimer);
 
-    // Clear wake notification if it was shown
-    if (wakeNotificationShown && onBackendWakingCallback) {
-      onBackendWakingCallback(false);
+    // Check for the X-Server-Warming header sent by backend during first 60 seconds
+    // This is only present during genuine cold starts on Render's free tier
+    const isWarmingUp = response.headers.get('X-Server-Warming') === 'true';
+
+    if (onBackendWakingCallback) {
+      // If we've already received a successful response, never show the banner again
+      // (even if backend is still in the 60-second warming window)
+      if (serverHasResponded) {
+        onBackendWakingCallback(false);
+      } else if (isWarmingUp) {
+        // First request during warm-up: show the banner
+        onBackendWakingCallback(true);
+      } else {
+        // First successful response after warm-up or no warm-up needed
+        serverHasResponded = true;
+        onBackendWakingCallback(false);
+      }
+    }
+
+    // Mark that we've successfully received a response
+    if (!serverHasResponded) {
+      serverHasResponded = true;
     }
 
     return response;
   } catch (error) {
-    clearTimeout(wakeTimer);
-    if (wakeNotificationShown && onBackendWakingCallback) {
+    // On error, clear any wake notification
+    if (onBackendWakingCallback) {
       onBackendWakingCallback(false);
     }
     throw error;
