@@ -23,8 +23,8 @@ function InstructionsModal({ instructions, onClose }) {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: '#fff3cd',
-          border: '2px solid #ffc107',
+          background: 'var(--card-bg)',
+          border: '2px solid var(--border-focus)',
           borderRadius: '12px',
           padding: '24px',
           maxWidth: '600px',
@@ -41,7 +41,7 @@ function InstructionsModal({ instructions, onClose }) {
           alignItems: 'center',
           marginBottom: '16px'
         }}>
-          <h3 style={{ margin: 0, color: '#856404', fontSize: '20px' }}>
+          <h3 style={{ margin: 0, color: 'var(--text-heading)', fontSize: '20px' }}>
             📋 Instructions
           </h3>
           <button
@@ -51,7 +51,7 @@ function InstructionsModal({ instructions, onClose }) {
               border: 'none',
               fontSize: '24px',
               cursor: 'pointer',
-              color: '#856404',
+              color: 'var(--text-heading)',
               padding: '0 8px'
             }}
             aria-label="Close instructions"
@@ -62,7 +62,7 @@ function InstructionsModal({ instructions, onClose }) {
         <ul style={{
           margin: 0,
           paddingLeft: '24px',
-          color: '#856404',
+          color: 'var(--text-body)',
           lineHeight: '1.8',
           fontSize: '16px'
         }}>

@@ -33,6 +33,12 @@ function App() {
   // Backend wake-up notification state
   const [backendWaking, setBackendWaking] = useState(false);
 
+  // Dark mode state - persisted to localStorage
+  const [darkMode, setDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved ? JSON.parse(saved) : false;
+  });
+
   // Drive folder ID from environment
   const ROOT_FOLDER_ID = process.env.REACT_APP_GOOGLE_DRIVE_FOLDER_ID || '1WucWdJWvvRdqwY7y8r-B1VFBo0Bh8L9_';
 
@@ -76,6 +82,16 @@ function App() {
       setBackendWaking(isWaking);
     });
   }, []);
+
+  // Apply dark mode to body and persist to localStorage
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+    localStorage.setItem('darkMode', JSON.stringify(darkMode));
+  }, [darkMode]);
 
   // Scroll logic for header
   const [showNavbar, setShowNavbar] = useState(true);
@@ -189,7 +205,7 @@ function App() {
   // session can be null for guests
   return (
     <div className="App">
-      <Navbar view={view} setView={setView} showNavbar={showNavbar} session={session} />
+      <Navbar view={view} setView={setView} showNavbar={showNavbar} session={session} darkMode={darkMode} setDarkMode={setDarkMode} />
 
       <ErrorBoundary>
         <Suspense fallback={LoadingFallback}>

@@ -12,9 +12,9 @@ function FlashcardHeader({ practice, setView }) {
             className="btn btn-primary"
             onClick={() => practice.toggleInstructions()}
             style={{
-              background: '#fff3cd',
-              border: '2px solid #ffc107',
-              color: '#856404',
+              background: 'var(--bg-secondary)',
+              border: '2px solid var(--border-focus)',
+              color: 'var(--text-heading)',
               fontWeight: '600'
             }}
             title="View instructions for this set"
@@ -28,7 +28,7 @@ function FlashcardHeader({ practice, setView }) {
         {/* FIX #9: Responsive set name - ellipsis on mobile, normal on desktop */}
         <div style={{
           fontWeight: 'bold',
-          color: '#333',
+          color: 'var(--text-heading)',
           fontSize: '18px',
           marginBottom: '5px',
           paddingLeft: '40px',
@@ -36,17 +36,17 @@ function FlashcardHeader({ practice, setView }) {
         }} className="set-name-header">
           {practice.currentSet.name}
         </div>
-        <div className="flashcard-progress" style={{color: '#666', fontWeight: '600'}}>
+        <div className="flashcard-progress">
           Question {practice.currentQuestionIndex + 1} / {practice.questions.length}
         </div>
 
         {/* Desktop keyboard shortcuts hint */}
         <div className="desktop-only" style={{
           fontSize: '13px',
-          color: '#667eea',
+          color: 'var(--border-focus)',
           marginTop: '10px',
           fontWeight: '500',
-          background: 'rgba(102, 126, 234, 0.08)',
+          background: 'var(--nav-hover-bg)',
           padding: '8px 12px',
           borderRadius: '6px',
           display: 'inline-block'

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { Search } from 'lucide-react';
+import { SkeletonSetCard, EmptyState } from '../components/common';
 
 function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,8 +39,8 @@ function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking 
     <div className="container">
       <h2>Question Sets</h2>
 
-      {/* Filter Buttons */}
-      <div style={{display: 'flex', gap: '10px', margin: '20px 0', flexWrap: 'wrap'}}>
+      {/* Filter Buttons - Horizontal scroll on mobile */}
+      <div className="filter-scroll-container" style={{display: 'flex', gap: '10px', margin: '20px 0', flexWrap: 'wrap'}}>
         {['all', 'completed', 'in-progress', 'unattempted'].map(filter => (
           <button
             key={filter}
@@ -53,7 +55,7 @@ function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking 
 
       {/* Sort Dropdown */}
       <div style={{marginBottom: '20px'}}>
-        <label style={{display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151'}}>
+        <label style={{display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--text-body)'}}>
           Sort by:
         </label>
         <select
@@ -61,10 +63,11 @@ function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking 
           onChange={(e) => setSortBy(e.target.value)}
           style={{
             padding: '10px 12px',
-            border: '2px solid #e5e7eb',
+            border: '2px solid var(--border-medium)',
             borderRadius: '8px',
             fontSize: '14px',
-            backgroundColor: 'white',
+            backgroundColor: 'var(--bg-primary)',
+            color: 'var(--text-body)',
             cursor: 'pointer',
             minWidth: '180px'
           }}
@@ -81,11 +84,19 @@ function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking 
         placeholder="Search by name or tag..."
         value={searchTerm}
         onChange={(e) => { setSearchTerm(e.target.value); setDisplayCount(10); }}
-        style={{width: '100%', padding: '12px', marginBottom: '20px', border: '2px solid #e5e7eb', borderRadius: '8px'}}
+        style={{width: '100%', padding: '12px', marginBottom: '20px', border: '2px solid var(--border-medium)', borderRadius: '8px', backgroundColor: 'var(--bg-primary)', color: 'var(--text-body)'}}
       />
       
-      {filtered.length === 0 ? (
-        <div className="empty-state"><p>No sets found.</p></div>
+      {backendWaking ? (
+        <div className="set-list">
+          {[1, 2, 3, 4].map(i => <SkeletonSetCard key={i} />)}
+        </div>
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={Search}
+          title="No sets found"
+          description={searchTerm ? `No question sets match "${searchTerm}". Try a different search term or filter.` : "No question sets match your current filter."}
+        />
       ) : (
         <>
           <div className="set-list">

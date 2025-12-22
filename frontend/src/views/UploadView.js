@@ -20,14 +20,14 @@ function UploadView({
       <h2>Manage Questions</h2>
 
       {/* Sub-Navigation Tabs */}
-      <div style={{display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '20px'}}>
+      <div style={{display: 'flex', borderBottom: '1px solid var(--border-medium)', marginBottom: '20px'}}>
         <button
           style={{
             padding: '10px 20px',
             border: 'none',
             background: 'none',
             borderBottom: upload.uploadSubView === 'import' ? '2px solid #667eea' : 'none',
-            color: upload.uploadSubView === 'import' ? '#667eea' : '#666',
+            color: upload.uploadSubView === 'import' ? '#667eea' : 'var(--text-muted)',
             fontWeight: '600',
             cursor: 'pointer'
           }}
@@ -41,7 +41,7 @@ function UploadView({
             border: 'none',
             background: 'none',
             borderBottom: upload.uploadSubView === 'library' ? '2px solid #667eea' : 'none',
-            color: upload.uploadSubView === 'library' ? '#667eea' : '#666',
+            color: upload.uploadSubView === 'library' ? '#667eea' : 'var(--text-muted)',
             fontWeight: '600',
             cursor: 'pointer'
           }}
@@ -58,14 +58,14 @@ function UploadView({
             upload.pendingUpload.type === 'drive-multi' ? (
               // Multi-file import review (inline, not modal)
               <div style={{
-                background: '#f9fafb',
+                background: 'var(--bg-secondary)',
                 padding: '25px',
                 borderRadius: '12px',
-                border: '1px solid #e5e7eb',
+                border: '1px solid var(--border-medium)',
                 maxWidth: '800px',
                 margin: '0 auto'
               }}>
-                  <h3 style={{marginTop: 0, color: '#333', marginBottom: '15px'}}>
+                  <h3 style={{marginTop: 0, color: 'var(--text-heading)', marginBottom: '15px'}}>
                     📝 Review Multi-File Import
                   </h3>
 
@@ -147,10 +147,10 @@ function UploadView({
                       )}
                     </div>
                     <div style={{
-                      border: '1px solid #e5e7eb',
+                      border: '1px solid var(--border-medium)',
                       borderRadius: '6px',
                       padding: '10px',
-                      background: '#f9fafb'
+                      background: 'var(--bg-tertiary)'
                     }}>
                       {/* Show selectable list if from recursive scan, otherwise just show selected files */}
                       {upload.recursiveFiles.length > 0 ? (
@@ -162,7 +162,7 @@ function UploadView({
                               onClick={() => !upload.uploading && upload.togglePendingFileSelection(file.id)}
                               style={{
                                 padding: '6px 0',
-                                borderBottom: idx < upload.recursiveFiles.length - 1 ? '1px solid #e5e7eb' : 'none',
+                                borderBottom: idx < upload.recursiveFiles.length - 1 ? '1px solid var(--border-medium)' : 'none',
                                 fontSize: '13px',
                                 cursor: upload.uploading ? 'not-allowed' : 'pointer',
                                 display: 'flex',
@@ -187,11 +187,11 @@ function UploadView({
                                 }}
                               />
                               <div style={{flex: 1}}>
-                                <div style={{fontWeight: '500', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '6px'}}>
+                                <div style={{fontWeight: '500', color: 'var(--text-heading)', display: 'flex', alignItems: 'center', gap: '6px'}}>
                                   <FileText size={16} /> {file.name}
                                 </div>
                                 {file.path && (
-                                  <div style={{color: '#6b7280', fontSize: '12px', marginLeft: '20px', display: 'flex', alignItems: 'center', gap: '4px'}}>
+                                  <div style={{color: 'var(--text-muted)', fontSize: '12px', marginLeft: '20px', display: 'flex', alignItems: 'center', gap: '4px'}}>
                                     <Folder size={14} /> {file.path}
                                   </div>
                                 )}
@@ -204,14 +204,14 @@ function UploadView({
                         upload.pendingUpload.data.map((file, idx) => (
                           <div key={idx} style={{
                             padding: '6px 0',
-                            borderBottom: idx < upload.pendingUpload.data.length - 1 ? '1px solid #e5e7eb' : 'none',
+                            borderBottom: idx < upload.pendingUpload.data.length - 1 ? '1px solid var(--border-medium)' : 'none',
                             fontSize: '13px'
                           }}>
-                            <div style={{fontWeight: '500', color: '#1f2937', display: 'flex', alignItems: 'center', gap: '6px'}}>
+                            <div style={{fontWeight: '500', color: 'var(--text-heading)', display: 'flex', alignItems: 'center', gap: '6px'}}>
                               <FileText size={16} /> {file.name}
                             </div>
                             {file.path && (
-                              <div style={{color: '#6b7280', fontSize: '12px', marginLeft: '20px', display: 'flex', alignItems: 'center', gap: '4px'}}>
+                              <div style={{color: 'var(--text-muted)', fontSize: '12px', marginLeft: '20px', display: 'flex', alignItems: 'center', gap: '4px'}}>
                                 <Folder size={14} /> {file.path}
                               </div>
                             )}
@@ -224,14 +224,14 @@ function UploadView({
                   {/* Fixed tags input and buttons section */}
                   <div style={{flex: '0 0 auto'}}>
                     <div style={{marginBottom: '20px'}}>
-                      <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>Tags (optional)</label>
+                      <label style={{display: 'block', marginBottom: '5px', fontWeight: '500', color: 'var(--text-body)'}}>Tags (optional)</label>
                       <input
                         type="text"
                         value={upload.uploadTags}
                         onChange={(e) => upload.setUploadTags(e.target.value)}
                         placeholder="e.g. History, Science"
                         disabled={upload.uploading}
-                        style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc'}}
+                        style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-medium)', backgroundColor: 'var(--bg-primary)', color: 'var(--text-body)'}}
                       />
                     </div>
 
@@ -265,8 +265,8 @@ function UploadView({
                 </div>
             ) : (
               // Single file import (local or single drive file)
-              <div style={{background: '#f9fafb', padding: '25px', borderRadius: '12px', border: '1px solid #e5e7eb', maxWidth: '600px', margin: '0 auto'}}>
-                <h3 style={{marginTop: 0, color: '#333'}}>📝 Review & Import</h3>
+              <div style={{background: 'var(--bg-secondary)', padding: '25px', borderRadius: '12px', border: '1px solid var(--border-medium)', maxWidth: '600px', margin: '0 auto'}}>
+                <h3 style={{marginTop: 0, color: 'var(--text-heading)'}}>📝 Review & Import</h3>
 
                 {upload.uploadError && (
                   <div style={{padding: '10px', background: '#fee2e2', color: '#dc2626', borderRadius: '6px', marginBottom: '15px', fontSize: '14px'}}>
@@ -274,8 +274,8 @@ function UploadView({
                   </div>
                 )}
 
-                <div style={{marginBottom: '20px', padding: '10px', background: '#fff', borderRadius: '6px', border: '1px solid #e5e7eb'}}>
-                  <span style={{fontWeight: 'bold', color: '#555'}}>Selected: </span>
+                <div style={{marginBottom: '20px', padding: '10px', background: 'var(--bg-primary)', borderRadius: '6px', border: '1px solid var(--border-medium)'}}>
+                  <span style={{fontWeight: 'bold', color: 'var(--text-body)'}}>Selected: </span>
                   {upload.pendingUpload.type === 'local'
                     ? `${upload.pendingUpload.data.length} file(s) from Device`
                     : (
@@ -286,26 +286,26 @@ function UploadView({
                 </div>
 
               <div style={{marginBottom: '15px'}}>
-                <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>Set Name</label>
-                <input 
-                  type="text" 
-                  value={upload.customName} 
-                  onChange={(e) => upload.setCustomName(e.target.value)} 
+                <label style={{display: 'block', marginBottom: '5px', fontWeight: '500', color: 'var(--text-body)'}}>Set Name</label>
+                <input
+                  type="text"
+                  value={upload.customName}
+                  onChange={(e) => upload.setCustomName(e.target.value)}
                   placeholder="e.g. My Quiz Set"
                   disabled={upload.uploading}
-                  style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc'}}
+                  style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-medium)', backgroundColor: 'var(--bg-primary)', color: 'var(--text-body)'}}
                 />
               </div>
 
               <div style={{marginBottom: '20px'}}>
-                <label style={{display: 'block', marginBottom: '5px', fontWeight: '500'}}>Tags</label>
-                <input 
-                  type="text" 
-                  value={upload.uploadTags} 
-                  onChange={(e) => upload.setUploadTags(e.target.value)} 
+                <label style={{display: 'block', marginBottom: '5px', fontWeight: '500', color: 'var(--text-body)'}}>Tags</label>
+                <input
+                  type="text"
+                  value={upload.uploadTags}
+                  onChange={(e) => upload.setUploadTags(e.target.value)}
                   placeholder="e.g. History, Science"
                   disabled={upload.uploading}
-                  style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc'}}
+                  style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-medium)', backgroundColor: 'var(--bg-primary)', color: 'var(--text-body)'}}
                 />
               </div>
 
@@ -399,7 +399,7 @@ function UploadView({
                   <div style={{display: 'flex', alignItems: 'center', marginBottom: '15px', gap: '10px', flexWrap: 'wrap'}}>
                     <button className="btn btn-secondary" onClick={upload.handleDriveRootClick} disabled={upload.drivePath.length <= 1 || upload.driveLoading}>🏠 Root</button>
                     <button className="btn btn-secondary" onClick={upload.handleDriveBackClick} disabled={upload.drivePath.length <= 1 || upload.driveLoading}>⬅ Back</button>
-                    <div style={{fontSize: '14px', color: '#666', flex: 1}}>
+                    <div style={{fontSize: '14px', color: 'var(--text-muted)', flex: 1}}>
                       {upload.drivePath.map(p => p.name).join(' > ')}
                     </div>
                     {upload.selectedDriveFiles.length > 0 && (
@@ -419,7 +419,7 @@ function UploadView({
                       placeholder="Search current folder..."
                       value={upload.driveSearchTerm}
                       onChange={(e) => upload.setDriveSearchTerm(e.target.value)}
-                      style={{flex: 1, minWidth: '200px', padding: '10px', border: '1px solid #d1d5db', borderRadius: '6px'}}
+                      style={{flex: 1, minWidth: '200px', padding: '10px', border: '1px solid var(--border-medium)', borderRadius: '6px', backgroundColor: 'var(--bg-primary)', color: 'var(--text-body)'}}
                     />
                     {upload.driveFiles.filter(f => f.mimeType !== 'application/vnd.google-apps.folder').length > 0 && (
                       <button
@@ -441,7 +441,7 @@ function UploadView({
                     )}
                   </div>
                   
-                  <div style={{minHeight: '200px', maxHeight: '500px', overflowY: 'auto', border: '1px solid #e5e7eb', borderRadius: '8px', background: 'white'}}>
+                  <div style={{minHeight: '200px', maxHeight: '500px', overflowY: 'auto', border: '1px solid var(--border-medium)', borderRadius: '8px', background: 'var(--bg-primary)'}}>
                     {upload.driveLoading ? (
                        <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', color: '#667eea', fontWeight: 'bold'}}>Loading folder...</div>
                     ) : (
@@ -469,13 +469,13 @@ function UploadView({
                                   alignItems: 'center',
                                   gap: '12px',
                                   padding: '10px 16px',
-                                  borderBottom: '1px solid #f3f4f6',
+                                  borderBottom: '1px solid var(--border-light)',
                                   transition: 'background 0.15s ease',
-                                  background: isSelected ? '#eff6ff' : 'white',
-                                  ':hover': {background: '#f9fafb'}
+                                  background: isSelected ? '#eff6ff' : 'var(--bg-primary)',
+                                  ':hover': {background: 'var(--bg-secondary)'}
                                 }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = isSelected ? '#eff6ff' : '#f9fafb'}
-                                onMouseLeave={(e) => e.currentTarget.style.background = isSelected ? '#eff6ff' : 'white'}
+                                onMouseEnter={(e) => e.currentTarget.style.background = isSelected ? '#eff6ff' : 'var(--bg-secondary)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = isSelected ? '#eff6ff' : 'var(--bg-primary)'}
                               >
                                 {!isFolder && (
                                   <input
@@ -502,7 +502,7 @@ function UploadView({
                                   <div style={{
                                     margin: 0,
                                     fontSize: '15px',
-                                    color: '#1f2937',
+                                    color: 'var(--text-heading)',
                                     fontWeight: isFolder ? '600' : '500',
                                     whiteSpace: 'nowrap',
                                     overflow: 'hidden',
@@ -545,13 +545,13 @@ function UploadView({
                                     >
                                       {upload.recursiveLoading === file.id ? '⏳ Scanning...' : '📥 Import All'}
                                     </button>
-                                    <div style={{fontSize: '14px', color: '#9ca3af', flexShrink: 0}}>→</div>
+                                    <div style={{fontSize: '14px', color: 'var(--text-muted)', flexShrink: 0}}>→</div>
                                   </>
                                 )}
                               </div>
                             );
                           })}
-                        {upload.driveFiles.length === 0 && <p style={{color: '#999', textAlign: 'center', padding: '40px 20px', margin: 0}}>No files found.</p>}
+                        {upload.driveFiles.length === 0 && <p style={{color: 'var(--text-muted)', textAlign: 'center', padding: '40px 20px', margin: 0}}>No files found.</p>}
                       </>
                     )}
                   </div>
@@ -559,10 +559,10 @@ function UploadView({
               )}
 
               {/* Pro Tips Section - Only show when not reviewing files */}
-              <div style={{marginTop: '40px', padding: '20px', background: '#f9fafb', borderRadius: '12px', border: '1px solid #e5e7eb'}}>
+              <div style={{marginTop: '40px', padding: '20px', background: 'var(--bg-secondary)', borderRadius: '12px', border: '1px solid var(--border-medium)'}}>
                 <h3 style={{color: '#667eea', marginBottom: '15px', fontSize: '18px'}}>💡 Tips & Best Practices</h3>
 
-                <div style={{color: '#666', lineHeight: '1.7', fontSize: '14px'}}>
+                <div style={{color: 'var(--text-body)', lineHeight: '1.7', fontSize: '14px'}}>
                   <p style={{marginBottom: '12px'}}>
                     <strong>File Naming:</strong> When uploading from your device, you can provide a custom name.
                     If left blank, the filename will be used. When importing from Google Drive, the file name is used by default.
@@ -600,7 +600,7 @@ function UploadView({
             </div>
           )}
 
-          <p style={{color: '#666', marginBottom: '20px'}}>Manage the sets you have imported or uploaded.</p>
+          <p style={{color: 'var(--text-body)', marginBottom: '20px'}}>Manage the sets you have imported or uploaded.</p>
           
           {(() => {
             const myUploadedSets = questionSets.filter(set => set.uploaded_by_username === session.user.email.split('@')[0]);

@@ -122,10 +122,11 @@ function Flashcard({
                 {imageError ? (
                   <div style={{
                     padding: '16px',
-                    background: '#fff3cd',
-                    border: '1px solid #ffc107',
+                    background: 'var(--bg-secondary)',
+                    border: '2px solid var(--border-focus)',
                     borderRadius: '8px',
-                    margin: '16px 0'
+                    margin: '16px 0',
+                    color: 'var(--text-body)'
                   }}>
                     ⚠️ Image unavailable in secure mode
                     <div style={{fontSize: '12px', marginTop: '8px'}}>

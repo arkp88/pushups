@@ -1,8 +1,9 @@
 import { memo } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Home, BookOpen, Upload, BarChart3, HelpCircle, Lock, LogOut, LogIn } from 'lucide-react';
+import DarkModeToggle from './DarkModeToggle';
 
-const Navbar = memo(function Navbar({ view, setView, showNavbar, session }) {
+const Navbar = memo(function Navbar({ view, setView, showNavbar, session, darkMode, setDarkMode }) {
   return (
     <>
       {/* Mobile-only top header */}
@@ -12,6 +13,7 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session }) {
           <h1>Pushups</h1>
         </div>
         <div className="mobile-header-user">
+          <DarkModeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
           {session ? (
             <>
               <span className="username">{session.user.email.split('@')[0]}</span>
@@ -85,6 +87,7 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session }) {
 
         {/* User & Logout / Sign In */}
         <div className="nav-user">
+          <DarkModeToggle darkMode={darkMode} setDarkMode={setDarkMode} />
           {session ? (
             <>
               <span>{session.user.email.split('@')[0]}</span>
