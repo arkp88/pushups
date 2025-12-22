@@ -913,24 +913,11 @@ h1, h2, h3, h4, h5, h6,
   align-items: center;
   text-align: center;
   cursor: pointer;
-  transition: all 0.5s var(--spring);
+  transition: transform 0.5s var(--spring), box-shadow 0.5s var(--spring);
   position: relative;
-  animation: slideInCard 0.6s var(--ease-out-expo);
   border: 1px solid var(--card-border);
   color: var(--text-heading);
-}
-
-@keyframes slideInCard {
-  from {
-    opacity: 0;
-    transform: translateY(30px) scale(0.9);
-    filter: blur(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    filter: blur(0);
-  }
+  touch-action: pan-y pinch-zoom; /* Allow vertical scroll, prevent horizontal */
 }
 
 .flashcard:hover {
@@ -1250,18 +1237,25 @@ select option {
   font-family: 'Inter', sans-serif;
   font-weight: 500;
   padding: 8px;
+  background-color: var(--bg-primary);
+  color: var(--text-body);
 }
 
 select:hover {
-  border-color: rgba(102, 126, 234, 0.4) !important;
-  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: var(--border-focus) !important;
+  background-color: var(--bg-secondary) !important;
 }
 
 select:focus {
   outline: none !important;
-  border-color: #667eea !important;
-  background-color: white !important;
+  border-color: var(--border-focus) !important;
+  background-color: var(--bg-primary) !important;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+}
+
+/* Dark mode dropdown arrow */
+body.dark-mode select {
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23cbd5e1%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") !important;
 }
 
 /* Label styling for consistency */

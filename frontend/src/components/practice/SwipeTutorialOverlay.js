@@ -23,22 +23,6 @@ function SwipeTutorialOverlay({ show, onDismiss }) {
         cursor: 'pointer'
       }}
     >
-      <div style={{
-        color: 'white',
-        fontSize: '24px',
-        fontWeight: 'bold',
-        marginBottom: '30px',
-        textAlign: 'center'
-      }}>
-        Swipe to Answer
-      </div>
-
-      <div style={{
-        fontSize: '80px',
-        marginBottom: '20px'
-      }}>
-        👆
-      </div>
 
       <div style={{
         display: 'flex',
@@ -64,10 +48,19 @@ function SwipeTutorialOverlay({ show, onDismiss }) {
       </div>
 
       <div style={{
+        color: 'rgba(255,255,255,0.9)',
+        fontSize: '15px',
+        textAlign: 'center',
+        marginBottom: '15px',
+        fontWeight: '500'
+      }}>
+        Swipe works on both question & answer sides once you've seen the answer.
+      </div>
+
+      <div style={{
         color: 'rgba(255,255,255,0.7)',
         fontSize: '14px',
-        textAlign: 'center',
-        marginTop: '20px'
+        textAlign: 'center'
       }}>
         Touch anywhere to start
       </div>

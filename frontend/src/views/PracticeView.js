@@ -39,11 +39,11 @@ function PracticeView({
         // Show tutorial after a brief delay
         tutorialTimeoutRef.current = setTimeout(() => {
           setShowTutorial(true);
-          // Auto-dismiss after 4 seconds
+          // Auto-dismiss after 7 seconds
           setTimeout(() => {
             setShowTutorial(false);
             localStorage.setItem('hasSeenSwipeTutorial', 'true');
-          }, 4000);
+          }, 7000);
         }, 500);
       }
     }
@@ -77,17 +77,56 @@ function PracticeView({
         onClose={() => practice.toggleInstructions()}
       />
 
-      <Flashcard
-        practice={practice}
-        imageError={imageError}
-        setImageError={setImageError}
-        swipeOffset={swipeGesture.swipeOffset}
-        isSwiping={swipeGesture.isSwiping}
-        onTouchStart={swipeGesture.handleTouchStart}
-        onTouchMove={swipeGesture.handleTouchMove}
-        onTouchEnd={swipeGesture.handleTouchEnd}
-        handleBookmarkWrapper={handleBookmarkWrapper}
-      />
+      {/* Card stack container */}
+      <div style={{ position: 'relative' }}>
+        {/* Next card preview (behind current card) - only visible during swipe */}
+        {practice.currentQuestionIndex < practice.questions.length - 1 && (
+          <div style={{
+            position: 'absolute',
+            top: '8px',
+            left: '0',
+            right: '0',
+            zIndex: 0,
+            transform: Math.abs(swipeGesture.swipeOffset) > 20 ? 'scale(0.95)' : 'scale(0.9)',
+            opacity: Math.abs(swipeGesture.swipeOffset) > 20 ? Math.min(Math.abs(swipeGesture.swipeOffset) / 150, 0.6) : 0,
+            pointerEvents: 'none',
+            transition: swipeGesture.isSwiping ? 'transform 0.2s ease' : 'all 0.3s ease'
+          }}>
+            <Flashcard
+              practice={{
+                ...practice,
+                currentQuestionIndex: practice.currentQuestionIndex + 1,
+                isFlipped: false
+              }}
+              imageError={false}
+              setImageError={() => {}}
+              swipeOffset={0}
+              isSwiping={false}
+              hasSeenAnswer={false}
+              onTouchStart={() => {}}
+              onTouchMove={() => {}}
+              onTouchEnd={() => {}}
+              handleBookmarkWrapper={() => {}}
+            />
+          </div>
+        )}
+
+        {/* Current card (on top) */}
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <Flashcard
+            practice={practice}
+            imageError={imageError}
+            setImageError={setImageError}
+            swipeOffset={swipeGesture.swipeOffset}
+            isSwiping={swipeGesture.isSwiping}
+            hasSeenAnswer={swipeGesture.hasSeenAnswer}
+            onTouchStart={swipeGesture.handleTouchStart}
+            onTouchMove={swipeGesture.handleTouchMove}
+            onTouchEnd={swipeGesture.handleTouchEnd}
+            handleBookmarkWrapper={handleBookmarkWrapper}
+          />
+        </div>
+      </div>
 
       <div className="flashcard-controls">
         <FlashcardControls practice={practice} handleNextWrapper={handleNextWrapper} />

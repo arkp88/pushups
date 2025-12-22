@@ -8,6 +8,7 @@ function Flashcard({
   setImageError,
   swipeOffset,
   isSwiping,
+  hasSeenAnswer,
   onTouchStart,
   onTouchMove,
   onTouchEnd,
@@ -31,10 +32,10 @@ function Flashcard({
     <div
       className={`flashcard ${practice.isFlipped ? 'flipped' : ''}`}
       style={{
-        transform: practice.isFlipped && swipeOffset !== 0
+        transform: hasSeenAnswer && swipeOffset !== 0
           ? `translate3d(${swipeOffset}px, 0, 0) rotate(${swipeOffset * 0.05}deg)`
           : undefined,
-        transition: isSwiping ? 'none' : undefined,
+        transition: 'none',
       }}
       onClick={(e) => {
         if (!isSwiping) {
@@ -46,7 +47,7 @@ function Flashcard({
       onTouchEnd={onTouchEnd}
     >
       {/* Swipe direction indicators */}
-      {practice.isFlipped && Math.abs(swipeOffset) > 20 && (
+      {hasSeenAnswer && Math.abs(swipeOffset) > 20 && (
         <>
           <div style={{
             position: 'absolute',

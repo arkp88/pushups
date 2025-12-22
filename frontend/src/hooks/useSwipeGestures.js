@@ -5,17 +5,25 @@ function useSwipeGestures(practice, handleNextWrapper, showTutorial, setShowTuto
   const touchStartY = useRef(0);
   const isSwiping = useRef(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
+  const hasSeenAnswer = useRef(false); // Track if user has flipped this card
 
-  // Reset swipe offset when question changes
+  // Reset swipe offset and hasSeenAnswer when question changes
   useEffect(() => {
     setSwipeOffset(0);
+    hasSeenAnswer.current = false; // Reset for new question
     return () => {
       setSwipeOffset(0);
     };
   }, [practice.currentQuestionIndex]);
 
   const handleTouchStart = (e) => {
-    if (!practice.isFlipped) return; // Only allow swipes when card is flipped
+    // Track if user has seen the answer for this card
+    if (practice.isFlipped) {
+      hasSeenAnswer.current = true;
+    }
+
+    // Allow swipes only after user has seen the answer (both sides)
+    if (!hasSeenAnswer.current) return;
 
     // FIX #5: Dismiss tutorial on first touch AND set localStorage immediately
     if (showTutorial) {
@@ -29,14 +37,18 @@ function useSwipeGestures(practice, handleNextWrapper, showTutorial, setShowTuto
   };
 
   const handleTouchMove = (e) => {
-    if (!practice.isFlipped) return;
+    // Allow swipes only after seeing the answer
+    if (!hasSeenAnswer.current) return;
 
     const currentX = e.touches[0].clientX;
     const deltaX = currentX - touchStartX.current;
     const deltaY = Math.abs(e.touches[0].clientY - touchStartY.current);
 
+    // Increase threshold to 15px to reduce accidental triggers
     // If horizontal movement is greater than vertical, it's a swipe
-    if (Math.abs(deltaX) > 10 && Math.abs(deltaX) > deltaY) {
+    if (Math.abs(deltaX) > 15 && Math.abs(deltaX) > deltaY) {
+      // Prevent default scrolling behavior when swiping horizontally
+      e.preventDefault();
       isSwiping.current = true;
       // Update card position in real-time
       setSwipeOffset(deltaX);
@@ -44,16 +56,23 @@ function useSwipeGestures(practice, handleNextWrapper, showTutorial, setShowTuto
   };
 
   const handleTouchEnd = (e) => {
-    if (!practice.isFlipped || !isSwiping.current) {
+    // If user hasn't seen answer yet, reset
+    if (!hasSeenAnswer.current) {
+      setSwipeOffset(0);
+      return;
+    }
+
+    // If not swiping, just reset
+    if (!isSwiping.current) {
       isSwiping.current = false;
-      setSwipeOffset(0); // Reset position
+      setSwipeOffset(0);
       return;
     }
 
     const touchEndX = e.changedTouches[0].clientX;
     const deltaX = touchEndX - touchStartX.current;
-    // FIX #13: Responsive threshold - 25% of screen width instead of fixed 100px
-    const threshold = window.innerWidth * 0.25;
+    // Responsive threshold - 30% of screen width (less sensitive, requires more drag)
+    const threshold = window.innerWidth * 0.30;
 
     if (Math.abs(deltaX) > threshold && !practice.processingNext) {
       e.preventDefault();
@@ -74,17 +93,24 @@ function useSwipeGestures(practice, handleNextWrapper, showTutorial, setShowTuto
           handleNextWrapper(false);
         }
       }, 300); // Match CSS transition duration
+
+      // Set swiping to false after a delay to allow animation
+      setTimeout(() => {
+        isSwiping.current = false;
+      }, 50);
     } else {
-      // Didn't meet threshold, snap back
+      // User released mid-swipe - snap back smoothly
+      // First stop swiping to enable transition
+      isSwiping.current = false;
+      // Then reset position (will animate smoothly)
       setSwipeOffset(0);
     }
-
-    isSwiping.current = false;
   };
 
   return {
     swipeOffset,
     isSwiping: isSwiping.current,
+    hasSeenAnswer: hasSeenAnswer.current,
     handleTouchStart,
     handleTouchMove,
     handleTouchEnd
