@@ -42,7 +42,8 @@ app.config['MAX_CONTENT_PATH'] = None
 # CORS configuration - whitelist specific origins
 logger.info(f"CORS allowed origins: {CORS_ALLOWED_ORIGINS}")
 
-CORS(app, origins=CORS_ALLOWED_ORIGINS)
+# Expose custom headers to frontend (needed for X-Server-Warming header)
+CORS(app, origins=CORS_ALLOWED_ORIGINS, expose_headers=['X-Server-Warming'])
 
 
 # Add middleware to include warming header in all responses
