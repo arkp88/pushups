@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, lazy, Suspense, useCallback, useMemo } fro
 import { supabase, api, setBackendWakingCallback } from './lib';
 import { Auth, Navbar, ErrorBoundary } from './components/common';
 import { useStats, useQuestionSets, usePractice, useUpload } from './hooks';
+import { Dumbbell } from 'lucide-react';
 import './App.css';
 
 // Lazy load view components for code splitting
@@ -230,28 +231,28 @@ function App() {
         {view === 'home' && (
           setsLoading ? (
             <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-              minHeight: '60vh',
-              gap: '20px'
-            }}>
-              <div style={{
-                color: '#667eea',
-                fontSize: '48px',
-                animation: 'pulse 1.5s ease-in-out infinite'
-              }}>
-                💪
-              </div>
-              <div style={{
-                color: '#667eea',
-                fontSize: '18px',
-                fontWeight: '600'
-              }}>
-                Loading your pushups...
-              </div>
-            </div>
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  minHeight: '60vh',
+                  gap: '20px'
+                }}>
+                  <div style={{
+                    color: '#667eea',
+                    animation: 'pulse 1.5s ease-in-out infinite'
+                  }}>
+                    {/* Replace 💪 with the premium Dumbbell icon */}
+                    <Dumbbell size={64} strokeWidth={2.5} /> 
+                  </div>
+                  <div style={{
+                    color: '#667eea',
+                    fontSize: '18px',
+                    fontWeight: '600'
+                  }}>
+                    Loading your pushups...
+                  </div>
+                </div>
           ) : setsError ? (
             <div style={{
               display: 'flex',

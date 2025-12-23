@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Home, BookOpen, Upload, BarChart3, HelpCircle, Lock, LogOut, LogIn } from 'lucide-react';
+// Add Dumbbell to this list:
+import { Home, BookOpen, Upload, BarChart3, HelpCircle, Lock, LogOut, LogIn, Dumbbell } from 'lucide-react'; 
 import DarkModeToggle from './DarkModeToggle';
 
 const Navbar = memo(function Navbar({ view, setView, showNavbar, session, darkMode, setDarkMode }) {
@@ -9,7 +10,7 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session, darkMo
       {/* Mobile-only top header */}
       <div className={`mobile-header ${showNavbar ? '' : 'hidden'}`}>
         <div className="mobile-header-brand">
-          <span className="brand-icon">💪</span>
+          <Dumbbell size={24} color="#667eea" strokeWidth={2.5} style={{ marginRight: '4px' }} />
           <h1>Pushups</h1>
         </div>
         <div className="mobile-header-user">
@@ -44,8 +45,8 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session, darkMo
       <nav className={`navbar ${showNavbar ? '' : 'hidden'}`}>
         {/* Logo & Quote */}
         <div className="nav-brand">
-          <div className="brand-row">
-            <span className="brand-icon">💪</span>
+          <div className="brand-row" style={{ display: 'flex', alignItems: 'center', marginBottom: '4px'}}>
+            <Dumbbell size={28} color="#667eea" strokeWidth={2.5} style={{ marginRight: '2px' }} />
             <h1>Pushups</h1>
           </div>
           <span className="brand-quote"> Pooja, what is this Tier-1 behavior? </span>
