@@ -43,39 +43,41 @@ async function isAuthenticated() {
 
 // Wrapper to detect genuine cold starts (backend waking up)
 async function fetchWithWakeDetection(url, options = {}) {
+  let wakeTimer = null;
+
+  // Start a timer to show the "Waking up" message if the request takes > 3 seconds
+  // and we haven't successfully connected to the server yet this session.
+  if (onBackendWakingCallback && !serverHasResponded) {
+    wakeTimer = setTimeout(() => {
+      onBackendWakingCallback(true);
+    }, 3000); // Trigger after 3 seconds of silence
+  }
+
   try {
     const response = await fetch(url, options);
+    
+    // Clear the timer since we got a response
+    if (wakeTimer) clearTimeout(wakeTimer);
 
-    // Check for the X-Server-Warming header sent by backend during first 60 seconds
-    // This is only present during genuine cold starts on Render's free tier
     const isWarmingUp = response.headers.get('X-Server-Warming') === 'true';
 
     if (onBackendWakingCallback) {
-      // If we've already received a successful response, never show the banner again
-      // (even if backend is still in the 60-second warming window)
       if (serverHasResponded) {
         onBackendWakingCallback(false);
       } else if (isWarmingUp) {
-        // First request during warm-up: show the banner
+        // Keep it true if the backend confirms it's still in its warming window
         onBackendWakingCallback(true);
       } else {
-        // First successful response after warm-up or no warm-up needed
         serverHasResponded = true;
         onBackendWakingCallback(false);
       }
     }
 
-    // Mark that we've successfully received a response
-    if (!serverHasResponded) {
-      serverHasResponded = true;
-    }
-
+    if (!serverHasResponded) serverHasResponded = true;
     return response;
   } catch (error) {
-    // On error, clear any wake notification
-    if (onBackendWakingCallback) {
-      onBackendWakingCallback(false);
-    }
+    if (wakeTimer) clearTimeout(wakeTimer);
+    if (onBackendWakingCallback) onBackendWakingCallback(false);
     throw error;
   }
 }
