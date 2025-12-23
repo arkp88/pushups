@@ -41,39 +41,38 @@ async function isAuthenticated() {
   return !!session;
 }
 
-// Wrapper to detect genuine cold starts (backend waking up)
+// frontend/src/lib/api.js
+
 async function fetchWithWakeDetection(url, options = {}) {
   let wakeTimer = null;
 
-  // Start a timer to show the "Waking up" message if the request takes > 3 seconds
-  // and we haven't successfully connected to the server yet this session.
-  if (onBackendWakingCallback && !serverHasResponded) {
+  // 1. Determine if this is a "light" request (GET)
+  const isGetRequest = !options.method || options.method.toUpperCase() === 'GET';
+
+  // 2. PROACTIVE: Only start the timer if:
+  //    - The server hasn't successfully responded yet this session
+  //    - AND it's a GET request (avoids false positives on uploads)
+  if (onBackendWakingCallback && !serverHasResponded && isGetRequest) {
     wakeTimer = setTimeout(() => {
       onBackendWakingCallback(true);
-    }, 3000); // Trigger after 3 seconds of silence
+    }, 3000); // Show banner if first request takes > 3 seconds
   }
 
   try {
     const response = await fetch(url, options);
-    
-    // Clear the timer since we got a response
+
+    // 3. Clear the timer immediately when ANY response arrives
     if (wakeTimer) clearTimeout(wakeTimer);
 
-    const isWarmingUp = response.headers.get('X-Server-Warming') === 'true';
+    // 4. Mark server as "hot" immediately. 
+    // This prevents the timer from ever starting for future requests.
+    serverHasResponded = true;
 
+    // 5. Hide the banner immediately because we have a response
     if (onBackendWakingCallback) {
-      if (serverHasResponded) {
-        onBackendWakingCallback(false);
-      } else if (isWarmingUp) {
-        // Keep it true if the backend confirms it's still in its warming window
-        onBackendWakingCallback(true);
-      } else {
-        serverHasResponded = true;
-        onBackendWakingCallback(false);
-      }
+      onBackendWakingCallback(false);
     }
 
-    if (!serverHasResponded) serverHasResponded = true;
     return response;
   } catch (error) {
     if (wakeTimer) clearTimeout(wakeTimer);
