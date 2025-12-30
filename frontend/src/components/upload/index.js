@@ -1,6 +1,6 @@
-// Main containers (will be added in later phases)
+// Main containers (ImportView will be added in Phase 5)
 // export { default as ImportView } from './ImportView';
-// export { default as LibraryView } from './LibraryView';
+export { default as LibraryView } from './LibraryView';
 
 // Upload components
 export { default as UploadTabs } from './UploadTabs';
@@ -14,5 +14,5 @@ export { default as UploadTipsCard } from './UploadTipsCard';
 export { default as DriveBrowser } from './DriveBrowser';
 export { default as DriveFileItem } from './DriveFileItem';
 
-// Library components (will be added in Phase 4)
-// export { default as LibrarySetCard } from './LibrarySetCard';
+// Library components
+export { default as LibrarySetCard } from './LibrarySetCard';
