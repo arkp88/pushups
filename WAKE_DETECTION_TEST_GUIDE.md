@@ -28,6 +28,8 @@ This simulates the wake-up delay by adding a 10-second pause to all API requests
 
 ```python
 # At the top with other imports
+import sys
+sys.path.insert(0, 'tests/backend')
 from test_wake_delay import add_wake_delay
 
 # After creating app (after line: app = Flask(__name__))
@@ -142,7 +144,7 @@ You can use Chrome/Firefox DevTools to slow down network requests.
 
 ## Files Modified for Testing
 
-- `backend/test_wake_delay.py` - Testing helper (can keep, just don't import it)
+- `tests/backend/test_wake_delay.py` - Testing helper (can keep, just don't import it)
 - `backend/app.py` - **TEMPORARY changes** (must remove!)
 
 ## Production Verification

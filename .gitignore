@@ -64,3 +64,12 @@ coverage/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Temporary files
+*.tmp
+*.temp
