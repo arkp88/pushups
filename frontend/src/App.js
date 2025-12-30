@@ -3,7 +3,6 @@ import { supabase, api, setBackendWakingCallback } from './lib';
 import { Auth, Navbar, ErrorBoundary } from './components/common';
 import { useStats, useQuestionSets, usePractice, useUpload } from './hooks';
 import { Dumbbell } from 'lucide-react';
-import './App.css';
 
 // Lazy load view components for code splitting
 const HomeView = lazy(() => import('./views/HomeView'));

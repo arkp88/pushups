@@ -1,0 +1,107 @@
+/* ========================================
+   STATS & METRICS STYLES
+   ======================================== */
+
+/* Quick Stats Grid */
+.quick-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+  margin-bottom: 50px;
+}
+
+.quick-stat-card {
+  background: var(--card-bg);
+  color: var(--text-heading);
+  padding: 30px;
+  border-radius: 16px;
+  text-align: center;
+  border: 2px solid var(--border-medium);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.quick-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.12);
+  border-color: #e0e7ff;
+}
+
+.quick-stat-value {
+  font-size: 48px;
+  font-weight: 800;
+  margin-bottom: 5px;
+  line-height: 1;
+  color: #667eea;
+}
+
+.quick-stat-label {
+  font-size: 15px;
+  opacity: 0.9;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 25px;
+  margin-top: 30px;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 30px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow:
+    0 4px 16px rgba(102, 126, 234, 0.25),
+    0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow:
+    0 8px 24px rgba(102, 126, 234, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-value {
+  font-size: 42px;
+  font-weight: 800;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 16px;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+/* Mobile Stats */
+@media (max-width: 768px) {
+  .quick-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+
+  .quick-stat-value {
+    font-size: 36px;
+  }
+}

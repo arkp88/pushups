@@ -1,0 +1,72 @@
+/* ========================================
+   GLOBAL BASE STYLES & RESETS
+   ======================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--text-body);
+  /* Static base background - uses CSS variables for theme switching */
+  background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-mid) 50%, var(--bg-gradient-end) 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Animated gradient mesh on pseudo-element for better performance */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 20% 30%, var(--gradient-1) 0px, transparent 50%),
+    radial-gradient(circle at 80% 70%, var(--gradient-2) 0px, transparent 50%),
+    radial-gradient(circle at 50% 50%, var(--gradient-3) 0px, transparent 50%);
+  animation: gradientFloat 20s ease-in-out infinite;
+  will-change: transform;
+  pointer-events: none;
+}
+
+/* FORCE all elements to use Inter font - including form elements that don't inherit by default */
+p, span, div, a, button, input, textarea, select, optgroup {
+  font-family: 'Inter', sans-serif !important;
+}
+
+/* Apply Inter font to all headings and stat values for consistency */
+h1, h2, h3, h4, h5, h6,
+.stat-value,
+.quick-stat-value {
+  font-family: 'Inter', sans-serif !important;
+  letter-spacing: -0.02em;
+  color: var(--text-heading);
+  font-weight: 700; /* Make headings bold to distinguish from body text */
+}
+
+/* Label styling for consistency */
+label {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-body);
+}
+
+/* Adjust main container to clear the fixed navbar */
+.App {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  padding-top: 110px; /* Increased for taller navbar */
+}
