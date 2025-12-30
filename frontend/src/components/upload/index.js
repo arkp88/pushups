@@ -1,5 +1,5 @@
-// Main containers (ImportView will be added in Phase 5)
-// export { default as ImportView } from './ImportView';
+// Main containers
+export { default as ImportView } from './ImportView';
 export { default as LibraryView } from './LibraryView';
 
 // Upload components
