@@ -1,0 +1,21 @@
+/* ========================================
+   MAIN STYLESHEET - Modular CSS Entry Point
+   ======================================== */
+
+/* Core Styles */
+@import './variables.css';
+@import './base.css';
+@import './animations.css';
+
+/* Component Styles */
+@import './components/navbar.css';
+@import './components/buttons.css';
+@import './components/cards.css';
+@import './components/flashcards.css';
+@import './components/forms.css';
+@import './components/modals.css';
+@import './components/stats.css';
+
+/* Utility Styles */
+@import './utils/utilities.css';
+@import './utils/responsive.css';

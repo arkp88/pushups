@@ -1,0 +1,131 @@
+/* ========================================
+   FORM STYLES
+   ======================================== */
+
+/* Auth Container */
+.auth-container {
+  max-width: 450px;
+  margin: 40px auto;
+  background: var(--bg-primary);
+  padding: 50px;
+  border-radius: 20px;
+  box-shadow: var(--shadow-2xl);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.auth-container h2 {
+  text-align: center;
+  margin-bottom: 40px;
+  font-size: 32px;
+  color: var(--text-heading);
+}
+
+/* Form Group */
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--text-body);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid var(--border-medium);
+  border-radius: 10px;
+  font-size: 16px;
+  transition: border-color 0.3s, background 0.3s;
+  background: var(--bg-secondary);
+  color: var(--text-body);
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  background: var(--bg-primary);
+}
+
+/* Custom Select Styling */
+select {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23667eea%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px top 50% !important;
+  background-size: 12px auto !important;
+  padding-right: 40px !important;
+  transition: all 0.3s var(--ease-out-expo);
+  font-family: 'Inter', sans-serif !important;
+  font-weight: 500 !important;
+  line-height: 1.5;
+}
+
+select option {
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  padding: 8px;
+  background-color: var(--bg-primary);
+  color: var(--text-body);
+}
+
+select:hover {
+  border-color: var(--border-focus) !important;
+  background-color: var(--bg-secondary) !important;
+}
+
+select:focus {
+  outline: none !important;
+  border-color: var(--border-focus) !important;
+  background-color: var(--bg-primary) !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+}
+
+/* Dark mode dropdown arrow */
+body.dark-mode select {
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23cbd5e1%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") !important;
+}
+
+/* Label styling for consistency */
+label {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-body);
+}
+
+/* Error Message */
+.error-message {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 25px;
+  font-size: 15px;
+  border: 1px solid #fee2e2;
+}
+
+/* Auth Toggle */
+.auth-toggle {
+  text-align: center;
+  margin-top: 30px;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+.auth-toggle button {
+  background: none;
+  border: none;
+  color: #667eea;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: none;
+  margin-left: 5px;
+}
+
+.auth-toggle button:hover {
+  text-decoration: underline;
+}

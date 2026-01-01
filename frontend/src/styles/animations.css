@@ -1,0 +1,97 @@
+/* ========================================
+   KEYFRAME ANIMATIONS
+   ======================================== */
+
+/* Performance-optimized gradient animation using transform instead of background-position */
+@keyframes gradientFloat {
+  0%, 100% {
+    transform: translate(0%, 0%) rotate(0deg);
+  }
+  33% {
+    transform: translate(-5%, 5%) rotate(1deg);
+  }
+  66% {
+    transform: translate(5%, -3%) rotate(-1deg);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Skeleton loading animation */
+@keyframes skeleton-loading {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.85; }
+}
+
+@keyframes errorPulse {
+  0% { transform: translateX(-50%) scale(1); }
+  25% { transform: translateX(-50%) scale(1.02); }
+  50% { transform: translateX(-50%) scale(1); }
+  75% { transform: translateX(-50%) scale(1.02); }
+  100% { transform: translateX(-50%) scale(1); }
+}
+
+/* Minimal bookmark toggle feedback - simple scale pulse */
+@keyframes bookmarkPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* Utility animation classes */
+.skeleton {
+  background: var(--bg-tertiary);
+  background-image: linear-gradient(
+    90deg,
+    var(--bg-tertiary) 0px,
+    var(--bg-secondary) 40px,
+    var(--bg-tertiary) 80px
+  );
+  background-size: 200px 100%;
+  animation: skeleton-loading 1.4s ease-in-out infinite;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+.bookmark-pulse {
+  animation: bookmarkPulse 0.2s ease-out;
+}

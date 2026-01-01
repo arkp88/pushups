@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect } from 'react';
+import { STORAGE_KEYS } from '../constants';
 
 function useSwipeGestures(practice, handleNextWrapper, showTutorial, setShowTutorial) {
   const touchStartX = useRef(0);
@@ -28,7 +29,7 @@ function useSwipeGestures(practice, handleNextWrapper, showTutorial, setShowTuto
     // FIX #5: Dismiss tutorial on first touch AND set localStorage immediately
     if (showTutorial) {
       setShowTutorial(false);
-      localStorage.setItem('hasSeenSwipeTutorial', 'true');
+      localStorage.setItem(STORAGE_KEYS.SEEN_SWIPE_TUTORIAL, 'true');
     }
 
     touchStartX.current = e.touches[0].clientX;

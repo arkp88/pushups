@@ -1,5 +1,7 @@
 import React, { memo } from 'react';
 import { RotateCcw, Library, Shuffle, Dices, XCircle, Bookmark, Loader2 } from 'lucide-react';
+import { STORAGE_KEYS } from '../constants';
+import './HomeView.css';
 
 const HomeView = memo(function HomeView({
   stats,
@@ -18,58 +20,33 @@ const HomeView = memo(function HomeView({
     <div className="home-container">
       {/* Streak Banner */}
       {session && stats.streak > 0 && (
-        <div style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          padding: '16px 20px',
-          borderRadius: '10px',
-          textAlign: 'center',
-          marginBottom: '25px',
-          boxShadow: '0 4px 12px rgba(102, 126, 234, 0.25)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '12px'
-        }}>
-          <div style={{
-            fontSize: '28px'
-          }}>
-            🔥
-          </div>
+        <div className="streak-banner">
+          <div className="streak-banner-icon">🔥</div>
           <div>
-            <div style={{
-              color: 'white',
-              fontSize: '20px',
-              fontWeight: '700',
-              marginBottom: '2px',
-              fontFamily: 'Inter, sans-serif'
-            }}>
+            <div className="streak-banner-title">
               {stats.streak} Day Streak!
             </div>
-            <div style={{
-              color: 'rgba(255, 255, 255, 0.9)',
-              fontSize: '13px',
-              fontFamily: 'Inter, sans-serif'
-            }}>
+            <div className="streak-banner-subtitle">
               {stats.streak === 1 ? 'Great start! Keep it going.' : `You're on fire! Don't break the chain.`}
             </div>
           </div>
         </div>
       )}
 
-      <h2 style={{marginBottom: '30px', textAlign: 'center'}}>Ready to Play?</h2>
+      <h2 className="home-title">Ready to Play?</h2>
 
       {/* Hide buttons while server is waking up - yellow banner shows message */}
       {!backendWaking && (
         <>
         <div className="practice-modes">
-        <h3 style={{marginBottom: '20px'}}>Choose Mode</h3>
+        <h3 className="section-title">Choose Mode</h3>
         <div className="practice-mode-grid">
           
           {/* 1. CONTINUE */}
           <button
-            className="practice-mode-button"
+            className={`practice-mode-button primary-border ${practice.startingPractice ? 'loading' : ''}`}
             onClick={() => {
-              const lastSetId = localStorage.getItem('pushups-last-set-id');
+              const lastSetId = localStorage.getItem(STORAGE_KEYS.LAST_SET_ID);
               if (!lastSetId) {
                 // REPLACE alert()
                 setAppNotification('No recent set found. Start a set first!', false);
@@ -79,13 +56,12 @@ const HomeView = memo(function HomeView({
               if (!lastSet) {
                 // REPLACE alert()
                 setAppNotification('Last practiced set not found. Cleared session.', false);
-                localStorage.removeItem('pushups-last-set-id');
+                localStorage.removeItem(STORAGE_KEYS.LAST_SET_ID);
                 return;
               }
               startPracticeWrapper(lastSet);
             }}
-            disabled={practice.startingPractice || !localStorage.getItem('pushups-last-set-id')}
-            style={{opacity: practice.startingPractice ? 0.7 : 1, cursor: practice.startingPractice ? 'wait' : 'pointer', border: '2px solid #667eea'}}
+            disabled={practice.startingPractice || !localStorage.getItem(STORAGE_KEYS.LAST_SET_ID)}
           >
             <div className="practice-mode-icon">
               <RotateCcw size={32} color="#667eea" strokeWidth={2.5} />
@@ -98,10 +74,9 @@ const HomeView = memo(function HomeView({
 
           {/* 2. BROWSE */}
           <button
-            className="practice-mode-button"
+            className={`practice-mode-button ${practice.startingPractice ? 'loading' : ''}`}
             onClick={() => setView('sets')}
             disabled={practice.startingPractice}
-            style={{opacity: practice.startingPractice ? 0.7 : 1, cursor: practice.startingPractice ? 'wait' : 'pointer'}}
           >
             <div className="practice-mode-icon">
               <Library size={32} color="#10b981" strokeWidth={2.5} />
@@ -114,7 +89,7 @@ const HomeView = memo(function HomeView({
 
           {/* 3. RANDOM SET */}
           <button
-            className="practice-mode-button"
+            className={`practice-mode-button ${practice.startingPractice ? 'loading' : ''}`}
             onClick={() => {
               const unplayedSets = questionSets.filter(s => !s.questions_attempted || s.questions_attempted === 0);
               if (unplayedSets.length === 0) {
@@ -128,7 +103,6 @@ const HomeView = memo(function HomeView({
               startPracticeWrapper(randomSet, true);
             }}
             disabled={practice.startingPractice || questionSets.filter(s => !s.questions_attempted || s.questions_attempted === 0).length === 0}
-            style={{opacity: practice.startingPractice ? 0.7 : 1, cursor: practice.startingPractice ? 'wait' : 'pointer'}}
           >
             <div className="practice-mode-icon">
               <Shuffle size={32} color="#f59e0b" strokeWidth={2.5} />
@@ -141,10 +115,9 @@ const HomeView = memo(function HomeView({
 
           {/* 4. RANDOM MODE - ALL */}
           <button
-            className="practice-mode-button"
+            className={`practice-mode-button ${practice.startingPractice ? 'loading' : ''}`}
             onClick={() => { setMixedFilter('all'); startMixedPracticeWrapper('all'); }}
             disabled={practice.startingPractice}
-            style={{opacity: practice.startingPractice ? 0.7 : 1, cursor: practice.startingPractice ? 'wait' : 'pointer'}}
           >
             <div className="practice-mode-icon">
               {practice.startingPractice && mixedFilter === 'all' ? (
@@ -161,10 +134,9 @@ const HomeView = memo(function HomeView({
 
           {/* 5. MISSED */}
           <button
-            className="practice-mode-button"
+            className={`practice-mode-button ${practice.startingPractice ? 'loading' : ''}`}
             onClick={() => { setMixedFilter('missed'); startMixedPracticeWrapper('missed'); }}
             disabled={practice.startingPractice || stats.missed === 0}
-            style={{opacity: practice.startingPractice ? 0.7 : 1, cursor: practice.startingPractice ? 'wait' : 'pointer'}}
           >
             <div className="practice-mode-icon">
               {practice.startingPractice && mixedFilter === 'missed' ? (
@@ -181,10 +153,9 @@ const HomeView = memo(function HomeView({
 
           {/* 6. BOOKMARKS */}
           <button
-            className="practice-mode-button"
+            className={`practice-mode-button ${practice.startingPractice ? 'loading' : ''}`}
             onClick={() => { setMixedFilter('bookmarks'); startMixedPracticeWrapper('bookmarks'); }}
             disabled={practice.startingPractice || !stats.bookmarks || stats.bookmarks === 0}
-            style={{opacity: practice.startingPractice ? 0.7 : 1, cursor: practice.startingPractice ? 'wait' : 'pointer'}}
           >
             <div className="practice-mode-icon">
               {practice.startingPractice && mixedFilter === 'bookmarks' ? (
@@ -204,7 +175,7 @@ const HomeView = memo(function HomeView({
 
       {/* Stats at bottom - motivational context (or sign-in message for guests) */}
       {session ? (
-        <div className="quick-stats-grid" style={{marginTop: '40px'}}>
+        <div className="quick-stats-grid">
           <div className="quick-stat-card">
             <div className="quick-stat-value">{stats.total_questions}</div>
             <div className="quick-stat-label">Questions Available</div>
@@ -219,29 +190,11 @@ const HomeView = memo(function HomeView({
           </div>
         </div>
       ) : (
-        <div style={{
-          marginTop: '40px',
-          padding: '24px',
-          borderRadius: '10px',
-          background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%)',
-          border: '2px solid rgba(102, 126, 234, 0.3)',
-          textAlign: 'center'
-        }}>
-          <div style={{
-            fontSize: '16px',
-            color: '#667eea',
-            fontWeight: '600',
-            marginBottom: '8px',
-            fontFamily: 'Inter, sans-serif'
-          }}>
+        <div className="guest-signin-card">
+          <div className="guest-signin-title">
             Sign in to unlock tracking
           </div>
-          <div style={{
-            fontSize: '14px',
-            color: '#64748b',
-            lineHeight: '1.5',
-            fontFamily: 'Inter, sans-serif'
-          }}>
+          <div className="guest-signin-subtitle">
             Track your stats, bookmarks, and missed questions by signing in
           </div>
         </div>

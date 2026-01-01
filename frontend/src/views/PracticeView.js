@@ -9,6 +9,7 @@ import {
   ImageModal
 } from '../components/practice';
 import { useKeyboardShortcuts, useSwipeGestures } from '../hooks';
+import { STORAGE_KEYS } from '../constants';
 
 function PracticeView({
   practice,
@@ -34,7 +35,7 @@ function PracticeView({
   // Tutorial effect - show on first flip to answer
   useEffect(() => {
     if (practice.isFlipped && practice.questions.length > 0) {
-      const hasSeenTutorial = localStorage.getItem('hasSeenSwipeTutorial');
+      const hasSeenTutorial = localStorage.getItem(STORAGE_KEYS.SEEN_SWIPE_TUTORIAL);
       if (!hasSeenTutorial) {
         // Show tutorial after a brief delay
         tutorialTimeoutRef.current = setTimeout(() => {
@@ -42,7 +43,7 @@ function PracticeView({
           // Auto-dismiss after 7 seconds
           setTimeout(() => {
             setShowTutorial(false);
-            localStorage.setItem('hasSeenSwipeTutorial', 'true');
+            localStorage.setItem(STORAGE_KEYS.SEEN_SWIPE_TUTORIAL, 'true');
           }, 7000);
         }, 500);
       }
@@ -56,7 +57,7 @@ function PracticeView({
 
   const handleTutorialDismiss = () => {
     setShowTutorial(false);
-    localStorage.setItem('hasSeenSwipeTutorial', 'true');
+    localStorage.setItem(STORAGE_KEYS.SEEN_SWIPE_TUTORIAL, 'true');
   };
 
   if (practice.questions.length === 0) return null;
