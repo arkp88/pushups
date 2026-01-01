@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { api } from '../lib';
+import { STORAGE_KEYS, getQuizPositionKey } from '../constants';
 
 export function usePractice(session, setAppNotification = () => {}) {
   const [questions, setQuestions] = useState([]);
@@ -43,7 +44,7 @@ export function usePractice(session, setAppNotification = () => {}) {
         await api.markSetOpened(set.id);
       }
       // Track last set for both guests and authenticated users (for "Continue Last Set")
-      localStorage.setItem('pushups-last-set-id', set.id);
+      localStorage.setItem(STORAGE_KEYS.LAST_SET_ID, set.id);
 
       // Track this set in the current random session
       if (isRandomSession) {
@@ -56,7 +57,7 @@ export function usePractice(session, setAppNotification = () => {}) {
       setShowInstructions(false); // Reset when starting new practice
       setCurrentSet(set);
 
-      const savedPosition = localStorage.getItem(`pushups-quiz-position-${set.id}`);
+      const savedPosition = localStorage.getItem(getQuizPositionKey(set.id));
       const startIndex = savedPosition ? parseInt(savedPosition) : 0;
 
       setCurrentQuestionIndex(startIndex);
@@ -190,14 +191,14 @@ export function usePractice(session, setAppNotification = () => {}) {
         setCurrentQuestionIndex(newIndex);
         setIsFlipped(false);
         stopSpeaking(); // Stop speech when moving to next question
-        if (currentSet.id !== 'mixed') localStorage.setItem(`pushups-quiz-position-${currentSet.id}`, newIndex);
+        if (currentSet.id !== 'mixed') localStorage.setItem(getQuizPositionKey(currentSet.id), newIndex);
 
         setProcessingNext(false);
       } else {
         // Session complete - show summary modal
         if (currentSet.id !== 'mixed') {
-          localStorage.removeItem(`pushups-quiz-position-${currentSet.id}`);
-          localStorage.removeItem('pushups-last-set-id');
+          localStorage.removeItem(getQuizPositionKey(currentSet.id));
+          localStorage.removeItem(STORAGE_KEYS.LAST_SET_ID);
         }
 
         // FIX #2: Set showSessionSummary FIRST, then clear processing state
@@ -220,7 +221,7 @@ export function usePractice(session, setAppNotification = () => {}) {
       setCurrentQuestionIndex(newIndex);
       setIsFlipped(false);
       stopSpeaking(); // Stop speech when moving to previous question
-      localStorage.setItem(`pushups-quiz-position-${currentSet.id}`, newIndex);
+      localStorage.setItem(getQuizPositionKey(currentSet.id), newIndex);
     }
   };
 

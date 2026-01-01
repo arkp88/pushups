@@ -80,6 +80,8 @@ Visit `http://localhost:3000` and sign up!
 
 ## 📚 Documentation
 
+- **[Code Structure](./docs/CODE_STRUCTURE.md)** - Architecture, patterns, and data flow
+- **[Changelog](./docs/CHANGELOG.md)** - Version history and upgrade notes
 - **[API Reference](./docs/API_REFERENCE.md)** - Complete API endpoints documentation
 - **[Backend README](./backend/README.md)** - Backend-specific details
 - **[Frontend README](./frontend/README.md)** - Frontend-specific details
@@ -308,20 +310,31 @@ For your use case (you + friends + 1000s of questions), this is plenty!
 ```
 quiz-app/
 ├── backend/
-│   ├── app.py              # Flask API
+│   ├── app.py              # Flask API entry point
 │   ├── database.py         # Database schema
+│   ├── routes/             # API route blueprints
 │   ├── requirements.txt    # Python dependencies
 │   └── README.md
 ├── frontend/
 │   ├── src/
-│   │   ├── App.js          # Main React component
-│   │   ├── App.css         # Styles
-│   │   ├── api.js          # API client
-│   │   └── supabaseClient.js
+│   │   ├── App.js          # Root component with providers
+│   │   ├── components/     # Reusable UI components
+│   │   ├── contexts/       # React Context providers
+│   │   ├── hooks/          # Custom React hooks
+│   │   ├── views/          # Page-level components
+│   │   ├── lib/            # API client & utilities
+│   │   ├── constants/      # App constants
+│   │   └── styles/         # Global styles
 │   ├── package.json
 │   └── README.md
+├── docs/                   # Documentation
+│   ├── CODE_STRUCTURE.md   # Architecture guide
+│   ├── CHANGELOG.md        # Version history
+│   └── API_REFERENCE.md    # API documentation
 └── README.md               # This file
 ```
+
+**For detailed structure, see [CODE_STRUCTURE.md](./docs/CODE_STRUCTURE.md).**
 
 ## 🎯 Security & Performance
 
@@ -339,12 +352,17 @@ quiz-app/
 
 ## 🔮 Future Enhancements
 
-- [ ] Export missed questions to Anki deck
+- [ ] Set mastery progress bars
 - [ ] Spaced repetition algorithm
+- [ ] Personal bests tracking
+- [ ] Weekly activity summaries
+- [ ] Optional leaderboards
+- [ ] Export missed questions to Anki deck
 - [ ] Category filtering
-- [ ] Dark mode
 - [ ] Offline support (PWA)
 - [ ] Native mobile apps
+
+**See [CHANGELOG.md](./docs/CHANGELOG.md) for detailed roadmap.**
 
 ## Troubleshooting
 

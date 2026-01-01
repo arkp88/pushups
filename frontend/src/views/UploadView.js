@@ -13,7 +13,6 @@ function UploadView({
   loadQuestionSets,
   questionSets,
   session,
-  deleteNotification,
   setToDelete,
   setSetToDelete,
   deletingSetId,
@@ -42,7 +41,6 @@ function UploadView({
         <LibraryView
           questionSets={questionSets}
           session={session}
-          deleteNotification={deleteNotification}
           setToDelete={setToDelete}
           setSetToDelete={setSetToDelete}
           deletingSetId={deletingSetId}
@@ -61,7 +59,6 @@ UploadView.propTypes = {
   loadQuestionSets: PropTypes.func.isRequired,
   questionSets: PropTypes.array.isRequired,
   session: PropTypes.object.isRequired,
-  deleteNotification: PropTypes.string,
   setToDelete: PropTypes.number,
   setSetToDelete: PropTypes.func.isRequired,
   deletingSetId: PropTypes.number,

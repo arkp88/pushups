@@ -6,7 +6,6 @@ import LibrarySetCard from './LibrarySetCard';
 function LibraryView({
   questionSets,
   session,
-  deleteNotification,
   setToDelete,
   setSetToDelete,
   deletingSetId,
@@ -20,20 +19,6 @@ function LibraryView({
   return (
     <div style={{marginTop: '20px'}}>
       <h3>Your Uploaded Sets</h3>
-
-      {deleteNotification && (
-        <div style={{
-          marginBottom: '15px',
-          padding: '10px',
-          borderRadius: '6px',
-          fontSize: '14px',
-          background: deleteNotification.includes('Error') ? '#fee2e2' : '#ecfdf5',
-          color: deleteNotification.includes('Error') ? '#dc2626' : '#065f46',
-          border: `1px solid ${deleteNotification.includes('Error') ? '#fca5a5' : '#a7f3d0'}`
-        }}>
-          {deleteNotification}
-        </div>
-      )}
 
       <p style={{color: 'var(--text-body)', marginBottom: '20px'}}>
         Manage the sets you have imported or uploaded.
@@ -71,7 +56,6 @@ LibraryView.propTypes = {
       email: PropTypes.string.isRequired
     }).isRequired
   }).isRequired,
-  deleteNotification: PropTypes.string,
   setToDelete: PropTypes.number,
   setSetToDelete: PropTypes.func.isRequired,
   deletingSetId: PropTypes.number,
