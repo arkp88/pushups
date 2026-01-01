@@ -35,8 +35,18 @@ const HomeView = memo(function HomeView({
 
       <h2 className="home-title">Ready to Play?</h2>
 
-      {/* Hide buttons while server is waking up - yellow banner shows message */}
-      {!backendWaking && (
+      {/* Show loading state while starting practice */}
+      {practice.startingPractice ? (
+        <div style={{
+          textAlign: 'center',
+          padding: '60px 20px',
+          color: '#667eea',
+          fontSize: '18px',
+          fontWeight: 600
+        }}>
+          Loading questions...
+        </div>
+      ) : !backendWaking ? (
         <>
         <div className="practice-modes">
         <h3 className="section-title">Choose Mode</h3>
@@ -44,7 +54,7 @@ const HomeView = memo(function HomeView({
           
           {/* 1. CONTINUE */}
           <button
-            className={`practice-mode-button primary-border ${practice.startingPractice ? 'loading' : ''}`}
+            className="practice-mode-button primary-border"
             onClick={() => {
               const lastSetId = localStorage.getItem(STORAGE_KEYS.LAST_SET_ID);
               if (!lastSetId) {
@@ -61,7 +71,7 @@ const HomeView = memo(function HomeView({
               }
               startPracticeWrapper(lastSet);
             }}
-            disabled={practice.startingPractice || !localStorage.getItem(STORAGE_KEYS.LAST_SET_ID)}
+            disabled={!localStorage.getItem(STORAGE_KEYS.LAST_SET_ID)}
           >
             <div className="practice-mode-icon">
               <RotateCcw size={32} color="#667eea" strokeWidth={2.5} />
@@ -74,9 +84,8 @@ const HomeView = memo(function HomeView({
 
           {/* 2. BROWSE */}
           <button
-            className={`practice-mode-button ${practice.startingPractice ? 'loading' : ''}`}
+            className="practice-mode-button"
             onClick={() => setView('sets')}
-            disabled={practice.startingPractice}
           >
             <div className="practice-mode-icon">
               <Library size={32} color="#10b981" strokeWidth={2.5} />
@@ -89,7 +98,7 @@ const HomeView = memo(function HomeView({
 
           {/* 3. RANDOM SET */}
           <button
-            className={`practice-mode-button ${practice.startingPractice ? 'loading' : ''}`}
+            className="practice-mode-button"
             onClick={() => {
               const unplayedSets = questionSets.filter(s => !s.questions_attempted || s.questions_attempted === 0);
               if (unplayedSets.length === 0) {
@@ -102,7 +111,7 @@ const HomeView = memo(function HomeView({
               const randomSet = unplayedSets[Math.floor(Math.random() * unplayedSets.length)];
               startPracticeWrapper(randomSet, true);
             }}
-            disabled={practice.startingPractice || questionSets.filter(s => !s.questions_attempted || s.questions_attempted === 0).length === 0}
+            disabled={questionSets.filter(s => !s.questions_attempted || s.questions_attempted === 0).length === 0}
           >
             <div className="practice-mode-icon">
               <Shuffle size={32} color="#f59e0b" strokeWidth={2.5} />
@@ -115,9 +124,8 @@ const HomeView = memo(function HomeView({
 
           {/* 4. RANDOM MODE - ALL */}
           <button
-            className={`practice-mode-button ${practice.startingPractice ? 'loading' : ''}`}
+            className="practice-mode-button"
             onClick={() => { setMixedFilter('all'); startMixedPracticeWrapper('all'); }}
-            disabled={practice.startingPractice}
           >
             <div className="practice-mode-icon">
               {practice.startingPractice && mixedFilter === 'all' ? (
@@ -134,9 +142,9 @@ const HomeView = memo(function HomeView({
 
           {/* 5. MISSED */}
           <button
-            className={`practice-mode-button ${practice.startingPractice ? 'loading' : ''}`}
+            className="practice-mode-button"
             onClick={() => { setMixedFilter('missed'); startMixedPracticeWrapper('missed'); }}
-            disabled={practice.startingPractice || stats.missed === 0}
+            disabled={stats.missed === 0}
           >
             <div className="practice-mode-icon">
               {practice.startingPractice && mixedFilter === 'missed' ? (
@@ -153,9 +161,9 @@ const HomeView = memo(function HomeView({
 
           {/* 6. BOOKMARKS */}
           <button
-            className={`practice-mode-button ${practice.startingPractice ? 'loading' : ''}`}
+            className="practice-mode-button"
             onClick={() => { setMixedFilter('bookmarks'); startMixedPracticeWrapper('bookmarks'); }}
-            disabled={practice.startingPractice || !stats.bookmarks || stats.bookmarks === 0}
+            disabled={!stats.bookmarks || stats.bookmarks === 0}
           >
             <div className="practice-mode-icon">
               {practice.startingPractice && mixedFilter === 'bookmarks' ? (
@@ -200,7 +208,7 @@ const HomeView = memo(function HomeView({
         </div>
       )}
       </>
-      )}
+      ) : null}
     </div>
   );
 });

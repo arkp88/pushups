@@ -118,6 +118,8 @@ button:active::after {
   position: relative;
   overflow: hidden;
   will-change: transform;
+  contain: layout; /* Prevent layout shifts */
+  min-height: 92px; /* Fixed minimum height to prevent resizing */
 }
 
 .practice-mode-button::before {
@@ -163,7 +165,9 @@ button:active::after {
 .practice-mode-icon {
   font-size: 32px;
   min-width: 56px;
+  width: 56px; /* Explicit width */
   height: 56px;
+  flex-shrink: 0; /* Prevent icon from shrinking */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -180,6 +184,11 @@ button:active::after {
   background: linear-gradient(135deg, rgba(221, 214, 254, 0.9) 0%, rgba(199, 210, 254, 0.7) 100%);
   box-shadow: 0 3px 10px rgba(102, 126, 234, 0.18);
   transform: scale(1.03);
+}
+
+.practice-mode-content {
+  flex: 1;
+  min-width: 0; /* Allow text truncation if needed */
 }
 
 .practice-mode-content h4 {

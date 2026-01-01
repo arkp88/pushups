@@ -49,27 +49,31 @@ async function fetchWithWakeDetection(url, options = {}) {
   // 1. Determine if this is a "light" request (GET)
   const isGetRequest = !options.method || options.method.toUpperCase() === 'GET';
 
-  // 2. PROACTIVE: Only start the timer if:
+  // 2. Check if we're on localhost (wake detection only needed for deployed backend)
+  const isLocalhost = API_URL.includes('localhost') || API_URL.includes('127.0.0.1');
+
+  // 3. PROACTIVE: Only start the timer if:
+  //    - NOT on localhost (wake detection is only for Render free tier)
   //    - The server hasn't successfully responded yet this session
   //    - AND it's a GET request (avoids false positives on uploads)
-  if (onBackendWakingCallback && !serverHasResponded && isGetRequest) {
+  if (onBackendWakingCallback && !serverHasResponded && isGetRequest && !isLocalhost) {
     wakeTimer = setTimeout(() => {
       onBackendWakingCallback(true);
-    }, 3000); // Show banner if first request takes > 3 seconds
+    }, 8000); // Show banner if first request takes > 8 seconds (Render cold start)
   }
 
   try {
     const response = await fetch(url, options);
 
-    // 3. Clear the timer immediately when ANY response arrives
+    // 4. Clear the timer immediately when ANY response arrives
     if (wakeTimer) clearTimeout(wakeTimer);
 
-    // 4. Mark server as "hot" immediately. 
+    // 5. Mark server as "hot" immediately.
     // This prevents the timer from ever starting for future requests.
     serverHasResponded = true;
 
-    // 5. Hide the banner immediately because we have a response
-    if (onBackendWakingCallback) {
+    // 6. Hide the banner immediately because we have a response (only if not localhost)
+    if (onBackendWakingCallback && !isLocalhost) {
       onBackendWakingCallback(false);
     }
 

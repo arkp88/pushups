@@ -6,7 +6,8 @@
 .notification-banner {
   position: fixed;
   top: 90px;
-  left: 50%;
+  left: 50% !important;
+  right: auto !important;
   transform: translateX(-50%);
   width: calc(100% - 40px);
   max-width: 800px;
@@ -15,13 +16,14 @@
   color: #1e40af;
   padding: 15px 20px;
   border-radius: 10px;
-  text-align: center;
+  text-align: center !important;
   font-size: 15px;
   font-weight: 500;
   font-family: 'Inter', sans-serif !important;
   animation: slideDown 0.3s ease-out;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   z-index: 1001;
+  margin: 0 auto;
 }
 
 .notification-banner.error-notification {
