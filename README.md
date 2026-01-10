@@ -14,7 +14,7 @@ A modern, production-ready flashcard quiz application with multi-user support, m
   - Upload TSV files from your device (single or multiple)
   - Import from Google Drive (single file or multi-select)
   - **Recursive folder import** - Import all TSV files from a folder and all its subfolders with one click (up to 50 files)
-  - Multi-file review modal with preview before import
+  - Multi-file review with preview before import
   - File selection/deselection before importing
 - 🃏 Flashcard interface with smooth animations
 - ⭐ Bookmark important questions
@@ -56,7 +56,7 @@ A modern, production-ready flashcard quiz application with multi-user support, m
 - 📱 **Auto-hiding mobile header** - Header hides on scroll for distraction-free practice
 
 ### Session Features
-- 📈 **Session Summary Modal** - Post-session stats showing:
+- 📈 **Session Summary ** - Post-session stats showing:
   - Correct/Wrong/Passed counts with color-coded cards
   - Accuracy percentage calculation
   - Quick actions: Practice Again, Review Misses, Back to Home
@@ -320,7 +320,7 @@ Sign in to unlock full features!
      - Browse folders and select individual files
      - Select multiple files at once
      - **Recursive Import:** Click "📥 Import All" on any folder to import ALL TSV files from that folder and all its subfolders with one click (up to 50 files)
-   - Review and deselect files before importing in multi-file preview modal
+   - Review and deselect files before importing.
    - Enter a descriptive name and add tags (optional)
    - Set-level instructions can be added for context
    - Questions are imported and formatted automatically
@@ -481,4 +481,3 @@ MIT - Feel free to use and modify!
 
 ---
 
-Built with ❤️ for quiz enthusiasts
