@@ -1,6 +1,6 @@
 # 💪 Pushups Quiz App
 
-A modern, production-ready flashcard quiz application with multi-user support, mobile-first design, and premium UI.
+A modern flashcard quiz application with multi-user support, mobile-first design, and premium UI.
 
 ![React](https://img.shields.io/badge/React-18-blue)
 ![Python](https://img.shields.io/badge/Python-3.9-green)
@@ -21,14 +21,14 @@ A modern, production-ready flashcard quiz application with multi-user support, m
 - 📊 Personal progress tracking & session statistics
 - 🎲 **6 Practice Modes:**
   - Continue Last Set
-  - Browse Question Sets
+  - Browse and select specifc Question Set
   - Random Unplayed Set
   - Random Mode (All Questions)
   - Retry Missed Questions
   - Review Bookmarks
 - 📱 Mobile-first responsive design with bottom navigation
-- 🔥 Daily streak tracker to encourage consistent practice
-- ✨ Premium UI with gradients and glassmorphism
+- 🔥 Daily streak tracker to encourage users to keep playing
+- ✨ UI with gradients and glassmorphism
 - 🏷️ **Set Management:**
   - Tag question sets for organization
   - Search by name or tags
@@ -41,9 +41,9 @@ A modern, production-ready flashcard quiz application with multi-user support, m
 ### Mobile Experience
 - 📲 **Advanced Swipe Gestures** - Swipe right for correct, left for wrong
   - Real-time card movement following your finger
-  - Smooth fly-off animation with 300ms transition on successful swipe
-  - Visual direction indicators (✅/❌) that move opposite to card
-  - First-time tutorial overlay (auto-dismisses after 7 seconds)
+  - Smooth fly-off animations
+  - Visual direction indicators (✅/❌)
+  - First-time tutorial overlay
   - 30% swipe threshold for natural feel
 - 🔊 **Text-to-Speech** - Listen to questions and answers with natural voice
 - ⌨️ **Keyboard Shortcuts** - Power-user navigation
@@ -65,7 +65,7 @@ A modern, production-ready flashcard quiz application with multi-user support, m
 - 🖼️ **HTML Tag Support** - `<br>`, `<hr>`, `<p>` tags preserved in content
 - 🔒 **HTTPS Image Upgrade** - Auto-upgrades HTTP images to prevent mixed content issues
 
-### Technical Excellence
+### Technical Aspects
 - 🛡️ **Security hardened** - XSS protection, rate limiting, file validation, sanitized inputs
 - ⚡ **Performance optimized** - Optimized queries, error boundaries, code splitting, connection pooling
 - 🎨 **Frontend markdown conversion** - Reduced upload time by 15-18 seconds
