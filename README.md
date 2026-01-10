@@ -9,29 +9,51 @@ A modern, production-ready flashcard quiz application with multi-user support, m
 ## ✨ Features
 
 ### Core Features
-- 🔐 Multi-user authentication via Supabase
+- 🔐 **Multi-user authentication** via Supabase (with guest mode for browsing)
 - 📥 **Smart Import Options:**
   - Upload TSV files from your device (single or multiple)
   - Import from Google Drive (single file or multi-select)
-  - **Recursive folder import** - Import all TSV files from a folder and all its subfolders with one click
-  - File selection/deselection before import
+  - **Recursive folder import** - Import all TSV files from a folder and all its subfolders with one click (up to 50 files)
+  - Multi-file review modal with preview before import
+  - File selection/deselection before importing
 - 🃏 Flashcard interface with smooth animations
 - ⭐ Bookmark important questions
 - 📊 Personal progress tracking & session statistics
-- 🎲 Multiple practice modes (Random, Missed, Bookmarks, Random Unplayed Set)
+- 🎲 **6 Practice Modes:**
+  - Continue Last Set
+  - Browse Question Sets
+  - Random Unplayed Set
+  - Random Mode (All Questions)
+  - Retry Missed Questions
+  - Review Bookmarks
 - 📱 Mobile-first responsive design with bottom navigation
 - 🔥 Daily streak tracker to encourage consistent practice
 - ✨ Premium UI with gradients and glassmorphism
-- 🏷️ Tagging and search functionality
+- 🏷️ **Set Management:**
+  - Tag question sets for organization
+  - Search by name or tags
+  - Filter by completion status (All, Completed, In-Progress, Unattempted)
+  - Sort by upload date, alphabetically, or last played
+  - Rename or delete question sets
+- 📋 **Set-level instructions** - Add custom instructions/context for each question set
+- 🌓 **Dark mode toggle** - Full dark theme support with smooth transitions
 
 ### Mobile Experience
 - 📲 **Advanced Swipe Gestures** - Swipe right for correct, left for wrong
   - Real-time card movement following your finger
-  - Smooth fly-off animation on successful swipe
+  - Smooth fly-off animation with 300ms transition on successful swipe
   - Visual direction indicators (✅/❌) that move opposite to card
-  - First-time tutorial overlay (auto-dismisses after 4s)
-- 🔊 **Text-to-Speech** - Listen to questions and answers
-- ⌨️ **Keyboard Shortcuts** - Power-user navigation (Space, Arrow keys, Esc)
+  - First-time tutorial overlay (auto-dismisses after 7 seconds)
+  - 30% swipe threshold for natural feel
+- 🔊 **Text-to-Speech** - Listen to questions and answers with natural voice
+- ⌨️ **Keyboard Shortcuts** - Power-user navigation
+  - Space/Enter: Flip card
+  - ↑: "Got it" (answer side)
+  - ↓: "Missed it" (answer side)
+  - ←: Previous question
+  - →: Next/Got it
+  - Esc: Exit to sets
+- 📱 **Auto-hiding mobile header** - Header hides on scroll for distraction-free practice
 
 ### Session Features
 - 📈 **Session Summary Modal** - Post-session stats showing:
@@ -44,10 +66,11 @@ A modern, production-ready flashcard quiz application with multi-user support, m
 - 🔒 **HTTPS Image Upgrade** - Auto-upgrades HTTP images to prevent mixed content issues
 
 ### Technical Excellence
-- 🛡️ Security hardened (XSS protection, rate limiting, MIME validation)
-- ⚡ Optimized queries & error boundaries
-- 🎨 Frontend markdown conversion (reduced upload time by 15-18 seconds)
-- ☁️ 100% free hosting (Supabase + Vercel + Render)
+- 🛡️ **Security hardened** - XSS protection, rate limiting, file validation, sanitized inputs
+- ⚡ **Performance optimized** - Optimized queries, error boundaries, code splitting, connection pooling
+- 🎨 **Frontend markdown conversion** - Reduced upload time by 15-18 seconds
+- 💤 **Backend wake detection** - Shows loading state when Render backend wakes from sleep
+- ☁️ **100% free hosting** - Supabase + Vercel + Render (all free tiers)
 
 ## 🚀 Quick Start
 
@@ -278,7 +301,18 @@ Multiple **bold** and *italic*	Combined **bold** and *italic* _text_
 
 ## Usage Guide
 
-### For Admin (You)
+### Guest Mode
+
+Users can browse and practice question sets without signing in. Guest mode has limited features:
+- ✅ Browse all question sets
+- ✅ Practice with flashcards
+- ❌ No progress tracking or statistics
+- ❌ No bookmarks
+- ❌ Cannot upload question sets
+
+Sign in to unlock full features!
+
+### For Authenticated Users
 
 1. **Upload Questions:**
    - **Local Upload:** Click "Choose TSV File" to upload from your device (single or multiple files)
@@ -286,8 +320,9 @@ Multiple **bold** and *italic*	Combined **bold** and *italic* _text_
      - Browse folders and select individual files
      - Select multiple files at once
      - **Recursive Import:** Click "📥 Import All" on any folder to import ALL TSV files from that folder and all its subfolders with one click (up to 50 files)
-   - Review and deselect files before importing
-   - Enter a descriptive name (optional)
+   - Review and deselect files before importing in multi-file preview modal
+   - Enter a descriptive name and add tags (optional)
+   - Set-level instructions can be added for context
    - Questions are imported and formatted automatically
    - Supports markdown (**bold**, *italic*) and HTML tags (`<br>`, `<hr>`)
 
@@ -300,24 +335,42 @@ Multiple **bold** and *italic*	Combined **bold** and *italic* _text_
      - **Retry Missed** - Review wrong answers
      - **Review Bookmarks** - Practice saved questions
 
-3. **During Practice:**
+3. **Manage Question Sets:**
+   - Browse all sets in Library view
+   - Search by name or filter by tags
+   - Filter by status: All, Completed, In-Progress, Unattempted
+   - Sort by upload date, alphabetically, or last played
+   - Rename or delete sets as needed
+
+4. **During Practice:**
    - **Desktop:** Click card to flip, use keyboard shortcuts (Space, Arrows, Esc)
    - **Mobile:** Tap to flip, swipe right for correct, left for wrong
-   - **Features:** Bookmark (⭐), Text-to-Speech (🔊), Previous/Next navigation
+   - **Features:**
+     - Bookmark important questions (⭐)
+     - Text-to-Speech for accessibility (🔊)
+     - Previous/Next navigation
+     - View set instructions if available
    - Progress auto-saves after each question
+   - Toggle dark mode anytime (🌓)
 
-4. **After Session:**
-   - View session summary with stats (Correct/Wrong/Passed)
-   - See accuracy percentage
-   - Choose to practice again, review misses, or go home
+5. **After Session:**
+   - View session summary with detailed stats (Correct/Wrong/Passed)
+   - See accuracy percentage calculation
+   - Choose to practice again, review only misses, or return home
+   - Track your daily streak (🔥)
 
-### For Friends
+6. **Help & Documentation:**
+   - Access help view from the navigation menu
+   - Learn keyboard shortcuts and features
+
+### Sharing with Others
 
 1. Share your deployed URL (e.g., `https://quiz-app.vercel.app`)
-2. They sign up with email/password
-3. They can see all question sets you upload
-4. Each person has their own progress tracking and streaks
-5. Full mobile support with swipe gestures
+2. Users can browse and practice without signing up (guest mode)
+3. For full features, they sign up with email/password
+4. They can see all question sets you upload (read-only)
+5. Each person has their own progress tracking, streaks, and bookmarks
+6. Full mobile support with swipe gestures and responsive design
 
 ## Cost Breakdown
 
