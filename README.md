@@ -66,14 +66,14 @@ pip install -r requirements.txt
 cp .env.example .env  # Add your Supabase credentials
 python database.py    # Initialize database
 
-# Frontend  
+# Frontend
 cd ../frontend
 npm install
 cp .env.example .env.local  # Add your Supabase credentials
 
 # Run
 python backend/app.py          # Terminal 1 (port 5000)
-npm start --prefix frontend    # Terminal 2 (port 3000)
+npm run dev --prefix frontend  # Terminal 2 (port 3000)
 ```
 
 Visit `http://localhost:3000` and sign up!
@@ -89,8 +89,9 @@ Visit `http://localhost:3000` and sign up!
 
 ## 🛠️ Tech Stack
 
-**Frontend:** React 18, Lazy Loading, React.memo, Inter Typography  
-**Backend:** Python Flask, Connection Pooling, Structured Logging, PostgreSQL  
+**Frontend:** React 18, Vite, Vitest, Lucide Icons, Lazy Loading, React.memo, Inter Typography
+**Backend:** Python Flask, Connection Pooling, Structured Logging, PostgreSQL
+**Integrations:** Google Drive API (recursive folder import)
 **Hosting:** Vercel + Render.com + Supabase (all free tiers)
 
 ## 📋 Detailed Setup
@@ -116,7 +117,25 @@ Visit `http://localhost:3000` and sign up!
 6. Go to Project Settings > Database
 7. Copy the connection string (Connection pooling > Transaction mode)
 
-### 2. Set Up Backend
+### 2. Set Up Google Drive (Optional)
+
+If you want to use Google Drive import:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Create a new project (or use existing)
+3. Enable **Google Drive API**:
+   - Go to "APIs & Services" > "Enable APIs and Services"
+   - Search for "Google Drive API"
+   - Click "Enable"
+4. Create API Key:
+   - Go to "APIs & Services" > "Credentials"
+   - Click "Create Credentials" > "API Key"
+   - Copy the API key
+5. Make your Google Drive folder public:
+   - Right-click folder > "Share" > "Anyone with the link can view"
+   - Copy the folder ID from the URL (the long string after `/folders/`)
+
+### 3. Set Up Backend
 
 ```bash
 cd backend
@@ -127,10 +146,12 @@ pip install -r requirements.txt
 # Create .env file
 cp .env.example .env
 
-# Edit .env with your Supabase values:
+# Edit .env with your values:
 # DATABASE_URL=postgresql://...  (from Supabase)
 # SUPABASE_JWT_SECRET=...  (from Supabase)
 # JWT_SECRET_KEY=any-random-string
+# GOOGLE_DRIVE_API_KEY=...  (optional, from Google Cloud)
+# FRONTEND_URL=http://localhost:3000  (for local dev)
 
 # Initialize database
 python database.py
@@ -141,7 +162,7 @@ python app.py
 
 Backend will run on `http://localhost:5000`
 
-### 3. Set Up Frontend
+### 4. Set Up Frontend
 
 ```bash
 cd frontend
@@ -153,17 +174,18 @@ npm install
 cp .env.example .env.local
 
 # Edit .env.local:
-# REACT_APP_SUPABASE_URL=https://xxxxx.supabase.co
-# REACT_APP_SUPABASE_ANON_KEY=your-anon-key
-# REACT_APP_API_URL=http://localhost:5000
+# VITE_SUPABASE_URL=https://xxxxx.supabase.co
+# VITE_SUPABASE_ANON_KEY=your-anon-key
+# VITE_API_URL=http://localhost:5000
+# VITE_GOOGLE_DRIVE_FOLDER_ID=...  (optional, your public folder ID)
 
 # Run locally
-npm start
+npm run dev
 ```
 
 Frontend will run on `http://localhost:3000`
 
-### 4. Test Locally
+### 5. Test Locally
 
 1. Open `http://localhost:3000`
 2. Sign up with an email and password
@@ -220,7 +242,12 @@ Multiple **bold** and *italic*	Combined **bold** and *italic* _text_
    - **Environment:** Python 3
    - **Build Command:** `pip install -r requirements.txt`
    - **Start Command:** `gunicorn app:app`
-   - **Environment Variables:** Add all from your `.env` file
+   - **Environment Variables:** Add all from your `.env` file:
+     - `DATABASE_URL`
+     - `SUPABASE_JWT_SECRET`
+     - `JWT_SECRET_KEY`
+     - `GOOGLE_DRIVE_API_KEY` (optional)
+     - `FRONTEND_URL` (your Vercel URL after deployment)
 6. Click "Create Web Service"
 7. Copy the deployed URL (e.g., `https://quiz-app-backend.onrender.com`)
 
@@ -231,12 +258,15 @@ Multiple **bold** and *italic*	Combined **bold** and *italic* _text_
 3. Click "New Project"
 4. Import your GitHub repository
 5. Configure:
-   - **Framework Preset:** Create React App
+   - **Framework Preset:** Vite
    - **Root Directory:** `frontend`
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `build`
    - **Environment Variables:**
-     - `REACT_APP_SUPABASE_URL`: Your Supabase URL
-     - `REACT_APP_SUPABASE_ANON_KEY`: Your Supabase anon key
-     - `REACT_APP_API_URL`: Your Render backend URL
+     - `VITE_SUPABASE_URL`: Your Supabase URL
+     - `VITE_SUPABASE_ANON_KEY`: Your Supabase anon key
+     - `VITE_API_URL`: Your Render backend URL
+     - `VITE_GOOGLE_DRIVE_FOLDER_ID`: Your public Google Drive folder ID (optional)
 6. Click "Deploy"
 7. Your app is live! 🎉
 
