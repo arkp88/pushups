@@ -1,0 +1,38 @@
+.dark-mode-toggle {
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-medium);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  color: var(--text-body);
+}
+
+.dark-mode-toggle:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border-focus);
+  transform: scale(1.05);
+}
+
+.dark-mode-toggle:active {
+  transform: scale(0.95);
+}
+
+.toggle-icon {
+  transition: transform 0.3s ease;
+}
+
+.dark-mode-toggle:hover .toggle-icon {
+  transform: rotate(20deg);
+}
+
+/* Mobile-specific styling */
+@media (max-width: 768px) {
+  .dark-mode-toggle {
+    padding: 6px;
+    border-radius: 6px;
+  }
+}

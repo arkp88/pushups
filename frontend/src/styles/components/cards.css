@@ -1,0 +1,192 @@
+/* ========================================
+   CONTAINER & CARD STYLES
+   ======================================== */
+
+.container {
+  background: var(--card-bg);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  padding: 35px;
+  box-shadow:
+    var(--shadow-lg),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
+}
+
+.container h2 {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-heading);
+  margin-bottom: 15px;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+/* Home Container */
+.home-container {
+  background: var(--bg-primary);
+  border-radius: 16px;
+  padding: 45px;
+  box-shadow: var(--shadow-xl);
+  max-width: 900px;
+  margin: 0 auto;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.home-container h2 {
+  font-family: 'Inter', sans-serif;
+  color: var(--text-heading);
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 40px;
+  letter-spacing: -0.02em;
+}
+
+/* Set Cards */
+.set-list {
+  display: grid;
+  gap: 20px;
+}
+
+.set-card {
+  border: 1px solid var(--border-light);
+  border-radius: 16px;
+  padding: 25px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy spring effect */
+  background: var(--card-bg);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  box-shadow:
+    var(--shadow-md),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+  will-change: transform; /* Optimize animations */
+}
+
+.set-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.05), transparent);
+  transition: left 0.6s ease;
+}
+
+.set-card:hover::before {
+  left: 100%;
+}
+
+.set-card:hover {
+  border-color: rgba(102, 126, 234, 0.5);
+  transform: translateY(-8px) scale(1.02); /* More pronounced lift */
+  box-shadow:
+    0 20px 40px -12px rgba(102, 126, 234, 0.25), /* Deeper colored shadow */
+    0 10px 20px -8px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(102, 126, 234, 0.15),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.9);
+}
+
+.set-card:active {
+  transform: translateY(-4px) scale(1.01); /* Pressed state */
+  transition: all 0.1s ease;
+}
+
+.set-card h3 {
+  color: var(--text-heading);
+  margin-bottom: 12px;
+  font-size: 17px;
+}
+
+.set-info {
+  display: flex;
+  gap: 25px;
+  color: var(--text-muted);
+  font-size: 15px;
+}
+
+/* Progress Bar */
+.progress-bar {
+  height: 10px;
+  background: var(--bg-tertiary);
+  border-radius: 5px;
+  margin-top: 15px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Practice Modes Grid */
+.practice-modes {
+  margin-top: 40px;
+}
+
+.practice-modes h3 {
+  color: var(--text-body);
+  text-align: center;
+  font-size: 20px;
+  margin-bottom: 25px;
+}
+
+.practice-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 25px;
+}
+
+/* Upload Section */
+.upload-section {
+  background: var(--bg-secondary);
+  border: 2px dashed var(--border-medium);
+  border-radius: 16px;
+  padding: 40px;
+  margin-bottom: 40px;
+  text-align: center;
+  transition: border-color 0.3s;
+}
+
+.upload-section:hover {
+  border-color: #667eea;
+}
+
+.upload-section input[type="file"] {
+  display: none;
+}
+
+.upload-label {
+  display: inline-block;
+  padding: 15px 30px;
+  background: #667eea;
+  color: white;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.upload-label:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+
+@media (max-width: 768px) {
+  .home-container {
+    padding: 25px 20px;
+  }
+
+  .home-container h2 {
+    font-size: 24px;
+    margin-bottom: 25px;
+  }
+}

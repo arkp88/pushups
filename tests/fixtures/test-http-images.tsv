@@ -1,0 +1,4 @@
+questionText	answerText	imageUrl
+What is shown in the image?	A cat	http://example.com/cat.jpg
+What is this?	A dog	https://example.com/dog.jpg
+No image question	Answer without image

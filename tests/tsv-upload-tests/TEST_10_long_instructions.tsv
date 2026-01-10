@@ -1,0 +1,6 @@
+roundNo	questionNo	questionText	imageUrl	answerText
+Round 1	Question 1	What is the capital of France?		Paris
+Round 1	Question 2	What is 2 + 2?		4
+Instructions	This is a very long instruction line that contains a lot of text to test how the modal handles longer content. It should wrap properly and display in a scrollable container if the content exceeds the maximum height of the modal window. This helps ensure the UI remains functional even with verbose instructions.
+Instructions	Another instruction: Please read all questions carefully before answering. Take your time and ensure accuracy. Guessing is discouraged unless absolutely necessary.
+Instructions	Final instruction: Remember to review your answers before submitting the quiz.

@@ -1,0 +1,4 @@
+questionText	answerText
+What is 2+2?	4
+This line has a tab in the "ans	wer" which breaks CSV parsing	Wrong
+What is the capital of France?	Paris
