@@ -1,6 +1,6 @@
 import React from 'react';
 
-export function SkeletonSetCard() {
+function SkeletonSetCard() {
   return (
     <div className="set-card" style={{ pointerEvents: 'none', opacity: 0.6 }}>
       {/* Title Skeleton */}

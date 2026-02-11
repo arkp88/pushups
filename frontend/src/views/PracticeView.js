@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   FlashcardHeader,
   InstructionsModal,
@@ -22,10 +22,21 @@ function PracticeView({
   const [showTutorial, setShowTutorial] = useState(false);
   const tutorialTimeoutRef = useRef(null);
   const [imageError, setImageError] = useState(false);
+  const [cardTransition, setCardTransition] = useState(null); // 'exiting' | 'entering' | null
 
-  // Custom hooks
-  useKeyboardShortcuts(practice, handleNextWrapper, setView);
+  // Custom hooks - swipe uses raw handler (has its own fly-off animation)
   const swipeGesture = useSwipeGestures(practice, handleNextWrapper, showTutorial, setShowTutorial);
+
+  // Wrap handleNextWrapper with card transition for buttons/keyboard
+  const handleNextWithTransition = useCallback(async (markAsCorrect = null) => {
+    setCardTransition('exiting');
+    await new Promise(resolve => setTimeout(resolve, 150));
+    await handleNextWrapper(markAsCorrect);
+    setCardTransition('entering');
+    setTimeout(() => setCardTransition(null), 200);
+  }, [handleNextWrapper]);
+
+  useKeyboardShortcuts(practice, handleNextWithTransition, setView);
 
   // FIX #4: Clean up image error state when question changes
   useEffect(() => {
@@ -63,7 +74,7 @@ function PracticeView({
   if (practice.questions.length === 0) return null;
 
   return (
-    <div className="flashcard-container">
+    <div className="flashcard-container view-enter">
       {/* Notification Banner */}
       {practice.practiceNotification && (
         <div className="notification-banner">
@@ -125,12 +136,13 @@ function PracticeView({
             onTouchMove={swipeGesture.handleTouchMove}
             onTouchEnd={swipeGesture.handleTouchEnd}
             handleBookmarkWrapper={handleBookmarkWrapper}
+            cardTransition={cardTransition}
           />
         </div>
       </div>
 
       <div className="flashcard-controls">
-        <FlashcardControls practice={practice} handleNextWrapper={handleNextWrapper} />
+        <FlashcardControls practice={practice} handleNextWrapper={handleNextWithTransition} />
       </div>
 
       <ImageModal

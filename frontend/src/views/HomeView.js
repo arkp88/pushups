@@ -17,7 +17,7 @@ const HomeView = memo(function HomeView({
   backendWaking
 }) {
   return (
-    <div className="home-container">
+    <div className="home-container view-enter">
       {/* Streak Banner */}
       {session && stats.streak > 0 && (
         <div className="streak-banner">
@@ -37,13 +37,8 @@ const HomeView = memo(function HomeView({
 
       {/* Show loading state while starting practice */}
       {practice.startingPractice ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '60px 20px',
-          color: '#667eea',
-          fontSize: '18px',
-          fontWeight: 600
-        }}>
+        <div className="practice-loading">
+          <Loader2 size={28} className="spin" />
           Loading questions...
         </div>
       ) : !backendWaking ? (

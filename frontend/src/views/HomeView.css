@@ -53,6 +53,20 @@
   cursor: wait;
 }
 
+/* Practice Loading State */
+.practice-loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--border-focus);
+  font-size: 18px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
 /* Quick Stats */
 .quick-stats-grid {
   margin-top: 40px;

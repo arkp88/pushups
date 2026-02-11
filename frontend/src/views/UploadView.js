@@ -20,7 +20,7 @@ function UploadView({
   openRenameModal
 }) {
   return (
-    <div className="container">
+    <div className="container view-enter">
       <h2>Manage Questions</h2>
 
       <UploadTabs

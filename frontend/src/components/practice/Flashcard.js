@@ -12,7 +12,8 @@ function Flashcard({
   onTouchStart,
   onTouchMove,
   onTouchEnd,
-  handleBookmarkWrapper
+  handleBookmarkWrapper,
+  cardTransition
 }) {
   const [bookmarkPulse, setBookmarkPulse] = useState(false);
 
@@ -30,7 +31,7 @@ function Flashcard({
 
   return (
     <div
-      className={`flashcard ${practice.isFlipped ? 'flipped' : ''}`}
+      className={`flashcard ${practice.isFlipped ? 'flipped' : ''}${cardTransition === 'exiting' ? ' card-exiting' : ''}${cardTransition === 'entering' ? ' card-entering' : ''}`}
       style={{
         transform: hasSeenAnswer && swipeOffset !== 0
           ? `translate3d(${swipeOffset}px, 0, 0) rotate(${swipeOffset * 0.05}deg)`
@@ -109,86 +110,86 @@ function Flashcard({
           : `${currentQuestion.round_no} - ${currentQuestion.question_no}`}
       </div>
 
-      {!practice.isFlipped ? (
-        <>
-          <div className="question-text" dangerouslySetInnerHTML={{ __html: convertedQuestionText }} />
+      {/* Question face */}
+      <div className="flashcard-face question-face">
+        <div className="question-text" dangerouslySetInnerHTML={{ __html: convertedQuestionText }} />
 
-          {/* Image with click-to-expand */}
-          {currentQuestion.image_url && (() => {
-            const originalUrl = currentQuestion.image_url;
-            const safeUrl = getSafeImageUrl(originalUrl);
+        {/* Image with click-to-expand */}
+        {currentQuestion.image_url && (() => {
+          const originalUrl = currentQuestion.image_url;
+          const safeUrl = getSafeImageUrl(originalUrl);
 
-            return safeUrl ? (
-              <>
-                {imageError ? (
-                  <div style={{
-                    padding: '16px',
-                    background: 'var(--bg-secondary)',
-                    border: '2px solid var(--border-focus)',
-                    borderRadius: '8px',
-                    margin: '16px 0',
-                    color: 'var(--text-body)'
-                  }}>
-                    ⚠️ Image unavailable in secure mode
-                    <div style={{fontSize: '12px', marginTop: '8px'}}>
-                      <a
-                        href={originalUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{color: '#667eea'}}
-                      >
-                        View image in new tab
-                      </a>
-                    </div>
+          return safeUrl ? (
+            <>
+              {imageError ? (
+                <div style={{
+                  padding: '16px',
+                  background: 'var(--bg-secondary)',
+                  border: '2px solid var(--border-focus)',
+                  borderRadius: '8px',
+                  margin: '16px 0',
+                  color: 'var(--text-body)'
+                }}>
+                  ⚠️ Image unavailable in secure mode
+                  <div style={{fontSize: '12px', marginTop: '8px'}}>
+                    <a
+                      href={originalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{color: '#667eea'}}
+                    >
+                      View image in new tab
+                    </a>
                   </div>
-                ) : (
-                  <img
-                    key={`q-${practice.currentQuestionIndex}-${safeUrl}`}
-                    src={safeUrl}
-                    alt="Q"
-                    className="question-image"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      practice.setEnlargedImage(safeUrl);
-                    }}
-                    onError={() => {
-                      setImageError(true);
-                    }}
-                  />
-                )}
-              </>
-            ) : null;
-          })()}
+                </div>
+              ) : (
+                <img
+                  key={`q-${practice.currentQuestionIndex}-${safeUrl}`}
+                  src={safeUrl}
+                  alt="Q"
+                  className="question-image"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    practice.setEnlargedImage(safeUrl);
+                  }}
+                  onError={() => {
+                    setImageError(true);
+                  }}
+                />
+              )}
+            </>
+          ) : null;
+        })()}
 
-          <div className="flip-hint">Click to reveal answer</div>
-        </>
-      ) : (
-        <>
-          <div className="answer-text" dangerouslySetInnerHTML={{ __html: convertedAnswerText }} />
-          <div className="flip-hint">Click to see question</div>
+        <div className="flip-hint">Click to reveal answer</div>
+      </div>
 
-          {/* Mobile swipe instructions - only on first question */}
-          {practice.currentQuestionIndex === 0 && (
-            <div className="mobile-only" style={{
-              fontSize: '13px',
-              color: 'rgba(255,255,255,0.9)',
-              marginTop: '20px',
-              fontWeight: '500',
-              textAlign: 'center',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '8px'
-            }}>
-              <span>Swipe Right = Got it</span>
-              <Check size={16} />
-              <span>·</span>
-              <span>Left = Missed it</span>
-              <XIcon size={16} />
-            </div>
-          )}
-        </>
-      )}
+      {/* Answer face */}
+      <div className="flashcard-face answer-face">
+        <div className="answer-text" dangerouslySetInnerHTML={{ __html: convertedAnswerText }} />
+        <div className="flip-hint">Click to see question</div>
+
+        {/* Mobile swipe instructions - only on first question */}
+        {practice.currentQuestionIndex === 0 && (
+          <div className="mobile-only" style={{
+            fontSize: '13px',
+            color: 'rgba(255,255,255,0.9)',
+            marginTop: '20px',
+            fontWeight: '500',
+            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px'
+          }}>
+            <span>Swipe Right = Got it</span>
+            <Check size={16} />
+            <span>·</span>
+            <span>Left = Missed it</span>
+            <XIcon size={16} />
+          </div>
+        )}
+      </div>
 
       {/* Text-to-Speech Button */}
       <div

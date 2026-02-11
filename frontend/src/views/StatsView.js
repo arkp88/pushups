@@ -2,7 +2,7 @@ import React from 'react';
 
 function StatsView({ stats }) {
   return (
-    <div className="stats-container">
+    <div className="stats-container view-enter">
       <h2>Your Statistics</h2>
       <div className="stats-grid">
         <div className="stat-card">

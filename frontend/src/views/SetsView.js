@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { SkeletonSetCard, EmptyState } from '../components/common';
 
+function getSetStatus(set) {
+  if (set.questions_attempted === set.total_questions && set.total_questions > 0) return 'completed';
+  if (set.questions_attempted > 0 && set.questions_attempted < set.total_questions) return 'in-progress';
+  return 'unattempted';
+}
+
 function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [setsFilter, setSetsFilter] = useState('all');
@@ -11,7 +17,7 @@ function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking 
   let sets = questionSets;
   if (setsFilter === 'completed') sets = sets.filter(s => s.questions_attempted === s.total_questions && s.total_questions > 0);
   else if (setsFilter === 'in-progress') sets = sets.filter(s => s.questions_attempted > 0 && s.questions_attempted < s.total_questions);
-  else if (setsFilter === 'unattempted') sets = sets.filter(s => !s.questions_attempted || s.questions_attempted === 0);  // Zero questions answered
+  else if (setsFilter === 'unattempted') sets = sets.filter(s => !s.questions_attempted || s.questions_attempted === 0);
 
   const filtered = sets.filter(set =>
     set.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -23,12 +29,11 @@ function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking 
     if (sortBy === 'alphabetical') {
       return a.name.localeCompare(b.name);
     } else if (sortBy === 'upload-date') {
-      return new Date(b.created_at) - new Date(a.created_at); // Newest first
+      return new Date(b.created_at) - new Date(a.created_at);
     } else if (sortBy === 'last-played') {
-      // If both have last_opened, compare them; otherwise prioritize ones with last_opened
       const aDate = a.last_opened ? new Date(a.last_opened) : new Date(0);
       const bDate = b.last_opened ? new Date(b.last_opened) : new Date(0);
-      return bDate - aDate; // Most recent first
+      return bDate - aDate;
     }
     return 0;
   });
@@ -36,11 +41,11 @@ function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking 
   const displayed = sorted.slice(0, displayCount);
 
   return (
-    <div className="container">
+    <div className="container view-enter">
       <h2>Question Sets</h2>
 
-      {/* Filter Buttons - Horizontal scroll on mobile */}
-      <div className="filter-scroll-container" style={{display: 'flex', gap: '10px', margin: '20px 0', flexWrap: 'wrap'}}>
+      {/* Filter Buttons */}
+      <div className="sets-filter-bar">
         {['all', 'completed', 'in-progress', 'unattempted'].map(filter => (
           <button
             key={filter}
@@ -54,23 +59,12 @@ function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking 
       </div>
 
       {/* Sort Dropdown */}
-      <div style={{marginBottom: '20px'}}>
-        <label style={{display: 'block', marginBottom: '8px', fontWeight: '500', color: 'var(--text-body)'}}>
-          Sort by:
-        </label>
+      <div className="sets-sort-section">
+        <label className="sets-sort-label">Sort by:</label>
         <select
+          className="sets-sort-select"
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
-          style={{
-            padding: '10px 12px',
-            border: '2px solid var(--border-medium)',
-            borderRadius: '8px',
-            fontSize: '14px',
-            backgroundColor: 'var(--bg-primary)',
-            color: 'var(--text-body)',
-            cursor: 'pointer',
-            minWidth: '180px'
-          }}
         >
           <option value="upload-date">Upload Date (Newest)</option>
           <option value="alphabetical">Alphabetical (A-Z)</option>
@@ -80,13 +74,13 @@ function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking 
 
       {/* Search Bar */}
       <input
+        className="sets-search-input"
         type="text"
         placeholder="Search by name or tag..."
         value={searchTerm}
         onChange={(e) => { setSearchTerm(e.target.value); setDisplayCount(10); }}
-        style={{width: '100%', padding: '12px', marginBottom: '20px', border: '2px solid var(--border-medium)', borderRadius: '8px', backgroundColor: 'var(--bg-primary)', color: 'var(--text-body)'}}
       />
-      
+
       {backendWaking ? (
         <div className="set-list">
           {[1, 2, 3, 4].map(i => <SkeletonSetCard key={i} />)}
@@ -100,32 +94,38 @@ function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking 
       ) : (
         <>
           <div className="set-list">
-            {displayed.map(set => (
-              <div
-                key={set.id}
-                className="set-card"
-                onClick={() => !practice.startingPractice && !backendWaking && startPracticeWrapper(set)}
-                style={{
-                  cursor: (practice.startingPractice || backendWaking) ? 'wait' : 'pointer',
-                  opacity: (practice.startingPractice || backendWaking) ? 0.7 : 1,
-                  position: 'relative'
-                }}
-              >
-                {practice.startingPractice && practice.currentSet?.id === set.id && (
-                  <div style={{position: 'absolute', top: '10px', right: '10px'}}>⏳</div>
-                )}
-                <h3>{set.name}</h3>
-                <div className="set-info">
-                  <span>📝 {set.total_questions}</span>
-                  <span>✅ {set.questions_attempted || 0}</span>
-                  <span>👤 {set.uploaded_by_username}</span>
-                  {set.tags && <span>🏷️ {set.tags}</span>}
+            {displayed.map(set => {
+              const status = getSetStatus(set);
+              const progressPct = Math.round(((set.questions_attempted || 0) / set.total_questions) * 100);
+              return (
+                <div
+                  key={set.id}
+                  className={`set-card set-card--${status}`}
+                  onClick={() => !practice.startingPractice && !backendWaking && startPracticeWrapper(set)}
+                  style={{
+                    cursor: (practice.startingPractice || backendWaking) ? 'wait' : 'pointer',
+                    opacity: (practice.startingPractice || backendWaking) ? 0.7 : 1
+                  }}
+                >
+                  {practice.startingPractice && practice.currentSet?.id === set.id && (
+                    <div style={{position: 'absolute', top: '10px', right: '10px'}}>⏳</div>
+                  )}
+                  <h3>{set.name}</h3>
+                  <div className="set-info">
+                    <span>📝 {set.total_questions}</span>
+                    <span>✅ {set.questions_attempted || 0}</span>
+                    <span>👤 {set.uploaded_by_username}</span>
+                    {set.tags && <span>🏷️ {set.tags}</span>}
+                  </div>
+                  <div className="progress-row">
+                    <div className="progress-bar">
+                      <div className="progress-fill" style={{width: `${progressPct}%`}} />
+                    </div>
+                    <span className="progress-label">{progressPct}%</span>
+                  </div>
                 </div>
-                <div className="progress-bar">
-                  <div className="progress-fill" style={{width: `${((set.questions_attempted || 0) / set.total_questions) * 100}%`}} />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           {filtered.length > displayCount && (
             <div style={{textAlign: 'center', marginTop: '20px'}}>

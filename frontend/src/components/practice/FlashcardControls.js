@@ -1,4 +1,4 @@
-import { Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Check, X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 
 function FlashcardControls({ practice, handleNextWrapper }) {
   if (!practice.isFlipped) {
@@ -18,7 +18,7 @@ function FlashcardControls({ practice, handleNextWrapper }) {
           disabled={practice.processingNext}
           style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
         >
-          {practice.processingNext ? '...' : (
+          {practice.processingNext ? <Loader2 size={18} className="spin" /> : (
             <>
               Next
               <ChevronRight size={18} />
@@ -37,7 +37,7 @@ function FlashcardControls({ practice, handleNextWrapper }) {
         disabled={practice.processingNext}
         style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
       >
-        {practice.processingNext ? '...' : (
+        {practice.processingNext ? <Loader2 size={18} className="spin" /> : (
           <>
             <X size={18} />
             Missed it
@@ -50,7 +50,7 @@ function FlashcardControls({ practice, handleNextWrapper }) {
         disabled={practice.processingNext}
         style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
       >
-        {practice.processingNext ? '...' : (
+        {practice.processingNext ? <Loader2 size={18} className="spin" /> : (
           <>
             <Check size={18} />
             Got it

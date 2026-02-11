@@ -2,7 +2,7 @@ import React from 'react';
 
 function HelpView() {
   return (
-    <div className="container">
+    <div className="container view-enter">
       <h2>How to Use Pushups</h2>
       
       <div style={{marginTop: '30px'}}>

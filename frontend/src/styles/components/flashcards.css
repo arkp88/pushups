@@ -153,12 +153,74 @@
   color: rgba(255, 255, 255, 0.6);
 }
 
+/* Flip crossfade: both faces rendered, opacity transitions between them */
+.flashcard-face {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.3s ease;
+}
+
+.question-face {
+  opacity: 1;
+}
+
+.answer-face {
+  position: absolute;
+  top: 60px;
+  left: 40px;
+  right: 40px;
+  bottom: 80px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.flashcard.flipped .question-face {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.flashcard.flipped .answer-face {
+  opacity: 1;
+  pointer-events: auto;
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+}
+
 .flashcard-controls {
   display: flex;
   gap: 20px;
   margin-top: 30px;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+/* Card content transition for button-based navigation */
+.flashcard.card-exiting {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+}
+
+.flashcard.card-entering {
+  animation: cardEnter 0.2s ease-out;
+}
+
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @media (max-width: 768px) {
@@ -199,6 +261,13 @@
 
   .answer-text {
     font-size: 18px;
+  }
+
+  .answer-face {
+    top: 50px;
+    left: 15px;
+    right: 15px;
+    bottom: 70px;
   }
 
   .question-image {
