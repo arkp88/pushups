@@ -112,7 +112,7 @@ function Flashcard({
         <div className="question-text" dangerouslySetInnerHTML={{ __html: convertedQuestionText }} />
 
         {/* Image with click-to-expand */}
-        {currentQuestion.image_url && (() => {
+        {currentQuestion.image_url?.trim() && (() => {
           const originalUrl = currentQuestion.image_url;
           const safeUrl = getSafeImageUrl(originalUrl);
 
@@ -126,7 +126,10 @@ function Flashcard({
                   margin: '16px 0',
                   color: 'var(--text-body)'
                 }}>
-                  ⚠️ Image unavailable in secure mode
+                  ⚠️ Image failed to load
+                  <div style={{fontSize: '12px', marginTop: '8px', color: 'var(--text-muted)'}}>
+                    The image host may not support HTTPS or the URL is broken.
+                  </div>
                   <div style={{fontSize: '12px', marginTop: '8px'}}>
                     <a
                       href={originalUrl}
@@ -134,7 +137,7 @@ function Flashcard({
                       rel="noopener noreferrer"
                       style={{color: 'var(--text-heading)', fontWeight: '700', textDecoration: 'underline'}}
                     >
-                      View image in new tab
+                      Try opening in new tab →
                     </a>
                   </div>
                 </div>

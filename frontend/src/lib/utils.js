@@ -45,21 +45,30 @@ export function isSecureImageUrl(url) {
 
 /**
  * Gets a safe image URL that won't cause mixed content errors
- * If the URL would be blocked, returns null so caller can show a placeholder
+ * Routes HTTP URLs through a HTTPS proxy to avoid mixed content blocking
  *
  * @param {string} url - The image URL
- * @returns {string|null} - Safe URL or null if unsafe
+ * @returns {string|null} - Safe URL or null if invalid
  */
 export function getSafeImageUrl(url) {
-  if (!url) return null;
+  if (!url || typeof url !== 'string') return null;
 
-  // Try to upgrade HTTP to HTTPS
-  const httpsUrl = ensureHttps(url);
+  const trimmed = url.trim();
+  if (!trimmed) return null;
 
-  // Return the upgraded URL
-  // Note: This might still fail to load if the server doesn't support HTTPS,
-  // but that's better than getting blocked by mixed content policy
-  return httpsUrl;
+  // If URL is already HTTPS or relative, return as-is
+  if (trimmed.startsWith('https://') || trimmed.startsWith('/') || trimmed.startsWith('./')) {
+    return trimmed;
+  }
+
+  // If HTTP URL, route through HTTPS image proxy
+  // Using images.weserv.nl - a free, open-source image proxy service
+  if (trimmed.startsWith('http://')) {
+    return `https://images.weserv.nl/?url=${encodeURIComponent(trimmed)}`;
+  }
+
+  // Non-URL strings (garbage data, placeholders) — treat as no image
+  return null;
 }
 
 /**
