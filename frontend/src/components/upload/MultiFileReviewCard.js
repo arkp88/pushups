@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FileText, Folder, Check } from 'lucide-react';
+import { FileText, Folder, Check } from '@phosphor-icons/react';
 
 function MultiFileReviewCard({
   pendingUpload,
@@ -21,8 +21,8 @@ function MultiFileReviewCard({
     <div style={{
       background: 'var(--bg-secondary)',
       padding: '25px',
-      borderRadius: '12px',
-      border: '1px solid var(--border-medium)',
+      borderRadius: '0',
+      border: '3px solid #000',
       maxWidth: '800px',
       margin: '0 auto'
     }}>
@@ -33,9 +33,10 @@ function MultiFileReviewCard({
       {uploadError && (
         <div style={{
           padding: '10px',
-          background: '#fee2e2',
-          color: '#dc2626',
-          borderRadius: '6px',
+          background: 'var(--color-danger)',
+          color: '#fff',
+          border: '3px solid #000',
+          borderRadius: '0',
           marginBottom: '15px',
           fontSize: '14px'
         }}>
@@ -45,12 +46,12 @@ function MultiFileReviewCard({
 
       <div style={{
         padding: '12px',
-        background: '#f0f9ff',
-        borderRadius: '6px',
+        background: 'var(--color-primary)',
+        borderRadius: '0',
         marginBottom: '15px',
-        border: '1px solid #bfdbfe'
+        border: '3px solid #000'
       }}>
-        <p style={{margin: 0, color: '#1e40af', fontSize: '14px'}}>
+        <p style={{margin: 0, color: '#000', fontSize: '14px'}}>
           Ready to import <strong>{pendingUpload.data.length} files</strong> from Google Drive
         </p>
       </div>
@@ -58,12 +59,12 @@ function MultiFileReviewCard({
       {pendingUpload.data.length > 10 && (
         <div style={{
           padding: '10px 12px',
-          background: '#fef3c7',
-          borderRadius: '6px',
+          background: 'var(--color-warning)',
+          borderRadius: '0',
           marginBottom: '15px',
-          border: '1px solid #fcd34d'
+          border: '3px solid #000'
         }}>
-          <p style={{margin: 0, color: '#92400e', fontSize: '13px', lineHeight: '1.5'}}>
+          <p style={{margin: 0, color: '#000', fontSize: '13px', lineHeight: '1.5'}}>
             ⚠️ <strong>Large import:</strong> This will import {pendingUpload.data.length} files sequentially.
             Estimated time: ~{Math.ceil(pendingUpload.data.length * 2 / 60)} minute{Math.ceil(pendingUpload.data.length * 2 / 60) > 1 ? 's' : ''}.
             Please keep this tab open and don't refresh.
@@ -89,10 +90,10 @@ function MultiFileReviewCard({
                 style={{
                   padding: '4px 10px',
                   fontSize: '12px',
-                  background: '#667eea',
+                  background: '#000',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '4px',
+                  borderRadius: '0',
                   cursor: uploading ? 'not-allowed' : 'pointer',
                   fontWeight: '500',
                   display: 'flex',
@@ -110,7 +111,7 @@ function MultiFileReviewCard({
                   background: '#6b7280',
                   color: 'white',
                   border: 'none',
-                  borderRadius: '4px',
+                  borderRadius: '0',
                   cursor: uploading ? 'not-allowed' : 'pointer',
                   fontWeight: '500'
                 }}
@@ -122,8 +123,8 @@ function MultiFileReviewCard({
         </div>
 
         <div style={{
-          border: '1px solid var(--border-medium)',
-          borderRadius: '6px',
+          border: '3px solid #000',
+          borderRadius: '0',
           padding: '10px',
           background: 'var(--bg-tertiary)'
         }}>
@@ -157,7 +158,7 @@ function MultiFileReviewCard({
                       height: '16px',
                       flexShrink: 0,
                       cursor: uploading ? 'not-allowed' : 'pointer',
-                      accentColor: '#667eea'
+                      accentColor: '#000'
                     }}
                   />
                   <div style={{flex: 1}}>
@@ -239,7 +240,7 @@ function MultiFileReviewCard({
             style={{
               width: '100%',
               padding: '10px',
-              borderRadius: '6px',
+              borderRadius: '0',
               border: '1px solid var(--border-medium)',
               backgroundColor: 'var(--bg-primary)',
               color: 'var(--text-body)'

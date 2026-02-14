@@ -1,5 +1,5 @@
 /* ========================================
-   FORM STYLES
+   FORM STYLES — Neo-Brutalist
    ======================================== */
 
 /* Auth Container */
@@ -8,9 +8,14 @@
   margin: 40px auto;
   background: var(--bg-primary);
   padding: 50px;
-  border-radius: 20px;
-  box-shadow: var(--shadow-2xl);
-  transition: background 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 0;
+  border: 3px solid #000;
+  box-shadow: var(--shadow-xl);
+  transition: background 0.2s ease;
+}
+
+body.dark-mode .auth-container {
+  border-color: var(--border-medium);
 }
 
 .auth-container h2 {
@@ -29,25 +34,37 @@
   display: block;
   margin-bottom: 10px;
   color: var(--text-body);
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .form-group input {
   width: 100%;
-  padding: 15px;
-  border: 2px solid var(--border-medium);
-  border-radius: 10px;
+  padding: 14px 16px;
+  border: 3px solid #000;
+  border-radius: 0;
   font-size: 16px;
-  transition: border-color 0.3s, background 0.3s;
-  background: var(--bg-secondary);
+  transition: box-shadow 0.15s ease;
+  background: var(--bg-primary);
   color: var(--text-body);
+}
+
+body.dark-mode .form-group input {
+  border-color: var(--border-medium);
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: var(--border-focus);
+  border-color: #000;
   background: var(--bg-primary);
+  box-shadow: var(--shadow-md);
+}
+
+body.dark-mode .form-group input:focus {
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-md);
 }
 
 /* Custom Select Styling */
@@ -55,57 +72,70 @@ select {
   appearance: none !important;
   -webkit-appearance: none !important;
   -moz-appearance: none !important;
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23667eea%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") !important;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23000000%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") !important;
   background-repeat: no-repeat !important;
   background-position: right 12px top 50% !important;
   background-size: 12px auto !important;
   padding-right: 40px !important;
-  transition: all 0.3s var(--ease-out-expo);
-  font-family: 'Inter', sans-serif !important;
-  font-weight: 500 !important;
+  border: 3px solid #000 !important;
+  border-radius: 0 !important;
+  transition: all 0.15s ease;
+  font-weight: 700 !important;
   line-height: 1.5;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+body.dark-mode select {
+  border-color: var(--border-medium) !important;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFD600%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") !important;
 }
 
 select option {
-  font-family: 'Inter', sans-serif;
-  font-weight: 500;
+  font-weight: 600;
   padding: 8px;
   background-color: var(--bg-primary);
   color: var(--text-body);
 }
 
 select:hover {
-  border-color: var(--border-focus) !important;
+  border-color: #000 !important;
   background-color: var(--bg-secondary) !important;
+  transform: translate(-1px, -1px);
+  box-shadow: var(--shadow-sm) !important;
 }
 
 select:focus {
   outline: none !important;
-  border-color: var(--border-focus) !important;
+  border-color: #000 !important;
   background-color: var(--bg-primary) !important;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+  box-shadow: var(--shadow-md) !important;
 }
 
-/* Dark mode dropdown arrow */
-body.dark-mode select {
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23cbd5e1%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E") !important;
+body.dark-mode select:hover {
+  border-color: var(--border-focus) !important;
 }
 
-/* Label styling for consistency */
-label {
-  font-family: 'Inter', sans-serif;
-  color: var(--text-body);
+body.dark-mode select:focus {
+  border-color: var(--border-focus) !important;
+  box-shadow: var(--shadow-md) !important;
 }
 
 /* Error Message */
 .error-message {
-  background: #fef2f2;
-  color: #dc2626;
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 25px;
+  background: var(--color-danger);
+  color: #fff;
+  padding: 16px;
+  border-radius: 0;
+  margin-bottom: 24px;
   font-size: 15px;
-  border: 1px solid #fee2e2;
+  font-weight: 600;
+  border: 3px solid #000;
+  box-shadow: var(--shadow-sm);
+}
+
+body.dark-mode .error-message {
+  border-color: var(--border-medium);
 }
 
 /* Auth Toggle */
@@ -119,13 +149,20 @@ label {
 .auth-toggle button {
   background: none;
   border: none;
-  color: #667eea;
+  color: var(--text-heading);
   cursor: pointer;
-  font-weight: 600;
-  text-decoration: none;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
   margin-left: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .auth-toggle button:hover {
-  text-decoration: underline;
+  color: var(--color-primary);
+  background: #000;
+  padding: 2px 6px;
+  text-decoration: none;
 }

@@ -1,7 +1,6 @@
 import { memo } from 'react';
 import { supabase } from '../../lib/supabase';
-// Add Dumbbell to this list:
-import { Home, BookOpen, Upload, BarChart3, HelpCircle, Lock, LogOut, LogIn, Dumbbell } from 'lucide-react'; 
+import { House, BookOpen, Upload, ChartBar, Question, Lock, SignOut, SignIn, Barbell } from '@phosphor-icons/react';
 import DarkModeToggle from './DarkModeToggle';
 
 const Navbar = memo(function Navbar({ view, setView, showNavbar, session, darkMode, setDarkMode }) {
@@ -10,7 +9,7 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session, darkMo
       {/* Mobile-only top header */}
       <div className={`mobile-header ${showNavbar ? '' : 'hidden'}`}>
         <div className="mobile-header-brand">
-          <Dumbbell size={24} color="#667eea" strokeWidth={2.5} style={{ marginRight: '4px' }} />
+          <Barbell size={24} weight="bold" style={{ marginRight: '4px' }} />
           <h1>Pushups</h1>
         </div>
         <div className="mobile-header-user">
@@ -28,13 +27,13 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session, darkMo
                   console.error('Logout exception:', err);
                 }
               }}>
-                <LogOut size={16} />
+                <SignOut size={16} weight="bold" />
                 Logout
               </button>
             </>
           ) : (
             <button className="btn-signin-mobile" onClick={() => setView('auth')}>
-              <LogIn size={16} />
+              <SignIn size={16} weight="bold" />
               Sign In
             </button>
           )}
@@ -46,7 +45,7 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session, darkMo
         {/* Logo & Quote */}
         <div className="nav-brand">
           <div className="brand-row" style={{ display: 'flex', alignItems: 'center', marginBottom: '4px'}}>
-            <Dumbbell size={28} color="#667eea" strokeWidth={2.5} style={{ marginRight: '2px' }} />
+            <Barbell size={28} weight="bold" style={{ marginRight: '2px' }} />
             <h1>Pushups</h1>
           </div>
           <span className="brand-quote"> Pooja, what is this Tier-1 behavior? </span>
@@ -55,11 +54,11 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session, darkMo
         {/* Navigation Tabs */}
         <div className="nav-links">
           <button onClick={() => setView('home')} className={`nav-btn ${view === 'home' ? 'active' : ''}`}>
-            <Home size={18} />
+            <House size={18} weight="bold" />
             <span>Home</span>
           </button>
           <button onClick={() => setView('sets')} className={`nav-btn ${view === 'sets' ? 'active' : ''}`}>
-            <BookOpen size={18} />
+            <BookOpen size={18} weight="bold" />
             <span>Sets</span>
           </button>
           <button
@@ -67,21 +66,21 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session, darkMo
             className={`nav-btn ${view === 'upload' ? 'active' : ''} ${!session ? 'guest-disabled' : ''}`}
             title={!session ? 'Sign in to upload questions' : 'Upload questions'}
           >
-            <Upload size={18} />
+            <Upload size={18} weight="bold" />
             <span>Upload</span>
-            {!session && <Lock size={14} className="guest-lock-icon" />}
+            {!session && <Lock size={14} weight="bold" className="guest-lock-icon" />}
           </button>
           <button
             onClick={() => session ? setView('stats') : setView('auth')}
             className={`nav-btn ${view === 'stats' ? 'active' : ''} ${!session ? 'guest-disabled' : ''}`}
             title={!session ? 'Sign in to view your stats' : 'View your statistics'}
           >
-            <BarChart3 size={18} />
+            <ChartBar size={18} weight="bold" />
             <span>Stats</span>
-            {!session && <Lock size={14} className="guest-lock-icon" />}
+            {!session && <Lock size={14} weight="bold" className="guest-lock-icon" />}
           </button>
           <button onClick={() => setView('help')} className={`nav-btn ${view === 'help' ? 'active' : ''}`}>
-            <HelpCircle size={18} />
+            <Question size={18} weight="bold" />
             <span>Help</span>
           </button>
         </div>
@@ -102,13 +101,13 @@ const Navbar = memo(function Navbar({ view, setView, showNavbar, session, darkMo
                   console.error('Logout exception:', err);
                 }
               }}>
-                <LogOut size={16} />
+                <SignOut size={16} weight="bold" />
                 Logout
               </button>
             </>
           ) : (
             <button className="btn-signin" onClick={() => setView('auth')}>
-              <LogIn size={16} />
+              <SignIn size={16} weight="bold" />
               Sign In
             </button>
           )}

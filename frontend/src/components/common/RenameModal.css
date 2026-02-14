@@ -14,15 +14,17 @@
 .rename-modal-content {
   background: white;
   padding: 25px;
-  border-radius: 12px;
+  border-radius: 0;
   width: 90%;
   max-width: 400px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 6px 6px 0 #000;
+  border: 3px solid #000;
 }
 
 .dark-mode .rename-modal-content {
-  background: #1e1e2e;
+  background: var(--bg-primary);
   color: #e0e0e0;
+  border-color: var(--border-medium);
 }
 
 .rename-modal-title {
@@ -38,22 +40,22 @@
   width: 100%;
   padding: 10px;
   margin: 15px 0;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+  border-radius: 0;
+  border: 3px solid #000;
   font-size: 16px;
   box-sizing: border-box;
 }
 
 .dark-mode .rename-modal-input {
   background: #2a2a3e;
-  border-color: #444;
+  border-color: var(--border-medium);
   color: #e0e0e0;
 }
 
 .rename-modal-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+  border-color: #000;
+  box-shadow: 3px 3px 0 #000;
 }
 
 .rename-modal-input:disabled {

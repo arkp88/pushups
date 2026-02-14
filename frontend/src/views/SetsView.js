@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { MagnifyingGlass } from '@phosphor-icons/react';
 import { SkeletonSetCard, EmptyState } from '../components/common';
 
 function getSetStatus(set) {
@@ -87,7 +87,7 @@ function SetsView({ questionSets, practice, startPracticeWrapper, backendWaking 
         </div>
       ) : filtered.length === 0 ? (
         <EmptyState
-          icon={Search}
+          icon={MagnifyingGlass}
           title="No sets found"
           description={searchTerm ? `No question sets match "${searchTerm}". Try a different search term or filter.` : "No question sets match your current filter."}
         />

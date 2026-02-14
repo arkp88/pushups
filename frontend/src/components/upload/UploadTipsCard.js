@@ -6,10 +6,10 @@ function UploadTipsCard() {
       marginTop: '40px',
       padding: '20px',
       background: 'var(--bg-secondary)',
-      borderRadius: '12px',
-      border: '1px solid var(--border-medium)'
+      borderRadius: '0',
+      border: '3px solid #000'
     }}>
-      <h3 style={{color: '#667eea', marginBottom: '15px', fontSize: '18px'}}>
+      <h3 style={{color: 'var(--text-heading)', marginBottom: '15px', fontSize: '18px'}}>
         💡 Tips & Best Practices
       </h3>
 

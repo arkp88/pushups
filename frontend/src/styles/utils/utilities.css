@@ -16,10 +16,3 @@
     display: flex !important;
   }
 }
-
-/* Auth Container */
-.auth-container {
-  max-width: 500px;
-  margin: 80px auto;
-  padding: 20px;
-}

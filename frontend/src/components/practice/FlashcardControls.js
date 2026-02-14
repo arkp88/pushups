@@ -1,4 +1,4 @@
-import { Check, X, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Check, X, CaretLeft, CaretRight, CircleNotch } from '@phosphor-icons/react';
 
 function FlashcardControls({ practice, handleNextWrapper }) {
   if (!practice.isFlipped) {
@@ -9,7 +9,7 @@ function FlashcardControls({ practice, handleNextWrapper }) {
           onClick={practice.handlePrevious}
           disabled={practice.currentQuestionIndex === 0 || practice.processingNext}
         >
-          <ChevronLeft size={18} />
+          <CaretLeft size={18} weight="bold" />
           Prev
         </button>
         <button
@@ -18,10 +18,10 @@ function FlashcardControls({ practice, handleNextWrapper }) {
           disabled={practice.processingNext}
           style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
         >
-          {practice.processingNext ? <Loader2 size={18} className="spin" /> : (
+          {practice.processingNext ? <CircleNotch size={18} weight="bold" className="spin" /> : (
             <>
               Next
-              <ChevronRight size={18} />
+              <CaretRight size={18} weight="bold" />
             </>
           )}
         </button>
@@ -37,9 +37,9 @@ function FlashcardControls({ practice, handleNextWrapper }) {
         disabled={practice.processingNext}
         style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
       >
-        {practice.processingNext ? <Loader2 size={18} className="spin" /> : (
+        {practice.processingNext ? <CircleNotch size={18} weight="bold" className="spin" /> : (
           <>
-            <X size={18} />
+            <X size={18} weight="bold" />
             Missed it
           </>
         )}
@@ -50,9 +50,9 @@ function FlashcardControls({ practice, handleNextWrapper }) {
         disabled={practice.processingNext}
         style={{opacity: practice.processingNext ? 0.7 : 1, cursor: practice.processingNext ? 'wait' : 'pointer'}}
       >
-        {practice.processingNext ? <Loader2 size={18} className="spin" /> : (
+        {practice.processingNext ? <CircleNotch size={18} weight="bold" className="spin" /> : (
           <>
-            <Check size={18} />
+            <Check size={18} weight="bold" />
             Got it
           </>
         )}

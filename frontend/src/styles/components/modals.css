@@ -1,5 +1,5 @@
 /* ========================================
-   MODAL & NOTIFICATION STYLES
+   MODAL & NOTIFICATION STYLES — Neo-Brutalist
    ======================================== */
 
 /* Notification Banner */
@@ -11,36 +11,45 @@
   transform: translateX(-50%);
   width: calc(100% - 40px);
   max-width: 800px;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
-  color: #1e40af;
-  padding: 15px 20px;
-  border-radius: 10px;
+  background: var(--color-primary);
+  border: 3px solid #000;
+  color: #000;
+  padding: 16px 20px;
+  border-radius: 0;
   text-align: center !important;
   font-size: 15px;
-  font-weight: 500;
-  font-family: 'Inter', sans-serif !important;
-  animation: slideDown 0.3s ease-out;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-weight: 700;
+  animation: slideDown 0.2s ease-out;
+  box-shadow: var(--shadow-lg);
   z-index: 1001;
   margin: 0 auto;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+body.dark-mode .notification-banner {
+  border-color: var(--border-medium);
 }
 
 .notification-banner.error-notification {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  border: 2px solid #ef4444;
-  color: #991b1b;
-  font-weight: 600;
-  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.35);
-  animation: slideDown 0.3s ease-out, errorPulse 0.5s ease-out;
+  background: var(--color-danger);
+  border: 3px solid #000;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: var(--shadow-xl);
+  animation: slideDown 0.2s ease-out;
+}
+
+body.dark-mode .notification-banner.error-notification {
+  border-color: var(--border-medium);
 }
 
 .notification-banner.wake-notification {
-  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-  border: 2px solid #818cf8;
-  color: #3730a3;
-  font-weight: 600;
-  animation: slideDown 0.3s ease-out, notificationPulse 2s ease-in-out infinite;
+  background: var(--color-primary);
+  border: 3px solid #000;
+  color: #000;
+  font-weight: 700;
+  animation: slideDown 0.2s ease-out;
 }
 
 /* Mobile positioning */
@@ -53,46 +62,6 @@
   }
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-@keyframes notificationPulse {
-  0%, 100% {
-    opacity: 1;
-    transform: translateX(-50%);
-  }
-  50% {
-    opacity: 0.85;
-    transform: translateX(-50%);
-  }
-}
-
-@keyframes errorPulse {
-  0% {
-    transform: translateX(-50%) scale(1);
-  }
-  25% {
-    transform: translateX(-50%) scale(1.02);
-  }
-  50% {
-    transform: translateX(-50%) scale(1);
-  }
-  75% {
-    transform: translateX(-50%) scale(1.02);
-  }
-  100% {
-    transform: translateX(-50%) scale(1);
-  }
-}
-
 /* Image Modal */
 .image-modal {
   position: fixed;
@@ -100,22 +69,23 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.92);
+  background-color: rgba(0, 0, 0, 0.9);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 10000;
   cursor: zoom-out;
   padding: 20px;
-  backdrop-filter: blur(5px);
+  backdrop-filter: none;
 }
 
 .image-modal img {
   max-width: 100%;
   max-height: 95vh;
   object-fit: contain;
-  border-radius: 8px;
-  box-shadow: 0 0 50px rgba(0, 0, 0, 0.5);
+  border-radius: 0;
+  border: 4px solid #fff;
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.5);
 }
 
 /* Loading & Empty State */
@@ -123,15 +93,15 @@
 .empty-state {
   text-align: center;
   padding: 60px;
-  color: #6b7280;
+  color: var(--text-muted);
   font-size: 18px;
-  animation: fadeIn 0.5s ease-in;
+  animation: fadeIn 0.3s ease-in;
 }
 
 .empty-state h3 {
   font-size: 28px;
-  margin-bottom: 15px;
-  color: var(--text-body);
+  margin-bottom: 16px;
+  color: var(--text-heading);
 }
 
 .empty-state p {

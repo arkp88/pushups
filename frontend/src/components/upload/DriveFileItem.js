@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import { Folder, FileText, Download } from 'lucide-react';
+import { Folder, FileText, Download } from '@phosphor-icons/react';
 import './DriveFileItem.css';
 
 function DriveFileItem({
@@ -67,9 +67,9 @@ function DriveFileItem({
 
       <div className={`drive-file-item-icon ${isFolder ? 'folder' : ''}`}>
         {isFolder ? (
-          <Folder size={20} color="#667eea" />
+          <Folder size={20} weight="bold" />
         ) : (
-          <FileText size={20} color="#6b7280" />
+          <FileText size={20} weight="bold" color="var(--text-muted)" />
         )}
       </div>
 
@@ -91,7 +91,7 @@ function DriveFileItem({
               <span className="import-btn-full">⏳ Scanning...</span>
             ) : (
               <>
-                <Download size={16} className="import-btn-icon" />
+                <Download size={16} weight="bold" className="import-btn-icon" />
                 <span className="import-btn-full">📥 Import All</span>
                 <span className="import-btn-expanded">Tap to Import</span>
               </>

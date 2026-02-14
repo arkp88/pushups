@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { getSafeImageUrl, convertMarkdownToHTML } from '../../lib/utils';
-import { Star, Volume2, VolumeX, X as XIcon, Check } from 'lucide-react';
+import { Star, SpeakerHigh, SpeakerX, X as XIcon, Check } from '@phosphor-icons/react';
 
 function Flashcard({
   practice,
@@ -19,7 +19,6 @@ function Flashcard({
 
   const currentQuestion = practice.questions[practice.currentQuestionIndex];
 
-  // Convert markdown to HTML for current question (cached with useMemo)
   const convertedQuestionText = useMemo(
     () => convertMarkdownToHTML(currentQuestion?.question_text),
     [currentQuestion?.question_text]
@@ -60,7 +59,7 @@ function Flashcard({
             pointerEvents: 'none',
             zIndex: 5
           }}>
-            <XIcon size={48} color="#ef4444" strokeWidth={3} />
+            <XIcon size={48} weight="bold" color="#ef4444" />
           </div>
           <div style={{
             position: 'absolute',
@@ -72,7 +71,7 @@ function Flashcard({
             pointerEvents: 'none',
             zIndex: 5
           }}>
-            <Check size={48} color="#22c55e" strokeWidth={3} />
+            <Check size={48} weight="bold" color="#22c55e" />
           </div>
         </>
       )}
@@ -91,16 +90,14 @@ function Flashcard({
           right: '12px',
           cursor: 'pointer',
           zIndex: 10,
-          filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.2))',
-          transition: 'all 0.2s ease'
+          transition: 'all 0.15s ease'
         }}
         title="Toggle Bookmark"
       >
         <Star
           size={28}
-          fill={currentQuestion.is_bookmarked ? '#fbbf24' : 'none'}
-          color={currentQuestion.is_bookmarked ? '#fbbf24' : (practice.isFlipped ? 'rgba(255,255,255,0.9)' : '#6b7280')}
-          strokeWidth={2}
+          weight={currentQuestion.is_bookmarked ? 'fill' : 'regular'}
+          color={currentQuestion.is_bookmarked ? '#fbbf24' : (practice.isFlipped ? '#000' : '#6b7280')}
         />
       </div>
 
@@ -125,8 +122,7 @@ function Flashcard({
                 <div style={{
                   padding: '16px',
                   background: 'var(--bg-secondary)',
-                  border: '2px solid var(--border-focus)',
-                  borderRadius: '8px',
+                  border: '3px solid #000',
                   margin: '16px 0',
                   color: 'var(--text-body)'
                 }}>
@@ -136,7 +132,7 @@ function Flashcard({
                       href={originalUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{color: '#667eea'}}
+                      style={{color: 'var(--text-heading)', fontWeight: '700', textDecoration: 'underline'}}
                     >
                       View image in new tab
                     </a>
@@ -169,24 +165,26 @@ function Flashcard({
         <div className="answer-text" dangerouslySetInnerHTML={{ __html: convertedAnswerText }} />
         <div className="flip-hint">Click to see question</div>
 
-        {/* Mobile swipe instructions - only on first question */}
+        {/* Mobile swipe instructions */}
         {practice.currentQuestionIndex === 0 && (
           <div className="mobile-only" style={{
             fontSize: '13px',
-            color: 'rgba(255,255,255,0.9)',
+            color: '#000',
             marginTop: '20px',
-            fontWeight: '500',
+            fontWeight: '700',
             textAlign: 'center',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '8px'
+            gap: '8px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.03em'
           }}>
             <span>Swipe Right = Got it</span>
-            <Check size={16} />
+            <Check size={16} weight="bold" />
             <span>·</span>
             <span>Left = Missed it</span>
-            <XIcon size={16} />
+            <XIcon size={16} weight="bold" />
           </div>
         )}
       </div>
@@ -201,10 +199,9 @@ function Flashcard({
           left: '20px',
           cursor: 'pointer',
           zIndex: 10,
-          filter: 'drop-shadow(0 2px 3px rgba(0,0,0,0.2))',
-          transition: 'all 0.2s ease',
-          background: practice.isFlipped ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.9)',
-          borderRadius: '50%',
+          transition: 'all 0.15s ease',
+          background: practice.isFlipped ? 'rgba(0, 0, 0, 0.15)' : 'var(--bg-tertiary)',
+          border: '2px solid #000',
           width: '45px',
           height: '45px',
           display: 'flex',
@@ -214,14 +211,16 @@ function Flashcard({
         title={practice.isSpeaking ? "Stop speaking" : "Read aloud"}
       >
         {practice.isSpeaking ? (
-          <Volume2
+          <SpeakerHigh
             size={24}
-            color={practice.isFlipped ? '#fff' : '#667eea'}
+            weight="bold"
+            color={practice.isFlipped ? '#000' : 'var(--text-heading)'}
           />
         ) : (
-          <VolumeX
+          <SpeakerX
             size={24}
-            color={practice.isFlipped ? 'rgba(255, 255, 255, 0.9)' : '#6b7280'}
+            weight="bold"
+            color={practice.isFlipped ? 'rgba(0, 0, 0, 0.5)' : '#6b7280'}
           />
         )}
       </div>

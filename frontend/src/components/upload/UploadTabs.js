@@ -5,7 +5,7 @@ function UploadTabs({ activeTab, onTabChange }) {
   return (
     <div style={{
       display: 'flex',
-      borderBottom: '1px solid var(--border-medium)',
+      borderBottom: '3px solid var(--border-medium)',
       marginBottom: '20px'
     }}>
       <button
@@ -13,8 +13,8 @@ function UploadTabs({ activeTab, onTabChange }) {
           padding: '10px 20px',
           border: 'none',
           background: 'none',
-          borderBottom: activeTab === 'import' ? '2px solid #667eea' : 'none',
-          color: activeTab === 'import' ? '#667eea' : 'var(--text-muted)',
+          borderBottom: activeTab === 'import' ? '3px solid #000' : 'none',
+          color: activeTab === 'import' ? 'var(--text-heading)' : 'var(--text-muted)',
           fontWeight: '600',
           cursor: 'pointer'
         }}
@@ -27,8 +27,8 @@ function UploadTabs({ activeTab, onTabChange }) {
           padding: '10px 20px',
           border: 'none',
           background: 'none',
-          borderBottom: activeTab === 'library' ? '2px solid #667eea' : 'none',
-          color: activeTab === 'library' ? '#667eea' : 'var(--text-muted)',
+          borderBottom: activeTab === 'library' ? '3px solid #000' : 'none',
+          color: activeTab === 'library' ? 'var(--text-heading)' : 'var(--text-muted)',
           fontWeight: '600',
           cursor: 'pointer'
         }}

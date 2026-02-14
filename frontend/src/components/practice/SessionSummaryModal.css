@@ -16,11 +16,12 @@
 
 .session-modal-content {
   background: var(--bg-primary);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 30px;
   max-width: 400px;
   width: 100%;
-  box-shadow: var(--shadow-2xl);
+  box-shadow: 6px 6px 0 #000;
+  border: 3px solid #000;
   position: relative;
   animation: modalEnter 0.35s var(--spring);
 }
@@ -31,7 +32,7 @@
   right: 15px;
   background: var(--bg-tertiary);
   border: none;
-  border-radius: 50%;
+  border-radius: 0;
   width: 32px;
   height: 32px;
   font-size: 18px;
@@ -81,7 +82,7 @@
 .session-stat-card {
   text-align: center;
   padding: 14px 8px;
-  border-radius: 10px;
+  border-radius: 0;
   border: 2px solid;
 }
 
@@ -142,7 +143,7 @@ body.dark-mode .session-stat-card--wrong {
   text-align: center;
   padding: 15px;
   background: var(--bg-secondary);
-  border-radius: 10px;
+  border-radius: 0;
   margin-bottom: 25px;
 }
 
@@ -167,17 +168,19 @@ body.dark-mode .session-stat-card--wrong {
 .session-modal-btn {
   padding: 14px;
   border: none;
-  border-radius: 10px;
+  border-radius: 0;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition: opacity 0.2s ease, transform 0.2s ease;
   font-family: inherit;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .session-modal-btn:hover {
   opacity: 0.9;
-  transform: translateY(-1px);
+  transform: translate(-2px, -2px);
 }
 
 .session-modal-btn:active {
@@ -185,17 +188,19 @@ body.dark-mode .session-stat-card--wrong {
 }
 
 .session-modal-btn--primary {
-  background: #667eea;
-  color: white;
+  background: #000;
+  color: var(--color-primary);
+  border: 3px solid #000;
 }
 
 .session-modal-btn--danger {
-  background: #f87171;
+  background: var(--color-danger);
   color: white;
+  border: 3px solid #000;
 }
 
 .session-modal-btn--outline {
   background: var(--bg-primary);
-  color: var(--border-focus);
-  border: 2px solid var(--border-focus);
+  color: var(--text-heading);
+  border: 3px solid #000;
 }

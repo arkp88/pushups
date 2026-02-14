@@ -1,24 +1,30 @@
 .dark-mode-toggle {
   padding: 8px;
-  border-radius: 8px;
+  border-radius: 0;
   background: var(--bg-tertiary);
-  border: 1px solid var(--border-medium);
+  border: 3px solid #000;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
   color: var(--text-body);
+  box-shadow: var(--shadow-sm);
+}
+
+body.dark-mode .dark-mode-toggle {
+  border-color: var(--border-medium);
+  color: var(--color-primary);
 }
 
 .dark-mode-toggle:hover {
   background: var(--bg-secondary);
   border-color: var(--border-focus);
-  transform: scale(1.05);
+  transform: translate(-1px, -1px);
 }
 
 .dark-mode-toggle:active {
-  transform: scale(0.95);
+  transform: translate(1px, 1px);
 }
 
 .toggle-icon {
@@ -33,6 +39,6 @@
 @media (max-width: 768px) {
   .dark-mode-toggle {
     padding: 6px;
-    border-radius: 6px;
+    border-radius: 0;
   }
 }

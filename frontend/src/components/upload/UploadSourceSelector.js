@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { HardDrive } from 'lucide-react';
+import { HardDrives } from '@phosphor-icons/react';
 
 function UploadSourceSelector({ uploadMode, onModeChange }) {
   return (
@@ -9,7 +9,7 @@ function UploadSourceSelector({ uploadMode, onModeChange }) {
         className={`btn ${uploadMode === 'local' ? 'btn-primary' : 'btn-secondary'}`}
         onClick={() => onModeChange('local')}
       >
-        <HardDrive size={18} style={{marginRight: '6px'}} />
+        <HardDrives size={18} weight="bold" style={{marginRight: '6px'}} />
         From Your Device
       </button>
       <button

@@ -1,201 +1,261 @@
 /* ========================================
-   BUTTON STYLES
+   BUTTON STYLES — Neo-Brutalist
    ======================================== */
 
 .btn {
-  padding: 12px 24px; /* Bigger touch targets */
-  border: none;
-  border-radius: 10px;
+  padding: 12px 24px;
+  border: 3px solid #000;
+  border-radius: 0;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s var(--ease-out-expo);
+  transition: all 0.15s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   justify-content: center;
-  font-family: 'Inter', sans-serif !important;
-}
-
-button::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.5s ease, height 0.5s ease;
-}
-
-button:active::after {
-  width: 200px;
-  height: 200px;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   box-shadow: var(--shadow-md);
 }
 
+body.dark-mode .btn {
+  border-color: var(--border-medium);
+}
+
+/* Remove ripple effect */
+button::after {
+  display: none;
+}
+
+button:active::after {
+  display: none;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #000;
+}
+
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow:
-    0 8px 16px rgba(102, 126, 234, 0.4),
-    0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-xl);
 }
 
 .btn-primary:active:not(:disabled) {
-  transform: translateY(0) scale(0.98);
-  transition: all 0.1s ease;
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #000;
+  transition: all 0.05s ease;
 }
 
 .btn-secondary {
+  background: #fff;
+  color: #000;
+  border: 3px solid #000;
+}
+
+body.dark-mode .btn-secondary {
   background: var(--bg-tertiary);
-  color: #667eea;
-  border: 1px solid var(--border-medium);
+  color: var(--text-heading);
+  border-color: var(--border-medium);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--bg-secondary);
-  border-color: var(--border-focus);
-  transform: translateY(-1px) scale(1.01);
+  background: var(--bg-tertiary);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-xl);
 }
 
 .btn-secondary:active:not(:disabled) {
-  transform: translateY(0) scale(0.99);
-  transition: all 0.1s ease;
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #000;
+  transition: all 0.05s ease;
 }
 
 .btn-danger {
-  background: #ef4444;
-  color: white;
+  background: var(--color-danger);
+  color: #fff;
+  border: 3px solid #000;
 }
 
 .btn-danger:hover {
-  background: #dc2626;
+  background: var(--color-danger-hover);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-xl);
+}
+
+.btn-danger:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #000;
 }
 
 .btn-success {
-  background: #10b981;
-  color: white;
+  background: var(--color-success);
+  color: #fff;
+  border: 3px solid #000;
 }
 
 .btn-success:hover {
-  background: #059669;
+  background: var(--color-success-hover);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-xl);
+}
+
+.btn-success:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #000;
 }
 
 .btn-warning {
-  background: #f59e0b;
-  color: white;
+  background: var(--color-warning);
+  color: #000;
+  border: 3px solid #000;
 }
 
 .btn-warning:hover {
-  background: #d97706;
+  background: var(--color-warning-hover);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-xl);
 }
 
-/* Practice Mode Buttons */
+.btn-warning:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #000;
+}
+
+/* Practice Mode Buttons — each gets a bright accent color */
 .practice-mode-button {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 18px 20px;
-  border: 1px solid var(--card-border);
-  border-radius: 14px;
+  gap: 16px;
+  padding: 20px;
+  border: 3px solid #000;
+  border-radius: 0;
   background: var(--card-bg);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
   cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy spring effect */
+  transition: all 0.15s ease;
   text-align: left;
-  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: var(--shadow-md);
   position: relative;
-  overflow: hidden;
-  will-change: transform;
-  contain: layout; /* Prevent layout shifts */
-  min-height: 92px; /* Fixed minimum height to prevent resizing */
+  overflow: visible;
+  min-height: 92px;
 }
 
+body.dark-mode .practice-mode-button {
+  border-color: var(--border-medium);
+}
+
+/* Bright colored backgrounds for each mode button */
+.practice-mode-button:nth-child(1) { background: #FFD600; }  /* Continue — yellow */
+.practice-mode-button:nth-child(2) { background: #00E676; }  /* Browse — green */
+.practice-mode-button:nth-child(3) { background: #FF6090; }  /* Random Set — hot pink */
+.practice-mode-button:nth-child(4) { background: #FF8A50; }  /* Random All — orange */
+.practice-mode-button:nth-child(5) { background: #40C4FF; }  /* Missed — sky blue */
+.practice-mode-button:nth-child(6) { background: #B388FF; }  /* Bookmarks — purple */
+
+body.dark-mode .practice-mode-button:nth-child(1) { background: rgba(255, 214, 0, 0.2); }
+body.dark-mode .practice-mode-button:nth-child(2) { background: rgba(0, 230, 118, 0.2); }
+body.dark-mode .practice-mode-button:nth-child(3) { background: rgba(255, 96, 144, 0.2); }
+body.dark-mode .practice-mode-button:nth-child(4) { background: rgba(255, 138, 80, 0.2); }
+body.dark-mode .practice-mode-button:nth-child(5) { background: rgba(64, 196, 255, 0.2); }
+body.dark-mode .practice-mode-button:nth-child(6) { background: rgba(179, 136, 255, 0.2); }
+
+/* Ensure text stays readable on colored backgrounds */
+.practice-mode-button .practice-mode-content h4 {
+  color: #000;
+}
+
+.practice-mode-button .practice-mode-content p {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode .practice-mode-button .practice-mode-content h4 {
+  color: var(--text-heading);
+}
+
+body.dark-mode .practice-mode-button .practice-mode-content p {
+  color: var(--text-muted);
+}
+
+/* Remove gradient overlay */
 .practice-mode-button::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.02) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
+  display: none;
 }
 
 .practice-mode-button:hover:not(:disabled)::before {
-  opacity: 1;
+  display: none;
 }
 
 .practice-mode-button:hover:not(:disabled) {
-  border-color: rgba(102, 126, 234, 0.4);
-  transform: translateY(-6px) scale(1.01);
-  box-shadow:
-    0 12px 32px -8px rgba(102, 126, 234, 0.2),
-    0 6px 16px -4px rgba(0, 0, 0, 0.06),
-    0 0 0 1px rgba(102, 126, 234, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border-color: #000;
+  transform: translate(-3px, -3px);
+  box-shadow: var(--shadow-xl);
+  filter: brightness(1.08);
 }
 
 .practice-mode-button:active:not(:disabled) {
-  transform: translateY(-3px) scale(1.0);
-  transition: all 0.1s ease;
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 #000;
+  transition: all 0.05s ease;
+  filter: brightness(0.95);
 }
 
 .practice-mode-button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
   filter: grayscale(1);
   transform: none !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .practice-mode-icon {
   font-size: 32px;
   min-width: 56px;
-  width: 56px; /* Explicit width */
+  width: 56px;
   height: 56px;
-  flex-shrink: 0; /* Prevent icon from shrinking */
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(238, 242, 255, 0.8) 0%, rgba(224, 231, 255, 0.6) 100%);
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.1);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 0;
+  border: 3px solid #000;
+  box-shadow: var(--shadow-sm);
   position: relative;
   z-index: 1;
-  transition: all 0.3s ease;
-  border: 1px solid rgba(102, 126, 234, 0.1);
+  transition: all 0.15s ease;
+  color: #000;
+}
+
+body.dark-mode .practice-mode-icon {
+  border-color: var(--border-medium);
+  background: var(--bg-tertiary);
+  color: var(--text-heading);
 }
 
 .practice-mode-button:hover:not(:disabled) .practice-mode-icon {
-  background: linear-gradient(135deg, rgba(221, 214, 254, 0.9) 0%, rgba(199, 210, 254, 0.7) 100%);
-  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.18);
-  transform: scale(1.03);
+  background: #fff;
+  transform: none;
+  box-shadow: var(--shadow-sm);
 }
 
 .practice-mode-content {
   flex: 1;
-  min-width: 0; /* Allow text truncation if needed */
+  min-width: 0;
 }
 
 .practice-mode-content h4 {
   color: var(--text-heading);
   font-size: 16px;
   margin-bottom: 4px;
-  font-weight: 600;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .practice-mode-content p {
@@ -205,9 +265,9 @@ button:active::after {
   line-height: 1.4;
 }
 
-/* Speaker button animation when speaking */
+/* Speaker button */
 .speaker-button {
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .speaker-button:hover {
@@ -219,7 +279,6 @@ button:active::after {
 }
 
 @media (max-width: 768px) {
-  /* Mobile speaker button positioning */
   .speaker-button {
     bottom: 15px !important;
     left: auto !important;

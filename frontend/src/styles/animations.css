@@ -1,47 +1,27 @@
 /* ========================================
-   KEYFRAME ANIMATIONS
+   KEYFRAME ANIMATIONS — Neo-Brutalist
+   Snappy, minimal, no soft effects
    ======================================== */
 
-/* Performance-optimized gradient animation using transform instead of background-position */
+/* Remove gradient float — not needed */
 @keyframes gradientFloat {
-  0%, 100% {
-    transform: translate(0%, 0%) rotate(0deg);
-  }
-  33% {
-    transform: translate(-5%, 5%) rotate(1deg);
-  }
-  66% {
-    transform: translate(5%, -3%) rotate(-1deg);
-  }
+  0%, 100% { transform: none; }
 }
 
 @keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-/* Skeleton loading animation */
+/* Skeleton loading — striped pattern */
 @keyframes skeleton-loading {
-  0% {
-    background-position: -200px 0;
-  }
-  100% {
-    background-position: calc(200px + 100%) 0;
-  }
+  0% { background-position: -200px 0; }
+  100% { background-position: calc(200px + 100%) 0; }
 }
 
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
 }
 
 @keyframes slideDown {
@@ -57,33 +37,35 @@
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.85; }
+  50% { opacity: 0.6; }
 }
 
+/* Simplified error notification — no scale bounce */
 @keyframes errorPulse {
-  0% { transform: translateX(-50%) scale(1); }
-  25% { transform: translateX(-50%) scale(1.02); }
-  50% { transform: translateX(-50%) scale(1); }
-  75% { transform: translateX(-50%) scale(1.02); }
-  100% { transform: translateX(-50%) scale(1); }
+  0%, 100% { transform: translateX(-50%); }
 }
 
-/* Minimal bookmark toggle feedback - simple scale pulse */
+/* Simplified wake notification — no pulse */
+@keyframes notificationPulse {
+  0%, 100% { opacity: 1; transform: translateX(-50%); }
+}
+
+/* Bookmark toggle */
 @keyframes bookmarkPulse {
   0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
+  50% { transform: scale(1.15); }
   100% { transform: scale(1); }
 }
 
-/* View enter transition */
+/* View enter transition — snappy */
 .view-enter {
-  animation: viewFadeIn 0.3s ease-out;
+  animation: viewFadeIn 0.2s ease-out;
 }
 
 @keyframes viewFadeIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -91,29 +73,29 @@
   }
 }
 
-/* Modal entrance animation */
+/* Modal entrance — no scale bounce */
 @keyframes modalEnter {
   from {
     opacity: 0;
-    transform: scale(0.92) translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translateY(0);
   }
 }
 
-/* Utility animation classes */
+/* Skeleton utility */
 .skeleton {
   background: var(--bg-tertiary);
-  background-image: linear-gradient(
+  background-image: repeating-linear-gradient(
     90deg,
-    var(--bg-tertiary) 0px,
+    var(--bg-tertiary),
     var(--bg-secondary) 40px,
     var(--bg-tertiary) 80px
   );
   background-size: 200px 100%;
-  animation: skeleton-loading 1.4s ease-in-out infinite;
+  animation: skeleton-loading 1.2s ease-in-out infinite;
 }
 
 .spin {
@@ -121,5 +103,5 @@
 }
 
 .bookmark-pulse {
-  animation: bookmarkPulse 0.2s ease-out;
+  animation: bookmarkPulse 0.15s ease-out;
 }

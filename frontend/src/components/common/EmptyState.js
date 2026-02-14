@@ -14,9 +14,9 @@ function EmptyState({ icon: Icon, title, description, actionButton }) {
         <div style={{
           width: '80px',
           height: '80px',
-          borderRadius: '50%',
+          borderRadius: '0',
           background: 'var(--bg-secondary)',
-          border: '2px solid var(--border-medium)',
+          border: '3px solid #000',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',

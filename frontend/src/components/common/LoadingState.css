@@ -8,19 +8,19 @@
 }
 
 .loading-state-icon {
-  color: #667eea;
+  color: var(--text-heading);
   animation: pulse 1.5s ease-in-out infinite;
 }
 
 .loading-state-message {
-  color: #667eea;
+  color: var(--text-heading);
   font-size: 18px;
   font-weight: 600;
 }
 
 .dark-mode .loading-state-icon,
 .dark-mode .loading-state-message {
-  color: #a5b4fc;
+  color: var(--color-primary);
 }
 
 @keyframes pulse {

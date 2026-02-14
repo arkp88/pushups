@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { FileText } from 'lucide-react';
+import { FileText } from '@phosphor-icons/react';
 
 function FileReviewModal({
   pendingUpload,
@@ -17,8 +17,8 @@ function FileReviewModal({
     <div style={{
       background: 'var(--bg-secondary)',
       padding: '25px',
-      borderRadius: '12px',
-      border: '1px solid var(--border-medium)',
+      borderRadius: '0',
+      border: '3px solid #000',
       maxWidth: '600px',
       margin: '0 auto'
     }}>
@@ -29,7 +29,7 @@ function FileReviewModal({
           padding: '10px',
           background: '#fee2e2',
           color: '#dc2626',
-          borderRadius: '6px',
+          borderRadius: '0',
           marginBottom: '15px',
           fontSize: '14px'
         }}>
@@ -41,7 +41,7 @@ function FileReviewModal({
         marginBottom: '20px',
         padding: '10px',
         background: 'var(--bg-primary)',
-        borderRadius: '6px',
+        borderRadius: '0',
         border: '1px solid var(--border-medium)'
       }}>
         <span style={{fontWeight: 'bold', color: 'var(--text-body)'}}>Selected: </span>
@@ -72,8 +72,8 @@ function FileReviewModal({
           style={{
             width: '100%',
             padding: '10px',
-            borderRadius: '6px',
-            border: '1px solid var(--border-medium)',
+            borderRadius: '0',
+            border: '3px solid #000',
             backgroundColor: 'var(--bg-primary)',
             color: 'var(--text-body)'
           }}
@@ -98,8 +98,8 @@ function FileReviewModal({
           style={{
             width: '100%',
             padding: '10px',
-            borderRadius: '6px',
-            border: '1px solid var(--border-medium)',
+            borderRadius: '0',
+            border: '3px solid #000',
             backgroundColor: 'var(--bg-primary)',
             color: 'var(--text-body)'
           }}

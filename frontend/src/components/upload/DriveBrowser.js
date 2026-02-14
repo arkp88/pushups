@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Check } from 'lucide-react';
+import { Check } from '@phosphor-icons/react';
 import DriveFileItem from './DriveFileItem';
 
 function DriveBrowser({
@@ -68,8 +68,8 @@ function DriveBrowser({
             flex: 1,
             minWidth: '200px',
             padding: '10px',
-            border: '1px solid var(--border-medium)',
-            borderRadius: '6px',
+            border: '3px solid #000',
+            borderRadius: '0',
             backgroundColor: 'var(--bg-primary)',
             color: 'var(--text-body)'
           }}
@@ -98,8 +98,8 @@ function DriveBrowser({
         minHeight: '200px',
         maxHeight: '500px',
         overflowY: 'auto',
-        border: '1px solid var(--border-medium)',
-        borderRadius: '8px',
+        border: '3px solid #000',
+        borderRadius: '0',
         background: 'var(--bg-primary)'
       }}>
         {driveLoading ? (
@@ -108,7 +108,7 @@ function DriveBrowser({
             justifyContent: 'center',
             alignItems: 'center',
             height: '200px',
-            color: '#667eea',
+            color: 'var(--text-heading)',
             fontWeight: 'bold'
           }}>
             Loading folder...
